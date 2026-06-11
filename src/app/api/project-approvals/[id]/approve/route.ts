@@ -157,10 +157,9 @@ export async function POST(
         // 根据审批类型执行相应操作
         if (finalStatus === "approved") {
           try {
-            console.log("[New Project] approval.approvalData raw:", approval.approvalData);
+            console.log("[Approve Final] approvalType:", approval.approvalType, "projectId:", approval.projectId);
             const approvalData = approval.approvalData ? JSON.parse(approval.approvalData) : {};
-            console.log("[New Project] approvalData parsed:", JSON.stringify(approvalData, null, 2));
-            console.log("[New Project] approvalData.projectData:", approvalData.projectData);
+            console.log("[Approve Final] approvalData keys:", Object.keys(approvalData));
 
             switch (approval.approvalType) {
               case "delete_project":

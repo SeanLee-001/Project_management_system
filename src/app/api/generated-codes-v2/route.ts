@@ -18,7 +18,13 @@ export async function GET(request: NextRequest) {
     let whereClause = '';
 
     if (keyword) {
-      whereClause = `WHERE (gc.code LIKE '%${keyword}%' OR gc.material_name LIKE '%${keyword}%')`;
+      // 支持物料编码、产品名称、规格型号、项目名称模糊搜索
+      whereClause = `WHERE (
+        gc.code ILIKE '%${keyword}%' OR 
+        gc.material_name ILIKE '%${keyword}%' OR 
+        p.specification ILIKE '%${keyword}%' OR
+        gc.project_name ILIKE '%${keyword}%'
+      )`;
     }
 
     if (ruleId) {

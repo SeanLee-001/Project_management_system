@@ -179,8 +179,12 @@ export default function AppPage() {
   // 项目物料编码搜索状态
   const [codeSearchResults, setCodeSearchResults] = useState<any[]>([]);
   const [showCodeSearchDropdown, setShowCodeSearchDropdown] = useState(false);
+  const [isSearchingCodes, setIsSearchingCodes] = useState(false);
+  const codeSearchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const [editingCodeSearchResults, setEditingCodeSearchResults] = useState<any[]>([]);
   const [showEditingCodeSearchDropdown, setShowEditingCodeSearchDropdown] = useState(false);
+  const [isSearchingEditingCodes, setIsSearchingEditingCodes] = useState(false);
+  const editingCodeSearchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // 看板状态
   const [dashboardType, setDashboardType] = useState<"project" | "stats">("project" as any); // 项目看板 vs 数据统计看板
@@ -1621,43 +1625,53 @@ export default function AppPage() {
     }
   };
 
-  // 搜索编码记录
-  const searchCodeRecords = async (keyword: string) => {
+  // 搜索编码记录（支持物料编码、产品名称、规格型号模糊搜索，带防抖）
+  const searchCodeRecords = (keyword: string) => {
+    // 清除之前的搜索请求
+    if (codeSearchTimeoutRef.current) {
+      clearTimeout(codeSearchTimeoutRef.current);
+    }
+
     if (!keyword.trim()) {
       setCodeSearchResults([]);
+      setShowCodeSearchDropdown(false);
       return;
     }
 
-    try {
-      const res = await fetch(`/api/generated-codes-v2?keyword=${encodeURIComponent(keyword)}&limit=10`);
-      const json = await res.json();
-      if (json.data) {
-        setCodeSearchResults(json.data);
-        setShowCodeSearchDropdown(true);
+    // 设置防抖延迟（300ms）
+    codeSearchTimeoutRef.current = setTimeout(async () => {
+      setIsSearchingCodes(true);
+      try {
+        const res = await fetch(`/api/generated-codes-v2?keyword=${encodeURIComponent(keyword)}&limit=20`);
+        const json = await res.json();
+        if (json.data) {
+          setCodeSearchResults(json.data);
+          setShowCodeSearchDropdown(true);
+        }
+      } catch (error) {
+        console.error("Error searching codes:", error);
+        setCodeSearchResults([]);
+        setShowCodeSearchDropdown(false);
+      } finally {
+        setIsSearchingCodes(false);
       }
-    } catch (error) {
-      console.error("Error searching codes:", error);
-      setCodeSearchResults([]);
-    }
+    }, 300);
   };
 
-  const searchEditingCodeRecords = async (keyword: string) => {
+  const searchEditingCodeRecords = (keyword: string) => {
     if (!keyword.trim()) {
       setEditingCodeSearchResults([]);
       return;
     }
 
-    try {
-      const res = await fetch(`/api/generated-codes-v2?keyword=${encodeURIComponent(keyword)}&limit=10`);
-      const json = await res.json();
-      if (json.data) {
-        setEditingCodeSearchResults(json.data);
-        setShowEditingCodeSearchDropdown(true);
-      }
-    } catch (error) {
-      console.error("Error searching codes:", error);
-      setEditingCodeSearchResults([]);
-    }
+    setIsSearchingEditingCodes(true);
+    fetch(`/api/generated-codes-v2?keyword=${encodeURIComponent(keyword)}&limit=20`)
+      .then((res) => res.json())
+      .then((data) => {
+        setEditingCodeSearchResults(data);
+      })
+      .catch((err) => console.error('Failed to search codes:', err))
+      .finally(() => setIsSearchingEditingCodes(false));
   };
 
   const fetchOrders = async (searchParams?: {
@@ -5188,8 +5202,16 @@ export default function AppPage() {
                             }}
                             onBlur={() => setTimeout(() => setShowCodeSearchDropdown(false), 200)}
                             className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            placeholder="输入物料编码进行搜索..."
+                            placeholder="输入物料编码、产品名称、规格型号进行搜索..."
                           />
+                          {isSearchingCodes && (
+                            <div className="absolute right-2 top-2 text-gray-400">
+                              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                            </div>
+                          )}
                           {showCodeSearchDropdown && codeSearchResults.length > 0 && (
                             <div className="absolute z-10 mt-1 w-full max-w-4xl rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800 max-h-96 overflow-y-auto">
                               <table className="w-full text-sm">
@@ -5197,6 +5219,7 @@ export default function AppPage() {
                                   <tr>
                                     <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">编码</th>
                                     <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">物料名称</th>
+                                    <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">规格型号</th>
                                     <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">项目名称</th>
                                     <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">产品大类</th>
                                     <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">版本</th>
@@ -5212,6 +5235,7 @@ export default function AppPage() {
                                           ...projectForm,
                                           materialCode: result.code,
                                           productName: result.material_name || result.project_name || "",
+                                          specification: result.specification || "",
                                         });
                                         setShowCodeSearchDropdown(false);
                                         setCodeSearchResults([]);
@@ -5219,6 +5243,7 @@ export default function AppPage() {
                                     >
                                       <td className="px-3 py-2 font-mono text-blue-600 dark:text-blue-400">{result.code}</td>
                                       <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{result.material_name}</td>
+                                      <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{result.specification || '-'}</td>
                                       <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{result.project_name || result.material_name || '-'}</td>
                                       <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{result.second_category_name || '-'}</td>
                                       <td className="px-3 py-2 text-center text-gray-700 dark:text-gray-300">{result.version || '-'}</td>
@@ -5843,8 +5868,16 @@ export default function AppPage() {
                             }}
                             onBlur={() => setTimeout(() => setShowEditingCodeSearchDropdown(false), 200)}
                             className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            placeholder="输入物料编码进行搜索..."
+                            placeholder="输入物料编码、产品名称、规格型号进行搜索..."
                           />
+                          {isSearchingEditingCodes && (
+                            <div className="absolute right-2 top-2 text-gray-400">
+                              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                            </div>
+                          )}
                           {showEditingCodeSearchDropdown && editingCodeSearchResults.length > 0 && (
                             <div className="absolute z-10 mt-1 w-full max-w-4xl rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800 max-h-96 overflow-y-auto">
                               <table className="w-full text-sm">
@@ -5852,6 +5885,7 @@ export default function AppPage() {
                                   <tr>
                                     <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">编码</th>
                                     <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">物料名称</th>
+                                    <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">规格型号</th>
                                     <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">项目名称</th>
                                     <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">产品大类</th>
                                     <th className="px-3 py-2 text-left font-semibold text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">版本</th>
@@ -5867,6 +5901,7 @@ export default function AppPage() {
                                           ...editProjectForm,
                                           materialCode: result.code,
                                           productName: result.material_name || result.project_name || "",
+                                          specification: result.specification || "",
                                         });
                                         setShowEditingCodeSearchDropdown(false);
                                         setEditingCodeSearchResults([]);
@@ -5874,6 +5909,7 @@ export default function AppPage() {
                                     >
                                       <td className="px-3 py-2 font-mono text-blue-600 dark:text-blue-400">{result.code}</td>
                                       <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{result.material_name}</td>
+                                      <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{result.specification || '-'}</td>
                                       <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{result.project_name || result.material_name || '-'}</td>
                                       <td className="px-3 py-2 text-gray-700 dark:text-gray-300">{result.second_category_name || '-'}</td>
                                       <td className="px-3 py-2 text-center text-gray-700 dark:text-gray-300">{result.version || '-'}</td>
