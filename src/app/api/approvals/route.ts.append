@@ -1,0 +1,25 @@
+
+// DELETE - 清除待审批记录（管理员功能）
+export async function DELETE(request: Request) {
+  try {
+    const body = await request.json();
+    const { status } = body;
+    
+    if (status !== 'pending') {
+      return Response.json({ error: '只能清除待审批记录' }, { status: 400 });
+    }
+    
+    // 删除所有 status = 'pending' 的记录
+    const result = await db.delete(approvalRequests)
+      .where(eq(approvalRequests.status, 'pending'));
+    
+    return Response.json({ 
+      success: true, 
+      count: result.rowCount || 0 
+    });
+    
+  } catch (error) {
+    console.error('清除待审批记录失败:', error);
+    return Response.json({ error: '清除失败' }, { status: 500 });
+  }
+}

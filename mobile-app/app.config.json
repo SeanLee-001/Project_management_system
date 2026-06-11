@@ -1,0 +1,37 @@
+{
+  "appName": "项目管理系统",
+  "appId": "com.projectmanagement.app",
+  "version": "1.0.0",
+  "buildNumber": 1,
+  "api": {
+    "baseUrl": "http://localhost:5000/api",
+    "timeout": 30000
+  },
+  "features": {
+    "enableNotifications": false,
+    "enableOfflineMode": false,
+    "enableBiometricLogin": false
+  },
+  "theme": {
+    "primaryColor": "#3B82F6",
+    "secondaryColor": "#667eea",
+    "backgroundColor": "#F5F5F5",
+    "textColor": "#333333",
+    "darkMode": true
+  },
+  "storage": {
+    "tokenKey": "@app_token",
+    "userKey": "@app_user",
+    "settingsKey": "@app_settings"
+  },
+  "android": {
+    "minSdk": 21,
+    "targetSdk": 33,
+    "compileSdk": 33,
+    "versionCode": 1
+  },
+  "ios": {
+    "deploymentTarget": "13.0",
+    "bundleIdentifier": "com.projectmanagement.app"
+  }
+}

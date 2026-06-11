@@ -1,0 +1,5 @@
+-- 添加订单表的四个比率字段
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS prepay_ratio VARCHAR(50);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS arrival_ratio VARCHAR(50);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS acceptance_ratio VARCHAR(50);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS warranty_ratio VARCHAR(50);

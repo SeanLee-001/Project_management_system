@@ -1,0 +1,118 @@
+{
+  "name": "project-management-system",
+  "version": "1.0.0",
+  "description": "基于Next.js的全功能项目管理系统",
+  "main": "dist/electron/main.js",
+  "author": "Project Management Team",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 5000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5000 && electron .\"",
+    "electron:build": "npm run build && tsc -p electron/tsconfig.json && electron-builder",
+    "electron:pack": "npm run build && tsc -p electron/tsconfig.json && electron-builder --dir",
+    "electron:dist": "npm run build && tsc -p electron/tsconfig.json && electron-builder --win",
+    "db:init": "npx tsx scripts/init-local-db.ts",
+    "db:upgrade": "npx coze-coding-ai db upgrade"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.958.0",
+    "@aws-sdk/lib-storage": "^3.958.0",
+    "@hello-pangea/dnd": "^18.0.1",
+    "@types/bcryptjs": "^3.0.0",
+    "@types/pg": "^8.16.0",
+    "bcryptjs": "^3.0.3",
+    "coze-coding-dev-sdk": "0.7.15",
+    "date-fns": "^4.1.0",
+    "drizzle-kit": "^0.31.8",
+    "drizzle-orm": "^0.45.1",
+    "drizzle-zod": "^0.8.3",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
+    "jsbarcode": "^3.12.3",
+    "lucide-react": "^1.16.0",
+    "next": "16.0.10",
+    "next-intl": "^4.8.3",
+    "pg": "^8.16.3",
+    "pinyin-pro": "^3.28.0",
+    "pptxgenjs": "^4.0.1",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
+    "react-qr-code": "^2.0.18",
+    "recharts": "^3.6.0",
+    "rimraf": "^6.1.3",
+    "xlsx": "^0.18.5",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/file-saver": "^2.0.7",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "concurrently": "^8.2.2",
+    "electron": "^40.0.0",
+    "electron-builder": "^26.4.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.10",
+    "tailwindcss": "^4",
+    "tsx": "^4.22.4",
+    "typescript": "^5",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.projectmanagement.system",
+    "productName": "项目管理系统",
+    "directories": {
+      "output": "dist/electron",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*",
+      "package.json",
+      "start-next.js",
+      ".next/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/",
+        "to": "dist/",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "项目管理系统"
+    },
+    "portable": {
+      "artifactName": "项目管理系统-便携版-${version}.${ext}"
+    }
+  }
+}
