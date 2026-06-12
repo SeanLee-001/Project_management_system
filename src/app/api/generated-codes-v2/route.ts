@@ -124,14 +124,23 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 获取总数
-    const countResult = await db.execute(sql`
-      SELECT COUNT(*) as total
-      FROM generated_codes_v2 gc
-      ${sql.raw(whereClause)}
-    `);
-
-    const total = countResult.rows[0]?.total || 0;
+    // 获取总数 - 只在有 whereClause 时使用
+    let total = 0;
+    if (whereClause) {
+      const countResult = await db.execute(sql`
+        SELECT COUNT(*) as total
+        FROM generated_codes_v2 gc
+        LEFT JOIN products p ON gc.code = p.material_code
+        ${sql.raw(whereClause)}
+      `);
+      total = countResult.rows[0]?.total || 0;
+    } else {
+      const countResult = await db.execute(sql`
+        SELECT COUNT(*) as total
+        FROM generated_codes_v2 gc
+      `);
+      total = countResult.rows[0]?.total || 0;
+    }
 
     return NextResponse.json({
       data: result.rows || [],
