@@ -49,10 +49,6 @@ interface ProjectRiskAnalysis {
 }
 
 export function KnowledgeBasePanel() {
-  // ... component code
-}
-
-export default KnowledgeBasePanel;
   const [news, setNews] = useState<NewsItem[]>([]);
   const [riskAnalysis, setRiskAnalysis] = useState<ProjectRiskAnalysis[]>([]);
   const [loading, setLoading] = useState(false);
@@ -331,3 +327,5 @@ export default KnowledgeBasePanel;
     </div>
   );
 }
+
+export default KnowledgeBasePanel;
