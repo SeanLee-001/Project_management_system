@@ -1,9 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   RefreshCw,
   TrendingUp,
@@ -139,110 +136,103 @@ export function KnowledgeBasePanel() {
   };
 
   return (
-    <Card className="w-full h-full">
-      <CardHeader className="border-b">
+    <div className="w-full h-full bg-white rounded-lg shadow">
+      <div className="border-b p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">知识库与智能分析</h2>
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            className="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50"
             onClick={activeTab === 'news' ? fetchNews : fetchRiskAnalysis}
             disabled={loading}
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             刷新
-          </Button>
+          </button>
         </div>
         <div className="flex gap-2 mt-4">
-          <Button
-            variant={activeTab === 'news' ? 'default' : 'outline'}
-            size="sm"
+          <button
+            className={`px-4 py-2 rounded text-sm font-medium ${
+              activeTab === 'news' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'
+            }`}
             onClick={() => setActiveTab('news')}
           >
-            <TrendingUp className="w-4 h-4 mr-2" />
+            <TrendingUp className="w-4 h-4 inline mr-2" />
             行业新闻 ({news.length})
-          </Button>
-          <Button
-            variant={activeTab === 'risks' ? 'default' : 'outline'}
-            size="sm"
+          </button>
+          <button
+            className={`px-4 py-2 rounded text-sm font-medium ${
+              activeTab === 'risks' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'
+            }`}
             onClick={() => setActiveTab('risks')}
           >
-            <AlertTriangle className="w-4 h-4 mr-2" />
+            <AlertTriangle className="w-4 h-4 inline mr-2" />
             项目风险 {summary?.highRisks ? `(${summary.highRisks}个高危)` : ''}
-          </Button>
+          </button>
         </div>
-      </CardHeader>
-      <CardContent className="p-6 h-[calc(100%-120px)] overflow-y-auto">
+      </div>
         {activeTab === 'news' && (
-          <div className="space-y-4">
+          <div className="p-6 space-y-4 overflow-y-auto h-[calc(100vh-280px)]">
             {news.length === 0 && !loading && (
               <div className="text-center text-gray-500 py-10">
                 暂无新闻数据，点击刷新获取
               </div>
             )}
             {news.map((item) => (
-              <Card key={item.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="secondary">{item.category}</Badge>
-                        <span className="text-sm text-gray-500">{item.source}</span>
-                        <span
-                          className={`w-2 h-2 rounded-full ${getRelevanceColor(item.relevance)}`}
-                          title={`相关度：${item.relevance}`}
-                        />
-                      </div>
-                      <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                      <p className="text-gray-600 text-sm mb-2">{item.summary}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">
-                          {new Date(item.publishTime).toLocaleString('zh-CN')}
-                        </span>
-                        <Button variant="link" size="sm" asChild>
-                          <a href={item.url} target="_blank" rel="noopener noreferrer">
-                            阅读原文 <ExternalLink className="w-3 h-3 ml-1" />
-                          </a>
-                        </Button>
-                      </div>
+              <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-1 bg-gray-200 rounded text-xs font-medium">{item.category}</span>
+                      <span className="text-sm text-gray-500">{item.source}</span>
+                      <span
+                        className={`w-2 h-2 rounded-full ${getRelevanceColor(item.relevance)}`}
+                        title={`相关度：${item.relevance}`}
+                      />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
+                    <p className="text-gray-600 text-sm mb-2">{item.summary}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">
+                        {new Date(item.publishTime).toLocaleString('zh-CN')}
+                      </span>
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline text-sm inline-flex items-center"
+                      >
+                        阅读原文 <ExternalLink className="w-3 h-3 ml-1" />
+                      </a>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         )}
 
         {activeTab === 'risks' && (
-          <div className="space-y-6">
+          <div className="p-6 space-y-6 overflow-y-auto h-[calc(100vh-280px)]">
             {summary && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="text-2xl font-bold">{summary.totalProjects}</div>
-                    <div className="text-sm text-gray-500">总项目数</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="text-2xl font-bold text-yellow-600">
-                      {summary.projectsWithRisks}
-                    </div>
-                    <div className="text-sm text-gray-500">有风险项目</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="text-2xl font-bold text-red-600">{summary.highRisks}</div>
-                    <div className="text-sm text-gray-500">高危风险</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="text-2xl font-bold">{summary.totalRisks}</div>
-                    <div className="text-sm text-gray-500">总风险数</div>
-                  </CardContent>
-                </Card>
+                <div className="border rounded-lg p-4">
+                  <div className="text-2xl font-bold">{summary.totalProjects}</div>
+                  <div className="text-sm text-gray-500">总项目数</div>
+                </div>
+                <div className="border rounded-lg p-4">
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {summary.projectsWithRisks}
+                  </div>
+                  <div className="text-sm text-gray-500">有风险项目</div>
+                </div>
+                <div className="border rounded-lg p-4">
+                  <div className="text-2xl font-bold text-red-600">{summary.highRisks}</div>
+                  <div className="text-sm text-gray-500">高危风险</div>
+                </div>
+                <div className="border rounded-lg p-4">
+                  <div className="text-2xl font-bold">{summary.totalRisks}</div>
+                  <div className="text-sm text-gray-500">总风险数</div>
+                </div>
               </div>
             )}
 
@@ -255,19 +245,19 @@ export function KnowledgeBasePanel() {
             )}
 
             {riskAnalysis.map((analysis) => (
-              <Card key={analysis.projectId} className="border-l-4 border-l-red-500">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold">{analysis.projectName}</h3>
-                      <p className="text-sm text-gray-500">{analysis.projectCode}</p>
-                    </div>
-                    <Badge variant={analysis.highRiskCount > 0 ? 'destructive' : 'secondary'}>
-                      {analysis.riskCount}个风险 ({analysis.highRiskCount}高危)
-                    </Badge>
+              <div key={analysis.projectId} className="border-l-4 border-l-red-500 border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4 pb-3 border-b">
+                  <div>
+                    <h3 className="text-lg font-semibold">{analysis.projectName}</h3>
+                    <p className="text-sm text-gray-500">{analysis.projectCode}</p>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                  <span className={`px-3 py-1 rounded text-xs font-medium ${
+                    analysis.highRiskCount > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {analysis.riskCount}个风险 ({analysis.highRiskCount}高危)
+                  </span>
+                </div>
+                <div className="space-y-4">
                   <div>
                     <h4 className="font-semibold mb-2 flex items-center">
                       <AlertTriangle className="w-4 h-4 mr-2 text-red-500" />
@@ -292,9 +282,9 @@ export function KnowledgeBasePanel() {
                               <span className="text-sm">{risk.description}</span>
                             </div>
                             {risk.details && (
-                              <div className="text-xs text-gray-500 mt-1 ml-12">
+                              <pre className="text-xs text-gray-500 mt-1 ml-12 bg-gray-100 p-2 rounded overflow-auto max-h-32">
                                 {JSON.stringify(risk.details, null, 2)}
-                              </div>
+                              </pre>
                             )}
                           </div>
                         </div>
@@ -322,9 +312,13 @@ export function KnowledgeBasePanel() {
                           >
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-semibold">{rec.title}</span>
-                              <Badge variant="outline" className="text-xs">
+                              <span className={`px-2 py-0.5 rounded text-xs border ${
+                                rec.priority === 'high' ? 'border-red-500 text-red-600' :
+                                rec.priority === 'medium' ? 'border-yellow-500 text-yellow-600' :
+                                'border-blue-500 text-blue-600'
+                              }`}>
                                 {rec.priority === 'high' ? '紧急' : rec.priority === 'medium' ? '重要' : '建议'}
-                              </Badge>
+                              </span>
                             </div>
                             <p className="text-sm text-gray-700">{rec.content}</p>
                           </div>
@@ -332,12 +326,12 @@ export function KnowledgeBasePanel() {
                       </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
