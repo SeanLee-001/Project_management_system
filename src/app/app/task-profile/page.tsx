@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import {
   Users,
-  TaskSquare,
+  SquareActivity,
   CheckCircle,
   Clock,
   AlertCircle,
@@ -161,7 +161,7 @@ export function TaskProfilePage() {
               <p className="text-sm text-gray-500 mb-1">总任务数</p>
               <p className="text-3xl font-bold">{overallStats.totalTasks}</p>
             </div>
-            <TaskSquare className="w-10 h-10 text-blue-500" />
+            <SquareActivity className="w-10 h-10 text-blue-500" />
           </div>
         </div>
         
