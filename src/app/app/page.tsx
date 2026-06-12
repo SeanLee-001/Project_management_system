@@ -1964,6 +1964,24 @@ export default function AppPage() {
         }
       } else {
         // 普通用户需要通过审批流程
+        // 先创建项目（状态为 pending_approval），再创建审批记录
+        formData.approvalStatus = "pending";
+        
+        const projectRes = await fetch("/api/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(formData),
+        });
+        
+        const projectJson = await projectRes.json();
+        if (!projectJson.success) {
+          alert("创建项目失败：" + (projectJson.error || "未知错误"));
+          return;
+        }
+        
+        const projectId = projectJson.data.id;
+        
         const approvalData = {
           projectData: formData,
           customMembers: customMembersList,
@@ -1974,7 +1992,7 @@ export default function AppPage() {
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            projectId: "pending", // 待创建的项目ID
+            projectId,
             approvalType: "new_project",
             applicantId: currentUser?.id,
             applicantName: currentUser?.fullName || currentUser?.username,
@@ -2037,7 +2055,7 @@ export default function AppPage() {
           });
           setCustomMembersList([]);
           setTechnicalProtocolDisplayUrl("");
-          alert("项目审批申请已提交，等待审批通过后项目才会创建！");
+          alert("项目已创建并提交审批，等待审批通过后项目将生效！");
         } else {
           alert("提交审批失败：" + (json.error || "未知错误"));
         }
