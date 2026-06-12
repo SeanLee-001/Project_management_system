@@ -29,6 +29,7 @@ const FileManagement = dynamic(() => import("@/components/FileManagement"), { ss
 const UtilityTools = dynamic(() => import("@/components/UtilityTools"), { ssr: false });
 const Dashboard = dynamic(() => import("@/components/Dashboard"), { ssr: false });
 const ContractDashboard = dynamic(() => import("@/components/ContractDashboard"), { ssr: false });
+const KnowledgeBasePanel = dynamic(() => import("@/components/knowledge-base/KnowledgeBasePanel"), { ssr: false });
 
 // 轻量组件保持静态导入
 import MessageNotification from "@/components/MessageNotification";
@@ -43,7 +44,7 @@ import { convertToProxyUrl } from "@/lib/imageUtils";
 type Status = "active" | "completed" | "paused" | "cancelled";
 type TaskStatus = "todo" | "in_progress" | "completed";
 type Priority = "low" | "medium" | "high";
-type Tab = "dashboard" | "orders_dashboard" | "contracts_dashboard" | "projects" | "tasks" | "customers" | "contracts" | "orders" | "products" | "deliveries" | "messages" | "approvals" | "knowledge_base";
+type Tab = "dashboard" | "orders_dashboard" | "contracts_dashboard" | "projects" | "tasks" | "customers" | "contracts" | "orders" | "products" | "deliveries" | "messages" | "approvals" | "knowledge_base" | "task_profile";
 
 // Tab与资源的映射关系（用于权限控制）
 const TAB_RESOURCE_MAP: Record<Tab, string | null> = {
@@ -60,6 +61,7 @@ const TAB_RESOURCE_MAP: Record<Tab, string | null> = {
   messages: null, // 消息中心不需要权限
   approvals: null, // 审批中心不需要权限
   knowledge_base: null, // 知识库不需要权限
+  task_profile: null, // 任务画像不需要权限
 };
 
 // 计算项目持续时间
@@ -2774,6 +2776,16 @@ export default function AppPage() {
                 知识库
               </button>
             )}
+            <button
+              onClick={() => setActiveTab("task_profile")}
+              className={`px-4 py-3 border-b-2 text-2xl font-medium transition-colors whitespace-nowrap ${
+                activeTab === "task_profile"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+              }`}
+            >
+              任务画像
+            </button>
             {hasTabPermission("messages") && (
               <button
                 onClick={() => setActiveTab("messages")}
@@ -2953,6 +2965,19 @@ export default function AppPage() {
                   知识库
                 </button>
               )}
+              <button
+                onClick={() => setActiveTab("task_profile")}
+                className={`flex flex-col items-center px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  activeTab === "task_profile"
+                    ? "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400"
+                    : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                }`}
+              >
+                <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                任务画像
+              </button>
             </div>
           </nav>
         </div>
@@ -5081,7 +5106,15 @@ export default function AppPage() {
           )}
 
           {activeTab === "knowledge_base" && (
-            <KnowledgeBaseManagement />
+            <KnowledgeBasePanel />
+          )}
+
+          {activeTab === "task_profile" && (
+            <iframe
+              src="/app/task-profile"
+              className="w-full h-[calc(100vh-200px)] border-0"
+              title="任务画像"
+            />
           )}
 
           {activeTab === "messages" && <MessageCenter userId={currentUser?.id || ""} userRole={currentUser?.role || ""} />}
