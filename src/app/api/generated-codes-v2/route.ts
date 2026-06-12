@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const db = await getDb();
 
     let whereClause = '';
+    let productsWhereClause = '';
 
     if (keyword) {
       // 支持物料编码、产品名称、规格型号、项目名称模糊搜索
@@ -24,6 +25,13 @@ export async function GET(request: NextRequest) {
         gc.material_name ILIKE '%${keyword}%' OR 
         p.specification ILIKE '%${keyword}%' OR
         gc.project_name ILIKE '%${keyword}%'
+      )`;
+      
+      // 如果 generated_codes_v2 为空，直接搜索 products 表
+      productsWhereClause = `WHERE (
+        p.material_code ILIKE '%${keyword}%' OR 
+        p.project_name ILIKE '%${keyword}%' OR 
+        p.specification ILIKE '%${keyword}%'
       )`;
     }
 
@@ -43,17 +51,78 @@ export async function GET(request: NextRequest) {
         c3.name as third_category_name,
         c4.name as process_category_name,
         p.specification as product_specification,
-        p.imageUrl as product_image_url
+        p.image_url as product_image_url
       FROM generated_codes_v2 gc
       LEFT JOIN coding_rules_v2 cr ON gc.rule_id = cr.rule_id
       LEFT JOIN coding_categories_v2 c2 ON gc.second_category_id = c2.category_id
       LEFT JOIN coding_categories_v2 c3 ON gc.third_category_id = c3.category_id
       LEFT JOIN coding_categories_v2 c4 ON gc.process_category_id = c4.category_id
-      LEFT JOIN products p ON gc.code = p.materialCode
+      LEFT JOIN products p ON gc.code = p.material_code
       ${sql.raw(whereClause)}
       ORDER BY gc.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `);
+
+    // 如果 generated_codes_v2 表没有数据，直接从 products 表查询
+    if ((!result.rows || result.rows.length === 0) && keyword) {
+      const productsResult = await db.execute(sql`
+        SELECT 
+          p.material_code as code,
+          p.project_name as material_name,
+          p.specification,
+          p.project_name,
+          p.description as second_category_name,
+          'A' as version,
+          null as third_category_name,
+          null as process_category_name,
+          null as rule_name,
+          p.image_url as product_image_url,
+          p.id as record_id,
+          'products' as source_table
+        FROM products p
+        ${sql.raw(productsWhereClause)}
+        ORDER BY p.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `);
+      
+      return NextResponse.json({
+        data: productsResult.rows || [],
+        total: productsResult.rows?.length || 0,
+        limit: limit,
+        offset: offset
+      });
+    }
+    
+    // 如果没有关键词且 generated_codes_v2 为空，也返回 products 表数据
+    if (!result.rows || result.rows.length === 0) {
+      const productsWhereClauseSimple = keyword ? productsWhereClause : '';
+      const productsResult = await db.execute(sql`
+        SELECT 
+          p.material_code as code,
+          p.project_name as material_name,
+          p.specification,
+          p.project_name,
+          p.description as second_category_name,
+          'A' as version,
+          null as third_category_name,
+          null as process_category_name,
+          null as rule_name,
+          p.image_url as product_image_url,
+          p.id as record_id,
+          'products' as source_table
+        FROM products p
+        ${sql.raw(productsWhereClauseSimple)}
+        ORDER BY p.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `);
+      
+      return NextResponse.json({
+        data: productsResult.rows || [],
+        total: productsResult.rows?.length || 0,
+        limit: limit,
+        offset: offset
+      });
+    }
 
     // 获取总数
     const countResult = await db.execute(sql`
