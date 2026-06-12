@@ -48,7 +48,7 @@ interface ProjectRiskAnalysis {
   highRiskCount: number;
 }
 
-export function KnowledgeBasePanel() {
+export default function KnowledgeBasePanel() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [riskAnalysis, setRiskAnalysis] = useState<ProjectRiskAnalysis[]>([]);
   const [loading, setLoading] = useState(false);
@@ -95,36 +95,30 @@ export function KnowledgeBasePanel() {
   }, [activeTab]);
 
   const getRelevanceColor = (relevance: string) => {
-    switch (relevance) {
-      case 'high': return 'bg-red-500';
-      case 'medium': return 'bg-yellow-500';
-      case 'low': return 'bg-blue-500';
-      default: return 'bg-gray-500';
-    }
+    if (relevance === 'high') return 'bg-red-500';
+    if (relevance === 'medium') return 'bg-yellow-500';
+    if (relevance === 'low') return 'bg-blue-500';
+    return 'bg-gray-500';
   };
 
   const getRiskLevelColor = (level: string) => {
-    switch (level) {
-      case 'high': return 'bg-red-500 text-white';
-      case 'medium': return 'bg-yellow-500 text-black';
-      case 'low': return 'bg-blue-500 text-white';
-      default: return 'bg-gray-500 text-white';
-    }
+    if (level === 'high') return 'bg-red-500 text-white';
+    if (level === 'medium') return 'bg-yellow-500 text-black';
+    if (level === 'low') return 'bg-blue-500 text-white';
+    return 'bg-gray-500 text-white';
   };
 
   const getRiskIcon = (type: string) => {
-    switch (type) {
-      case 'schedule_overdue':
-      case 'schedule_warning':
-        return <Calendar className="w-5 h-5" />;
-      case 'task_imbalance':
-      case 'resource_idle':
-        return <Users className="w-5 h-5" />;
-      case 'stale_project':
-        return <Clock className="w-5 h-5" />;
-      default:
-        return <AlertTriangle className="w-5 h-5" />;
+    if (type === 'schedule_overdue' || type === 'schedule_warning') {
+      return <Calendar className="w-5 h-5" />;
     }
+    if (type === 'task_imbalance' || type === 'resource_idle') {
+      return <Users className="w-5 h-5" />;
+    }
+    if (type === 'stale_project') {
+      return <Clock className="w-5 h-5" />;
+    }
+    return <AlertTriangle className="w-5 h-5" />;
   };
 
   return (
@@ -173,7 +167,7 @@ export function KnowledgeBasePanel() {
             )}
             {news.map((item) => (
               <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between mb-2">
+                <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="px-2 py-1 bg-gray-200 rounded text-xs font-medium">{item.category}</span>
@@ -327,5 +321,3 @@ export function KnowledgeBasePanel() {
     </div>
   );
 }
-
-export default KnowledgeBasePanel;
