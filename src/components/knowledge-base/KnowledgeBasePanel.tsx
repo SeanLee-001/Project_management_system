@@ -96,27 +96,19 @@ export function KnowledgeBasePanel() {
 
   const getRelevanceColor = (relevance: string) => {
     switch (relevance) {
-      case 'high':
-        return 'bg-red-500';
-      case 'medium':
-        return 'bg-yellow-500';
-      case 'low':
-        return 'bg-blue-500';
-      default:
-        return 'bg-gray-500';
+      case 'high': return 'bg-red-500';
+      case 'medium': return 'bg-yellow-500';
+      case 'low': return 'bg-blue-500';
+      default: return 'bg-gray-500';
     }
   };
 
   const getRiskLevelColor = (level: string) => {
     switch (level) {
-      case 'high':
-        return 'bg-red-500 text-white';
-      case 'medium':
-        return 'bg-yellow-500 text-black';
-      case 'low':
-        return 'bg-blue-500 text-white';
-      default:
-        return 'bg-gray-500 text-white';
+      case 'high': return 'bg-red-500 text-white';
+      case 'medium': return 'bg-yellow-500 text-black';
+      case 'low': return 'bg-blue-500 text-white';
+      default: return 'bg-gray-500 text-white';
     }
   };
 
@@ -145,7 +137,7 @@ export function KnowledgeBasePanel() {
             onClick={activeTab === 'news' ? fetchNews : fetchRiskAnalysis}
             disabled={loading}
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 mr-2 inline ${loading ? 'animate-spin' : ''}`} />
             刷新
           </button>
         </div>
@@ -170,8 +162,10 @@ export function KnowledgeBasePanel() {
           </button>
         </div>
       </div>
+
+      <div className="p-6 overflow-y-auto h-[calc(100vh-280px)]">
         {activeTab === 'news' && (
-          <div className="p-6 space-y-4 overflow-y-auto h-[calc(100vh-280px)]">
+          <div className="space-y-4">
             {news.length === 0 && !loading && (
               <div className="text-center text-gray-500 py-10">
                 暂无新闻数据，点击刷新获取
@@ -212,7 +206,7 @@ export function KnowledgeBasePanel() {
         )}
 
         {activeTab === 'risks' && (
-          <div className="p-6 space-y-6 overflow-y-auto h-[calc(100vh-280px)]">
+          <div className="space-y-6">
             {summary && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="border rounded-lg p-4">
@@ -273,9 +267,7 @@ export function KnowledgeBasePanel() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <span
-                                className={`px-2 py-0.5 rounded text-xs ${getRiskLevelColor(
-                                  risk.level
-                                )}`}
+                                className={`px-2 py-0.5 rounded text-xs ${getRiskLevelColor(risk.level)}`}
                               >
                                 {risk.level === 'high' ? '高危' : risk.level === 'medium' ? '中危' : '低危'}
                               </span>
