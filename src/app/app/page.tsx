@@ -30,6 +30,7 @@ const UtilityTools = dynamic(() => import("@/components/UtilityTools"), { ssr: f
 const Dashboard = dynamic(() => import("@/components/Dashboard"), { ssr: false });
 const ContractDashboard = dynamic(() => import("@/components/ContractDashboard"), { ssr: false });
 const KnowledgeBasePanel = dynamic(() => import("@/components/knowledge-base/KnowledgeBasePanel"), { ssr: false });
+const TaskProfilePage = dynamic(() => import("@/app/app/task-profile/page"), { ssr: false });
 
 // 轻量组件保持静态导入
 import MessageNotification from "@/components/MessageNotification";
@@ -5110,11 +5111,7 @@ export default function AppPage() {
           )}
 
           {activeTab === "task_profile" && (
-            <iframe
-              src="/app/task-profile"
-              className="w-full h-[calc(100vh-200px)] border-0"
-              title="任务画像"
-            />
+            <TaskProfilePage />
           )}
 
           {activeTab === "messages" && <MessageCenter userId={currentUser?.id || ""} userRole={currentUser?.role || ""} />}
