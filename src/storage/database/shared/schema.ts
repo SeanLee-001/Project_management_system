@@ -482,10 +482,11 @@ export const products = pgTable(
       .primaryKey()
       .default(sql`gen_random_uuid()`),
     materialCode: varchar("material_code", { length: 100 }).notNull().unique(), // 物料编码
+    materialName: varchar("material_name", { length: 255 }), // 物料名称
     projectName: varchar("project_name", { length: 255 }).notNull(), // 项目名称
     specification: varchar("specification", { length: 255 }), // 规格型号
     description: text("description"), // 产品描述
-    imageUrl: text("image_url"), // 产品图片URL
+    imageUrl: text("image_url"), // 产品图片 URL
     status: varchar("status", { length: 50 }).notNull().default("active"), // 状态：active-启用，inactive-停用
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
@@ -1024,6 +1025,7 @@ export const updateOrderSchema = createCoercedInsertSchema(orders)
 // Products 的 Zod schemas
 export const insertProductSchema = createCoercedInsertSchema(products).pick({
   materialCode: true,
+  materialName: true,
   projectName: true,
   specification: true,
   description: true,
@@ -1033,6 +1035,7 @@ export const insertProductSchema = createCoercedInsertSchema(products).pick({
 
 export const updateProductSchema = createCoercedInsertSchema(products)
   .pick({
+    materialName: true,
     projectName: true,
     specification: true,
     description: true,

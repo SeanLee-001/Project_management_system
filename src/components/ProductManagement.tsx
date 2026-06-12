@@ -55,6 +55,7 @@ export default function ProductManagement() {
 
   const [productForm, setProductForm] = useState({
     materialCode: "",
+    materialName: "",
     projectName: "",
     specification: "",
     description: "",
@@ -281,6 +282,7 @@ export default function ProductManagement() {
     setEditingProduct(product);
     setProductForm({
       materialCode: product.materialCode,
+      materialName: (product as any).materialName || "",
       projectName: product.projectName,
       specification: product.specification || "",
       description: product.description || "",
@@ -316,6 +318,7 @@ export default function ProductManagement() {
   const resetProductForm = () => {
     setProductForm({
       materialCode: "",
+      materialName: "",
       projectName: "",
       specification: "",
       description: "",
@@ -361,6 +364,13 @@ export default function ProductManagement() {
       render: (value) => (
         <span className="font-medium text-gray-900 dark:text-white">{value}</span>
       ),
+    },
+    {
+      key: "materialName",
+      title: "物料名称",
+      width: 180,
+      sortable: true,
+      render: (value) => value || "-",
     },
     {
       key: "projectName",
@@ -871,6 +881,7 @@ export default function ProductManagement() {
                                 setProductForm({
                                   ...productForm,
                                   materialCode: result.code,
+                                  materialName: result.material_name || '',
                                   projectName: result.project_name || result.material_name || '',
                                 });
                                 setShowCodeSearch(false);
@@ -888,6 +899,21 @@ export default function ProductManagement() {
                       </table>
                     </div>
                   )}
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    物料名称 *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={productForm.materialName}
+                    onChange={(e) =>
+                      setProductForm({ ...productForm, materialName: e.target.value })
+                    }
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    placeholder="请输入物料名称"
+                  />
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
