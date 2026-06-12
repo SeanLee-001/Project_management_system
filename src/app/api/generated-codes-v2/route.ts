@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
         SELECT 
           p.material_code as code,
           p.project_name as material_name,
-          p.specification,
+          p.specification as product_specification,
           p.project_name,
           p.description as second_category_name,
           'A' as version,
@@ -80,7 +80,6 @@ export async function GET(request: NextRequest) {
           p.id as record_id,
           'products' as source_table
         FROM products p
-        ${sql.raw(productsWhereClause)}
         ORDER BY p.created_at DESC
         LIMIT ${limit} OFFSET ${offset}
       `);
@@ -100,7 +99,7 @@ export async function GET(request: NextRequest) {
         SELECT 
           p.material_code as code,
           p.project_name as material_name,
-          p.specification,
+          p.specification as product_specification,
           p.project_name,
           p.description as second_category_name,
           'A' as version,

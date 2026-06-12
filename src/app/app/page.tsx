@@ -5235,7 +5235,7 @@ export default function AppPage() {
                                           ...projectForm,
                                           materialCode: result.code,
                                           productName: result.material_name || result.project_name || "",
-                                          specification: result.specification || "",
+                                          specification: result.product_specification || result.specification || "",
                                         });
                                         setShowCodeSearchDropdown(false);
                                         setCodeSearchResults([]);
@@ -5901,7 +5901,7 @@ export default function AppPage() {
                                           ...editProjectForm,
                                           materialCode: result.code,
                                           productName: result.material_name || result.project_name || "",
-                                          specification: result.specification || "",
+                                          specification: result.product_specification || result.specification || "",
                                         });
                                         setShowEditingCodeSearchDropdown(false);
                                         setEditingCodeSearchResults([]);
