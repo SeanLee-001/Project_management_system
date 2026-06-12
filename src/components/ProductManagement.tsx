@@ -214,6 +214,32 @@ export default function ProductManagement() {
     }
   };
 
+  // 当物料编码变化时，自动查询物料名称（仅编辑模式）
+  useEffect(() => {
+    if (editingProduct && productForm.materialCode && productForm.materialCode !== editingProduct.materialCode) {
+      // 物料编码被修改，自动查询新的物料名称
+      const autoSearch = async () => {
+        try {
+          const res = await fetch(`/api/generated-codes-v2?keyword=${encodeURIComponent(productForm.materialCode)}&limit=1`);
+          const json = await res.json();
+          if (json.data && json.data.length > 0) {
+            const result = json.data[0];
+            setProductForm(prev => ({
+              ...prev,
+              materialName: result.material_name || '',
+              projectName: result.project_name || result.material_name || prev.projectName,
+              specification: result.product_specification || result.specification || prev.specification,
+              imageUrl: result.product_image_url || prev.imageUrl,
+            }));
+          }
+        } catch (error) {
+          console.error("Error auto-searching material name:", error);
+        }
+      };
+      autoSearch();
+    }
+  }, [productForm.materialCode, editingProduct]);
+
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -849,7 +875,6 @@ export default function ProductManagement() {
                         setSearchResults([]);
                       }
                     }}
-                    disabled={!!editingProduct}
                     placeholder="输入关键字搜索物料编码..."
                     onFocus={() => {
                       if (productForm.materialCode.trim()) {
@@ -857,10 +882,10 @@ export default function ProductManagement() {
                         searchGeneratedCodes(productForm.materialCode);
                       }
                     }}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                   />
                   {/* 搜索结果下拉框 */}
-                  {!editingProduct && showCodeSearch && searchResults.length > 0 && (
+                  {showCodeSearch && searchResults.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-96 overflow-y-auto">
                       <table className="w-full text-sm">
                         <thead className="bg-gray-100 dark:bg-gray-700 sticky top-0">
@@ -909,12 +934,10 @@ export default function ProductManagement() {
                   <input
                     type="text"
                     required
+                    readOnly
                     value={productForm.materialName}
-                    onChange={(e) =>
-                      setProductForm({ ...productForm, materialName: e.target.value })
-                    }
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                    placeholder="请输入物料名称"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 bg-gray-50 dark:border-gray-600 dark:bg-gray-600 dark:text-white cursor-not-allowed"
+                    placeholder="选择物料编码后自动填充"
                   />
                 </div>
                 <div>
