@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/storage/database';
-import { projects } from '@/storage/database/shared/schema';
-import { projectTasks } from '@/storage/database/shared/schema';
-import { eq, and, gte, lte } from 'drizzle-orm';
+import { projectManager } from '@/storage/database';
+import { taskManager } from '@/storage/database';
+import { eq } from 'drizzle-orm';
 
 /**
  * 项目风险智能分析
@@ -13,16 +12,15 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('projectId');
     
-    // 获取所有项目或指定项目
-    const allProjects = await db.select().from(projects);
+    const allProjects = await projectManager.getProjects({});
     const projectList = projectId 
       ? allProjects.filter(p => p.id === projectId)
       : allProjects;
 
     const riskAnalysis = await Promise.all(
       projectList.map(async (project) => {
-        const risks = [];
-        const recommendations = [];
+        const risks: any[] = [];
+        const recommendations: any[] = [];
 
         // 1. 项目延期风险分析
         if (project.endDate && new Date(project.endDate) < new Date()) {
@@ -38,7 +36,6 @@ export async function GET(request: NextRequest) {
               endDate: project.endDate,
             });
 
-            // 根据延期天数提供建议
             if (daysOverdue > 14) {
               recommendations.push({
                 type: 'schedule_adjustment',
@@ -88,13 +85,9 @@ export async function GET(request: NextRequest) {
         }
 
         // 3. 任务分配不平衡分析
-        const tasks = await db
-          .select()
-          .from(projectTasks)
-          .where(eq(projectTasks.projectId, project.id));
+        const tasks = await taskManager.getTasks({ projectId: project.id });
 
         if (tasks.length > 0) {
-          // 按负责人统计任务数量
           const taskDistribution: Record<string, number> = {};
           tasks.forEach((task) => {
             const assignee = task.assigneeId || '未分配';
@@ -108,7 +101,6 @@ export async function GET(request: NextRequest) {
           const maxTasks = Math.max(...taskCounts, 0);
           const minTasks = Math.min(...taskCounts, 0);
 
-          // 任务分配不平衡判断：最大值超过平均值 2 倍或最小值为 0
           if (maxTasks > avgTasks * 2 && taskCounts.length > 1) {
             const overloadedPerson = Object.entries(taskDistribution)
               .find(([_, count]) => count === maxTasks);
@@ -133,7 +125,6 @@ export async function GET(request: NextRequest) {
             });
           }
 
-          // 有人任务为 0
           if (minTasks === 0 && taskCounts.length > 1) {
             const idlePeople = Object.entries(taskDistribution)
               .filter(([_, count]) => count === 0)
@@ -187,12 +178,11 @@ export async function GET(request: NextRequest) {
           risks,
           recommendations,
           riskCount: risks.length,
-          highRiskCount: risks.filter(r => r.level === 'high').length,
+          highRiskCount: risks.filter((r: any) => r.level === 'high').length,
         };
       })
     );
 
-    // 汇总统计
     const summary = {
       totalProjects: projectList.length,
       projectsWithRisks: riskAnalysis.filter(r => r.riskCount > 0).length,
@@ -200,19 +190,19 @@ export async function GET(request: NextRequest) {
       highRisks: riskAnalysis.reduce((sum, r) => sum + r.highRiskCount, 0),
       riskTypes: {
         schedule_overdue: riskAnalysis.reduce(
-          (sum, r) => sum + r.risks.filter(risk => risk.type === 'schedule_overdue').length, 
+          (sum, r) => sum + r.risks.filter((risk: any) => risk.type === 'schedule_overdue').length, 
           0
         ),
         task_imbalance: riskAnalysis.reduce(
-          (sum, r) => sum + r.risks.filter(risk => risk.type === 'task_imbalance').length, 
+          (sum, r) => sum + r.risks.filter((risk: any) => risk.type === 'task_imbalance').length, 
           0
         ),
         resource_idle: riskAnalysis.reduce(
-          (sum, r) => sum + r.risks.filter(risk => risk.type === 'resource_idle').length, 
+          (sum, r) => sum + r.risks.filter((risk: any) => risk.type === 'resource_idle').length, 
           0
         ),
         stale_project: riskAnalysis.reduce(
-          (sum, r) => sum + r.risks.filter(risk => risk.type === 'stale_project').length, 
+          (sum, r) => sum + r.risks.filter((risk: any) => risk.type === 'stale_project').length, 
           0
         ),
       },
@@ -222,7 +212,7 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         summary,
-        analyses: riskAnalysis.filter(r => r.riskCount > 0), // 只返回有风险的 proj
+        analyses: riskAnalysis.filter(r => r.riskCount > 0),
       },
     });
   } catch (error: any) {
