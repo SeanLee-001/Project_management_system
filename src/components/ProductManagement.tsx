@@ -883,6 +883,8 @@ export default function ProductManagement() {
                                   materialCode: result.code,
                                   materialName: result.material_name || '',
                                   projectName: result.project_name || result.material_name || '',
+                                  specification: result.product_specification || result.specification || '',
+                                  imageUrl: result.product_image_url || '',
                                 });
                                 setShowCodeSearch(false);
                                 setSearchResults([]);

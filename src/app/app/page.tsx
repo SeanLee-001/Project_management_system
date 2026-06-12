@@ -5236,6 +5236,7 @@ export default function AppPage() {
                                           materialCode: result.code,
                                           productName: result.material_name || result.project_name || "",
                                           specification: result.product_specification || result.specification || "",
+                                          productImageUrl: result.product_image_url || "",
                                         });
                                         setShowCodeSearchDropdown(false);
                                         setCodeSearchResults([]);
@@ -5902,6 +5903,7 @@ export default function AppPage() {
                                           materialCode: result.code,
                                           productName: result.material_name || result.project_name || "",
                                           specification: result.product_specification || result.specification || "",
+                                          productImageUrl: result.product_image_url || "",
                                         });
                                         setShowEditingCodeSearchDropdown(false);
                                         setEditingCodeSearchResults([]);
