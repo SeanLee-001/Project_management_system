@@ -180,7 +180,7 @@ async function runAnalysis(): Promise<any> {
         }
       }
 
-      // 任务分配检查 (简化版，统计该项目相关的任务)
+      // 任务分配检查 (统计该项目相关的任务)
       const projectTasks = tasks.filter(t => t.projectId === project.id);
       if (projectTasks.length > 0) {
         const assigneeCounts: Record<string, number> = {};
@@ -192,19 +192,25 @@ async function runAnalysis(): Promise<any> {
         const counts = Object.values(assigneeCounts);
         const max = Math.max(...counts);
         const avg = counts.reduce((a,b)=>a+b,0) / counts.length;
+        const overloadedPerson = Object.keys(assigneeCounts).find(k => assigneeCounts[k] === max) || '';
         
-        // 只有当有具体人员分配且差异巨大时才报警
-        if (max > avg * 3 && Object.keys(assigneeCounts).length > 1) {
+        // 当有成员任务数显著高于平均值时报警
+        if (assigneeCounts[overloadedPerson] >= 3 && max > avg * 1.5) {
            risks.push({
              type: 'task_imbalance',
-             level: 'medium',
-             description: '项目内部任务分配严重不均',
+             level: max > avg * 2.5 ? 'high' : 'medium',
+             description: `${overloadedPerson} 承担了 ${assigneeCounts[overloadedPerson]} 个任务，远超平均值 ${avg.toFixed(0)} 个`,
+             details: {
+               overloadedPerson,
+               maxTasks: assigneeCounts[overloadedPerson],
+               avgTasks: +avg.toFixed(0),
+             },
            });
            recommendations.push({
              type: 'task_reassignment',
-             priority: 'low',
+             priority: max > avg * 2 ? 'high' : 'medium',
              title: '优化项目内部任务分配',
-             content: '某成员承担了该项目绝大多数任务，存在单点瓶颈风险。',
+             content: `${overloadedPerson} 承担了该项目绝大多数任务，人员任务分配不均衡，可能导致项目延期。建议重新分配任务，确保各成员负载均匀。`,
            });
         }
       }
@@ -231,6 +237,7 @@ async function runAnalysis(): Promise<any> {
       schedule_overdue: analyses.reduce((sum: number, a: any) => sum + a.risks.filter((r: any) => r.type === 'schedule_overdue').length, 0),
       financial_risk: analyses.reduce((sum: number, a: any) => sum + a.risks.filter((r: any) => r.type === 'financial_risk').length, 0),
       obsolete_project: analyses.reduce((sum: number, a: any) => sum + a.risks.filter((r: any) => r.type === 'obsolete_project').length, 0),
+      task_imbalance: analyses.reduce((sum: number, a: any) => sum + a.risks.filter((r: any) => r.type === 'task_imbalance').length, 0),
     }
   };
 

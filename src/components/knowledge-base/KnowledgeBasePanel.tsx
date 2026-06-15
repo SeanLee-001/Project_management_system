@@ -163,7 +163,7 @@ export default function KnowledgeBasePanel() {
     
     switch (risk.type) {
       case 'task_imbalance':
-        return `成员 ${risk.details.overloadedPerson} 承担 ${risk.details.maxTasks} 个任务，远高于平均值 ${risk.details.avgTasks} 个`;
+        return `${risk.details.overloadedPerson} 承担 ${risk.details.maxTasks} 个任务，平均值 ${risk.details.avgTasks} 个`;
       case 'resource_idle':
         return `${risk.details.idleCount} 名成员目前没有分配任务`;
       case 'schedule_overdue':
@@ -301,7 +301,7 @@ export default function KnowledgeBasePanel() {
                     <div className="text-sm text-gray-500">总风险数</div>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-4 gap-4">
                   <div className="border rounded-lg p-3 bg-orange-50">
                     <div className="flex items-center gap-2">
                       <ShieldAlert className="w-5 h-5 text-orange-500" />
@@ -322,6 +322,13 @@ export default function KnowledgeBasePanel() {
                       <div className="text-lg font-bold text-blue-700">{summary.riskTypes?.schedule_overdue || 0}</div>
                     </div>
                     <div className="text-sm text-gray-600">项目延期</div>
+                  </div>
+                  <div className="border rounded-lg p-3 bg-purple-50">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-purple-500" />
+                      <div className="text-lg font-bold text-purple-700">{summary.riskTypes?.task_imbalance || 0}</div>
+                    </div>
+                    <div className="text-sm text-gray-600">人员负载不均</div>
                   </div>
                 </div>
               </div>
