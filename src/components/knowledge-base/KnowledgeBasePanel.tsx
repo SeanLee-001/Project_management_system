@@ -48,6 +48,20 @@ interface ProjectRiskAnalysis {
   highRiskCount: number;
 }
 
+const RISK_TYPE_LABELS: Record<string, string> = {
+  schedule_overdue: '项目延期',
+  schedule_warning: '到期预警',
+  task_imbalance: '任务分配不均衡',
+  resource_idle: '成员空闲',
+  stale_project: '项目长期未更新',
+};
+
+const PRIORITY_LABELS: Record<string, string> = {
+  high: '紧急',
+  medium: '重要',
+  low: '建议',
+};
+
 export default function KnowledgeBasePanel() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [riskAnalysis, setRiskAnalysis] = useState<ProjectRiskAnalysis[]>([]);
@@ -119,6 +133,25 @@ export default function KnowledgeBasePanel() {
       return <Clock className="w-5 h-5" />;
     }
     return <AlertTriangle className="w-5 h-5" />;
+  };
+
+  const getRiskDetailText = (risk: RiskItem) => {
+    if (!risk.details) return null;
+    
+    switch (risk.type) {
+      case 'task_imbalance':
+        return `成员 ${risk.details.overloadedPerson} 承担 ${risk.details.maxTasks} 个任务，远高于平均值 ${risk.details.avgTasks} 个`;
+      case 'resource_idle':
+        return `${risk.details.idleCount} 名成员目前没有分配任务`;
+      case 'schedule_overdue':
+        return `截止日期：${risk.details?.endDate ? new Date(risk.details.endDate).toLocaleDateString('zh-CN') : '未知'}`;
+      case 'schedule_warning':
+        return `截止日期：${risk.details?.endDate ? new Date(risk.details.endDate).toLocaleDateString('zh-CN') : '未知'}`;
+      case 'stale_project':
+        return `最后更新时间：${risk.details?.updatedAt ? new Date(risk.details.updatedAt).toLocaleDateString('zh-CN') : '未知'}`;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -265,12 +298,13 @@ export default function KnowledgeBasePanel() {
                               >
                                 {risk.level === 'high' ? '高危' : risk.level === 'medium' ? '中危' : '低危'}
                               </span>
-                              <span className="text-sm">{risk.description}</span>
+                              <span className="font-medium text-sm">{RISK_TYPE_LABELS[risk.type] || risk.type}</span>
+                              <span className="text-sm text-gray-600">- {risk.description}</span>
                             </div>
-                            {risk.details && (
-                              <pre className="text-xs text-gray-500 mt-1 ml-12 bg-gray-100 p-2 rounded overflow-auto max-h-32">
-                                {JSON.stringify(risk.details, null, 2)}
-                              </pre>
+                            {getRiskDetailText(risk) && (
+                              <div className="ml-2 mt-1 text-xs text-gray-500">
+                                {getRiskDetailText(risk)}
+                              </div>
                             )}
                           </div>
                         </div>
@@ -303,7 +337,7 @@ export default function KnowledgeBasePanel() {
                                 rec.priority === 'medium' ? 'border-yellow-500 text-yellow-600' :
                                 'border-blue-500 text-blue-600'
                               }`}>
-                                {rec.priority === 'high' ? '紧急' : rec.priority === 'medium' ? '重要' : '建议'}
+                                {PRIORITY_LABELS[rec.priority] || rec.priority}
                               </span>
                             </div>
                             <p className="text-sm text-gray-700">{rec.content}</p>
