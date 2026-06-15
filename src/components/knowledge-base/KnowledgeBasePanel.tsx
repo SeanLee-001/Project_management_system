@@ -10,6 +10,8 @@ import {
   Clock,
   UserCheck,
   Users,
+  ShieldAlert,
+  TrendingDown,
 } from 'lucide-react';
 
 interface NewsItem {
@@ -54,6 +56,8 @@ const RISK_TYPE_LABELS: Record<string, string> = {
   task_imbalance: '任务分配不均衡',
   resource_idle: '成员空闲',
   stale_project: '项目长期未更新',
+  obsolete_project: '技术/设备淘汰预警',
+  financial_risk: '客户财务风险',
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -66,8 +70,10 @@ export default function KnowledgeBasePanel() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [riskAnalysis, setRiskAnalysis] = useState<ProjectRiskAnalysis[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'news' | 'risks'>('news');
   const [summary, setSummary] = useState<any>(null);
+  const [nextScheduleTime, setNextScheduleTime] = useState<string>('');
 
   const fetchNews = async () => {
     setLoading(true);
@@ -84,19 +90,30 @@ export default function KnowledgeBasePanel() {
     }
   };
 
-  const fetchRiskAnalysis = async () => {
+  const fetchRiskAnalysis = async (force = false) => {
     setLoading(true);
     try {
-      const response = await fetch('/api/project-risk-analysis');
+      const response = await fetch(`/api/project-risk-analysis?force=${force}`);
       const data = await response.json();
       if (data.success) {
         setRiskAnalysis(data.data.analyses);
         setSummary(data.data.summary);
+        setNextScheduleTime(data.data.nextScheduleTime || '');
+        return data.data;
       }
     } catch (error) {
       console.error('Failed to fetch risk analysis:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefreshRiskAnalysis = async () => {
+    setRefreshing(true);
+    try {
+      await fetchRiskAnalysis(true);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -132,6 +149,12 @@ export default function KnowledgeBasePanel() {
     if (type === 'stale_project') {
       return <Clock className="w-5 h-5" />;
     }
+    if (type === 'obsolete_project') {
+      return <TrendingDown className="w-5 h-5 text-red-500" />;
+    }
+    if (type === 'financial_risk') {
+      return <ShieldAlert className="w-5 h-5 text-orange-500" />;
+    }
     return <AlertTriangle className="w-5 h-5" />;
   };
 
@@ -149,6 +172,10 @@ export default function KnowledgeBasePanel() {
         return `截止日期：${risk.details?.endDate ? new Date(risk.details.endDate).toLocaleDateString('zh-CN') : '未知'}`;
       case 'stale_project':
         return `最后更新时间：${risk.details?.updatedAt ? new Date(risk.details.updatedAt).toLocaleDateString('zh-CN') : '未知'}`;
+      case 'obsolete_project':
+        return `匹配关键词：${risk.details.keyword || '行业报告预警'}`;
+      case 'financial_risk':
+        return `客户：${risk.details.customer || '未知'}，来源：${risk.details.source || '公开数据'}`;
       default:
         return null;
     }
@@ -161,7 +188,7 @@ export default function KnowledgeBasePanel() {
           <h2 className="text-2xl font-bold">知识库与智能分析</h2>
           <button
             className="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50"
-            onClick={activeTab === 'news' ? fetchNews : fetchRiskAnalysis}
+            onClick={() => activeTab === 'news' ? fetchNews() : fetchRiskAnalysis()}
             disabled={loading}
           >
             <RefreshCw className={`w-4 h-4 mr-2 inline ${loading ? 'animate-spin' : ''}`} />
@@ -188,6 +215,24 @@ export default function KnowledgeBasePanel() {
             项目风险 {summary?.highRisks ? `(${summary.highRisks}个高危)` : ''}
           </button>
         </div>
+        {activeTab === 'risks' && (
+          <div className="mt-3 flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2 text-gray-600">
+              <Clock className="w-4 h-4" />
+              下次定时分析：{nextScheduleTime}
+            </div>
+            <button
+              className={`px-4 py-1.5 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                refreshing ? 'animate-pulse' : ''
+              }`}
+              onClick={handleRefreshRiskAnalysis}
+              disabled={loading || refreshing}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 mr-1.5 inline ${refreshing ? 'animate-spin' : ''}`} />
+              立即刷新分析
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="p-6 overflow-y-auto h-[calc(100vh-280px)]">
@@ -235,24 +280,49 @@ export default function KnowledgeBasePanel() {
         {activeTab === 'risks' && (
           <div className="space-y-6">
             {summary && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="border rounded-lg p-4">
-                  <div className="text-2xl font-bold">{summary.totalProjects}</div>
-                  <div className="text-sm text-gray-500">总项目数</div>
-                </div>
-                <div className="border rounded-lg p-4">
-                  <div className="text-2xl font-bold text-yellow-600">
-                    {summary.projectsWithRisks}
+              <div className="space-y-4 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="border rounded-lg p-4">
+                    <div className="text-2xl font-bold">{summary.totalProjects}</div>
+                    <div className="text-sm text-gray-500">总项目数</div>
                   </div>
-                  <div className="text-sm text-gray-500">有风险项目</div>
+                  <div className="border rounded-lg p-4">
+                    <div className="text-2xl font-bold text-yellow-600">
+                      {summary.projectsWithRisks}
+                    </div>
+                    <div className="text-sm text-gray-500">有风险项目</div>
+                  </div>
+                  <div className="border rounded-lg p-4">
+                    <div className="text-2xl font-bold text-red-600">{summary.highRisks}</div>
+                    <div className="text-sm text-gray-500">高危风险</div>
+                  </div>
+                  <div className="border rounded-lg p-4">
+                    <div className="text-2xl font-bold">{summary.totalRisks}</div>
+                    <div className="text-sm text-gray-500">总风险数</div>
+                  </div>
                 </div>
-                <div className="border rounded-lg p-4">
-                  <div className="text-2xl font-bold text-red-600">{summary.highRisks}</div>
-                  <div className="text-sm text-gray-500">高危风险</div>
-                </div>
-                <div className="border rounded-lg p-4">
-                  <div className="text-2xl font-bold">{summary.totalRisks}</div>
-                  <div className="text-sm text-gray-500">总风险数</div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="border rounded-lg p-3 bg-orange-50">
+                    <div className="flex items-center gap-2">
+                      <ShieldAlert className="w-5 h-5 text-orange-500" />
+                      <div className="text-lg font-bold text-orange-700">{summary.riskTypes?.financial_risk || 0}</div>
+                    </div>
+                    <div className="text-sm text-gray-600">客户财务风险</div>
+                  </div>
+                  <div className="border rounded-lg p-3 bg-red-50">
+                    <div className="flex items-center gap-2">
+                      <TrendingDown className="w-5 h-5 text-red-500" />
+                      <div className="text-lg font-bold text-red-700">{summary.riskTypes?.obsolete_project || 0}</div>
+                    </div>
+                    <div className="text-sm text-gray-600">淘汰预警</div>
+                  </div>
+                  <div className="border rounded-lg p-3 bg-blue-50">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-blue-500" />
+                      <div className="text-lg font-bold text-blue-700">{summary.riskTypes?.schedule_overdue || 0}</div>
+                    </div>
+                    <div className="text-sm text-gray-600">项目延期</div>
+                  </div>
                 </div>
               </div>
             )}
@@ -265,90 +335,98 @@ export default function KnowledgeBasePanel() {
               </div>
             )}
 
-            {riskAnalysis.map((analysis) => (
-              <div key={analysis.projectId} className="border-l-4 border-l-red-500 border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4 pb-3 border-b">
-                  <div>
-                    <h3 className="text-lg font-semibold">{analysis.projectName}</h3>
-                    <p className="text-sm text-gray-500">{analysis.projectCode}</p>
-                  </div>
-                  <span className={`px-3 py-1 rounded text-xs font-medium ${
-                    analysis.highRiskCount > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {analysis.riskCount}个风险 ({analysis.highRiskCount}高危)
-                  </span>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold mb-2 flex items-center">
-                      <AlertTriangle className="w-4 h-4 mr-2 text-red-500" />
-                      风险项
-                    </h4>
-                    <div className="space-y-2">
-                      {analysis.risks.map((risk, index) => (
-                        <div
-                          key={index}
-                          className="flex items-start gap-2 p-2 bg-gray-50 rounded"
-                        >
-                          {getRiskIcon(risk.type)}
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={`px-2 py-0.5 rounded text-xs ${getRiskLevelColor(risk.level)}`}
-                              >
-                                {risk.level === 'high' ? '高危' : risk.level === 'medium' ? '中危' : '低危'}
-                              </span>
-                              <span className="font-medium text-sm">{RISK_TYPE_LABELS[risk.type] || risk.type}</span>
-                              <span className="text-sm text-gray-600">- {risk.description}</span>
-                            </div>
-                            {getRiskDetailText(risk) && (
-                              <div className="ml-2 mt-1 text-xs text-gray-500">
-                                {getRiskDetailText(risk)}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+            {riskAnalysis.map((analysis) => {
+              const hasObsolete = analysis.risks.some(r => r.type === 'obsolete_project');
+              const hasFinancial = analysis.risks.some(r => r.type === 'financial_risk');
+              let borderColor = 'border-l-red-500';
+              if (hasFinancial) borderColor = 'border-l-orange-500';
+              if (hasObsolete) borderColor = 'border-l-purple-500';
+              
+              return (
+                <div key={analysis.projectId} className={`border-l-4 ${borderColor} border rounded-lg p-4`}>
+                  <div className="flex items-center justify-between mb-4 pb-3 border-b">
+                    <div>
+                      <h3 className="text-lg font-semibold">{analysis.projectName}</h3>
+                      <p className="text-sm text-gray-500">{analysis.projectCode}</p>
                     </div>
+                    <span className={`px-3 py-1 rounded text-xs font-medium ${
+                      analysis.highRiskCount > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {analysis.riskCount}个风险 ({analysis.highRiskCount}高危)
+                    </span>
                   </div>
-
-                  {analysis.recommendations.length > 0 && (
+                  <div className="space-y-4">
                     <div>
                       <h4 className="font-semibold mb-2 flex items-center">
-                        <UserCheck className="w-4 h-4 mr-2 text-green-600" />
-                        建议措施
+                        <AlertTriangle className="w-4 h-4 mr-2 text-red-500" />
+                        风险项
                       </h4>
                       <div className="space-y-2">
-                        {analysis.recommendations.map((rec, index) => (
+                        {analysis.risks.map((risk, index) => (
                           <div
                             key={index}
-                            className={`p-3 rounded border-l-4 ${
-                              rec.priority === 'high'
-                                ? 'bg-red-50 border-red-500'
-                                : rec.priority === 'medium'
-                                ? 'bg-yellow-50 border-yellow-500'
-                                : 'bg-blue-50 border-blue-500'
-                            }`}
+                            className="flex items-start gap-2 p-2 bg-gray-50 rounded"
                           >
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-semibold">{rec.title}</span>
-                              <span className={`px-2 py-0.5 rounded text-xs border ${
-                                rec.priority === 'high' ? 'border-red-500 text-red-600' :
-                                rec.priority === 'medium' ? 'border-yellow-500 text-yellow-600' :
-                                'border-blue-500 text-blue-600'
-                              }`}>
-                                {PRIORITY_LABELS[rec.priority] || rec.priority}
-                              </span>
+                            {getRiskIcon(risk.type)}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`px-2 py-0.5 rounded text-xs ${getRiskLevelColor(risk.level)}`}
+                                >
+                                  {risk.level === 'high' ? '高危' : risk.level === 'medium' ? '中危' : '低危'}
+                                </span>
+                                <span className="font-medium text-sm">{RISK_TYPE_LABELS[risk.type] || risk.type}</span>
+                                <span className="text-sm text-gray-600">- {risk.description}</span>
+                              </div>
+                              {getRiskDetailText(risk) && (
+                                <div className="ml-2 mt-1 text-xs text-gray-500">
+                                  {getRiskDetailText(risk)}
+                                </div>
+                              )}
                             </div>
-                            <p className="text-sm text-gray-700">{rec.content}</p>
                           </div>
                         ))}
                       </div>
                     </div>
-                  )}
+
+                    {analysis.recommendations.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold mb-2 flex items-center">
+                          <UserCheck className="w-4 h-4 mr-2 text-green-600" />
+                          建议措施
+                        </h4>
+                        <div className="space-y-2">
+                          {analysis.recommendations.map((rec, index) => (
+                            <div
+                              key={index}
+                              className={`p-3 rounded border-l-4 ${
+                                rec.priority === 'high'
+                                  ? 'bg-red-50 border-red-500'
+                                  : rec.priority === 'medium'
+                                  ? 'bg-yellow-50 border-yellow-500'
+                                  : 'bg-blue-50 border-blue-500'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-semibold">{rec.title}</span>
+                                <span className={`px-2 py-0.5 rounded text-xs border ${
+                                  rec.priority === 'high' ? 'border-red-500 text-red-600' :
+                                  rec.priority === 'medium' ? 'border-yellow-500 text-yellow-600' :
+                                  'border-blue-500 text-blue-600'
+                                }`}>
+                                  {PRIORITY_LABELS[rec.priority] || rec.priority}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-700">{rec.content}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
