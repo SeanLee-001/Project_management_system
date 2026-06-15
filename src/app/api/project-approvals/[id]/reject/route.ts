@@ -119,9 +119,9 @@ export async function POST(
       data: updatedApproval[0],
       message: "审批已拒绝",
     });
-  } catch (error: any) {
-    console.error("Error rejecting project approval:", error);
-    const errorMessage = error?.message || error?.toString() || "拒绝审批失败";
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("[Reject Error]", errorMessage, error);
     return NextResponse.json(
       { success: false, error: errorMessage },
       { status: 500 }

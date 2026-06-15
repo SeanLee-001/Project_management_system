@@ -198,10 +198,15 @@ export default function ProjectApproval({ projectId, userId, userRole, targetApp
       });
       const json = await res.json();
 
+      if (!res.ok) {
+        console.error('[Approve HTTP Error]', { status: res.status, statusText: res.statusText, json });
+        alert(json.error || `HTTP 错误：${res.status}`);
+        return;
+      }
+
       if (json.success) {
-        alert("审批已通过");
+        alert(json.message || "审批已通过");
         await fetchApprovals();
-        // 通知父组件刷新项目列表
         if (onApprovalCompleted) {
           onApprovalCompleted();
         }
@@ -268,13 +273,18 @@ export default function ProjectApproval({ projectId, userId, userRole, targetApp
       });
       const json = await res.json();
 
+      if (!res.ok) {
+        console.error('[Reject HTTP Error]', { status: res.status, statusText: res.statusText, json });
+        alert(json.error || `HTTP 错误：${res.status}`);
+        return;
+      }
+
       if (json.success) {
-        alert("审批已拒绝");
+        alert(json.message || "审批已拒绝");
         setShowRejectDialog(false);
         setRejectingApproval(null);
         setRejectReason("");
         await fetchApprovals();
-        // 通知父组件刷新项目列表
         if (onApprovalCompleted) {
           onApprovalCompleted();
         }

@@ -430,23 +430,11 @@ export async function POST(
       data: updatedApproval[0],
       message: finalStatus === "approved" ? "审批已通过" : "已提交下一级审批",
     });
-  } catch (error: any) {
-    console.error("Error approving project approval:", error);
-    console.error("错误详情:", {
-      message: error?.message || String(error),
-      stack: error?.stack,
-      name: error?.name,
-      code: error?.code,
-      detail: error?.detail,
-      hint: error?.hint,
-      where: error?.where,
-      schema: error?.schema,
-      table: error?.table,
-      column: error?.column,
-    });
-    const errorMessage = error?.message || error?.toString() || "审批失败";
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("[Approve Error]", errorMessage, error);
     return NextResponse.json(
-      { success: false, error: errorMessage, details: error?.message },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
