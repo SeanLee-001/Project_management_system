@@ -31,6 +31,7 @@ const Dashboard = dynamic(() => import("@/components/Dashboard"), { ssr: false }
 const ContractDashboard = dynamic(() => import("@/components/ContractDashboard"), { ssr: false });
 const KnowledgeBasePanel = dynamic(() => import("@/components/knowledge-base/KnowledgeBasePanel"), { ssr: false });
 const TaskProfilePage = dynamic(() => import("@/app/app/task-profile/page"), { ssr: false });
+const FinancialManagement = dynamic(() => import("@/components/FinancialManagement"), { ssr: false });
 
 // 轻量组件保持静态导入
 import MessageNotification from "@/components/MessageNotification";
@@ -45,7 +46,7 @@ import { convertToProxyUrl } from "@/lib/imageUtils";
 type Status = "active" | "completed" | "paused" | "cancelled";
 type TaskStatus = "todo" | "in_progress" | "completed";
 type Priority = "low" | "medium" | "high";
-type Tab = "dashboard" | "orders_dashboard" | "contracts_dashboard" | "projects" | "tasks" | "customers" | "contracts" | "orders" | "products" | "deliveries" | "messages" | "approvals" | "knowledge_base" | "task_profile";
+type Tab = "dashboard" | "orders_dashboard" | "contracts_dashboard" | "projects" | "tasks" | "customers" | "contracts" | "orders" | "products" | "deliveries" | "messages" | "approvals" | "knowledge_base" | "task_profile" | "financial_management";
 
 // Tab与资源的映射关系（用于权限控制）
 const TAB_RESOURCE_MAP: Record<Tab, string | null> = {
@@ -63,6 +64,7 @@ const TAB_RESOURCE_MAP: Record<Tab, string | null> = {
   approvals: null, // 审批中心不需要权限
   knowledge_base: null, // 知识库不需要权限
   task_profile: null, // 任务画像不需要权限
+  financial_management: null, // 财务管理不需要权限
 };
 
 // 计算项目持续时间
@@ -937,7 +939,7 @@ export default function AppPage() {
   useEffect(() => {
     if (!hasTabPermission(activeTab)) {
       // 查找第一个有权限的Tab
-      const tabs: Tab[] = ["dashboard", "orders_dashboard", "projects", "tasks", "customers", "contracts", "orders", "products", "messages"];
+      const tabs: Tab[] = ["dashboard", "orders_dashboard", "projects", "tasks", "customers", "contracts", "orders", "products", "messages", "knowledge_base", "financial_management"];
       const firstAllowedTab = tabs.find(tab => hasTabPermission(tab));
       if (firstAllowedTab) {
         setActiveTab(firstAllowedTab);
@@ -2775,7 +2777,7 @@ export default function AppPage() {
                 送货管理
               </button>
             )}
-            {hasTabPermission("knowledge_base") && (
+             {hasTabPermission("knowledge_base") && (
               <button
                 onClick={() => setActiveTab("knowledge_base")}
                 className={`px-4 py-3 border-b-2 text-2xl font-medium transition-colors whitespace-nowrap ${
@@ -2787,7 +2789,17 @@ export default function AppPage() {
                 知识库
               </button>
              )}
-            {hasTabPermission("messages") && (
+             <button
+               onClick={() => setActiveTab("financial_management")}
+               className={`px-4 py-3 border-b-2 text-2xl font-medium transition-colors whitespace-nowrap ${
+                 activeTab === "financial_management"
+                   ? "border-orange-500 text-orange-600 dark:text-orange-400"
+                   : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+               }`}
+             >
+               财务管理
+             </button>
+             {hasTabPermission("messages") && (
               <button
                 onClick={() => setActiveTab("messages")}
                 className={`px-4 py-3 border-b-2 text-2xl font-medium transition-colors whitespace-nowrap ${
@@ -5108,6 +5120,10 @@ export default function AppPage() {
 
           {activeTab === "knowledge_base" && (
             <KnowledgeBasePanel />
+          )}
+
+          {activeTab === "financial_management" && (
+            <FinancialManagement />
           )}
 
           {activeTab === "task_profile" && (
