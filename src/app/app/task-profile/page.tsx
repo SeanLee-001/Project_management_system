@@ -24,9 +24,17 @@ interface TaskStats {
   workloadScore: number;
 }
 
-export function TaskProfilePage() {
+interface Project {
+  id: string;
+  name: string;
+  projectCode: string;
+}
+
+export default function TaskProfilePage() {
   const [teamStats, setTeamStats] = useState<TaskStats[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
+  const [projects, setProjects] = useState<Project[]>([]);
   const [overallStats, setOverallStats] = useState({
     totalTasks: 0,
     completedTasks: 0,
@@ -39,25 +47,33 @@ export function TaskProfilePage() {
 
   useEffect(() => {
     fetchTaskStats();
-  }, []);
+  }, [selectedProjectId]);
 
   const fetchTaskStats = async () => {
     setLoading(true);
     try {
-      const tasksResponse = await fetch('/api/project-tasks');
+      const url = selectedProjectId === 'all' 
+        ? '/api/project-tasks' 
+        : `/api/project-tasks?projectId=${selectedProjectId}`;
+        
+      const tasksResponse = await fetch(url);
       const tasksData = await tasksResponse.json();
       
       if (tasksData.success) {
-        const tasks = tasksData.data;
+        const tasks = tasksData.data.tasks;
+        const projectsData = tasksData.data.projects;
+        setProjects(projectsData);
+        
         const statsMap: Record<string, TaskStats> = {};
         
         tasks.forEach((task: any) => {
           const assigneeId = task.assigneeId || 'unassigned';
+          const assigneeName = task.assignee || '未分配';
           
           if (!statsMap[assigneeId]) {
             statsMap[assigneeId] = {
               assigneeId,
-              assigneeName: task.assigneeName || '未分配',
+              assigneeName,
               totalTasks: 0,
               completedTasks: 0,
               inProgressTasks: 0,
@@ -73,7 +89,7 @@ export function TaskProfilePage() {
           
           if (task.status === 'completed') stat.completedTasks++;
           else if (task.status === 'in_progress') stat.inProgressTasks++;
-          else if (task.status === 'pending') stat.pendingTasks++;
+          else if (task.status === 'pending' || task.status === 'todo') stat.pendingTasks++;
           
           if (task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'completed') {
             stat.overdueTasks++;
@@ -140,7 +156,8 @@ export function TaskProfilePage() {
     switch (status) {
       case 'completed': return 'bg-green-500';
       case 'in_progress': return 'bg-blue-500';
-      case 'pending': return 'bg-gray-500';
+      case 'pending': 
+      case 'todo': return 'bg-gray-500';
       default: return 'bg-gray-500';
     }
   };
@@ -149,9 +166,26 @@ export function TaskProfilePage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">任务管理画像</h1>
-        <span className="px-3 py-1 border rounded text-sm">
-          最后更新：{new Date().toLocaleString('zh-CN')}
-        </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-500">选择项目：</label>
+            <select
+              className="p-2 border rounded text-sm"
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+            >
+              <option value="all">所有项目</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name} ({project.projectCode})
+                </option>
+              ))}
+            </select>
+          </div>
+          <span className="px-3 py-1 border rounded text-sm">
+            最后更新：{new Date().toLocaleString('zh-CN')}
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -256,7 +290,6 @@ export function TaskProfilePage() {
                         </div>
                         <div>
                           <div className="font-medium">{stat.assigneeName}</div>
-                          <div className="text-xs text-gray-500">{stat.assigneeId === 'unassigned' ? '未分配' : '成员'}</div>
                         </div>
                       </div>
                     </td>
@@ -357,7 +390,7 @@ export function TaskProfilePage() {
 
         <div className="border rounded-lg bg-white">
           <div className="p-6 border-b">
-            <h2 className="text-xl font-semibold">Workload 分析</h2>
+            <h2 className="text-xl font-semibold">Workload 分析 (Top 5)</h2>
           </div>
           <div className="p-6 space-y-4">
             {teamStats.slice(0, 5).map((stat, index) => (
@@ -387,5 +420,3 @@ export function TaskProfilePage() {
     </div>
   );
 }
-
-export default TaskProfilePage;

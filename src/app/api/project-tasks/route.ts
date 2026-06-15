@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { taskManager } from '@/storage/database';
+import { taskManager, projectManager } from '@/storage/database';
 
 export async function GET(request: NextRequest) {
   try {
-    const tasks = await taskManager.getTasks({});
+    const { searchParams } = new URL(request.url);
+    const projectId = searchParams.get('projectId');
     
+    let tasks = [];
+    if (projectId) {
+      tasks = await taskManager.getTasks({ projectId });
+    } else {
+      tasks = await taskManager.getTasks({});
+    }
+    
+    const projects = await projectManager.getProjects({});
+
     return NextResponse.json({
       success: true,
-      data: tasks,
+      data: {
+        tasks,
+        projects,
+      },
     });
   } catch (error: any) {
     console.error('Error fetching project tasks:', error);
