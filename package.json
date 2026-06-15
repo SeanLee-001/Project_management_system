@@ -1,22 +1,14 @@
 {
   "name": "project-management-system",
-  "version": "1.0.0",
-  "description": "基于Next.js的全功能项目管理系统",
-  "main": "dist/electron/main.js",
-  "author": "Project Management Team",
-  "license": "MIT",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 5000",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5000 && electron .\"",
-    "electron:build": "npm run build && tsc -p electron/tsconfig.json && electron-builder",
-    "electron:pack": "npm run build && tsc -p electron/tsconfig.json && electron-builder --dir",
-    "electron:dist": "npm run build && tsc -p electron/tsconfig.json && electron-builder --win",
-    "db:init": "npx tsx scripts/init-local-db.ts",
-    "db:upgrade": "npx coze-coding-ai db upgrade"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "cleanup": "node scripts/cleanup-unused-imports.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.958.0",
@@ -59,6 +51,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
     "tailwindcss": "^4",
+    "ts-prune": "^0.10.3",
     "tsx": "^4.22.4",
     "typescript": "^5",
     "wait-on": "^7.2.0"

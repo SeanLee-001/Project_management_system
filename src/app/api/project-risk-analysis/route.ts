@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { projectManager, taskManager } from '@/storage/database';
+import { logger } from '@/lib/logger';
+
+const MODULE = 'project-risk-analysis';
 
 // 缓存配置
 let analysisCache: { data: any; timestamp: Date | null } = {
@@ -256,15 +259,12 @@ export async function GET(request: NextRequest) {
     
     let result;
     if (shouldRunAnalysis(force)) {
-      // 执行分析
-      console.log('[Risk Analysis] 开始执行智能分析...');
+      logger.info(MODULE, '开始执行智能分析...');
       result = await runAnalysis();
-      // 更新缓存
       analysisCache.data = result;
       analysisCache.timestamp = new Date();
     } else {
-      // 返回缓存
-      console.log('[Risk Analysis] 使用缓存数据');
+      logger.debug(MODULE, '使用缓存数据');
       // 补充动态时间信息
       result = {
         ...analysisCache.data,
@@ -277,10 +277,11 @@ export async function GET(request: NextRequest) {
       data: result,
     });
 
-  } catch (error: any) {
-    console.error('Error in risk analysis:', error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : '智能分析服务异常';
+    logger.error(MODULE, message);
     return NextResponse.json(
-      { success: false, error: error.message || '智能分析服务异常' },
+      { success: false, error: message },
       { status: 500 }
     );
   }
