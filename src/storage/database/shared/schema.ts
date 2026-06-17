@@ -432,31 +432,51 @@ export const orders = pgTable(
     prepayRatio: varchar("prepay_ratio", { length: 50 }), // 预付款比率
     prepayAmount: varchar("prepay_amount", { length: 50 }), // 预付金额
     prepayReceived: boolean("prepay_received").notNull().default(false), // 预付是否已收款
+    prepayStatus: varchar("prepay_status", { length: 50 }), // 预付收款状态1
+    prepayReceivedAmount: varchar("prepay_received_amount", { length: 50 }), // 预付实收金额
     prepayDate: timestamp("prepay_date", { withTimezone: true }), // 预付日期
     prepayInvoiceAmount: varchar("prepay_invoice_amount", { length: 50 }), // 预付开票金额
     prepayInvoiceDate: timestamp("prepay_invoice_date", { withTimezone: true }), // 预付开票日期
     prepayInvoiced: boolean("prepay_invoiced").notNull().default(false), // 预付是否已开票
+    prepayInvoiceNumber: varchar("prepay_invoice_number", { length: 100 }), // 预付发票号
+    prepayInvoiceNotes: text("prepay_invoice_notes"), // 预付发票备注
+    prepayTransactionNotes: text("prepay_transaction_notes"), // 预付交易备注
     arrivalAmount: varchar("arrival_amount", { length: 50 }), // 到货金额
     arrivalReceived: boolean("arrival_received").notNull().default(false), // 到货是否已收款
+    arrivalStatus: varchar("arrival_status", { length: 50 }), // 到货收款状态1
+    arrivalReceivedAmount: varchar("arrival_received_amount", { length: 50 }), // 到货实收金额
     arrivalDate: timestamp("arrival_date", { withTimezone: true }), // 到货日期
     arrivalInvoiceAmount: varchar("arrival_invoice_amount", { length: 50 }), // 到货开票金额
     arrivalInvoiceDate: timestamp("arrival_invoice_date", { withTimezone: true }), // 到货开票日期
     arrivalInvoiced: boolean("arrival_invoiced").notNull().default(false), // 到货是否已开票
+    arrivalInvoiceNumber: varchar("arrival_invoice_number", { length: 100 }), // 到货发票号
+    arrivalInvoiceNotes: text("arrival_invoice_notes"), // 到货发票备注
+    arrivalTransactionNotes: text("arrival_transaction_notes"), // 到货交易备注
     arrivalRatio: varchar("arrival_ratio", { length: 50 }), // 到货款比率
     acceptanceRatio: varchar("acceptance_ratio", { length: 50 }), // 验收款比率
     acceptanceAmount: varchar("acceptance_amount", { length: 50 }), // 验收金额
     acceptanceReceived: boolean("acceptance_received").notNull().default(false), // 验收是否已收款
+    acceptanceStatus: varchar("acceptance_status", { length: 50 }), // 验收收款状态1
+    acceptanceReceivedAmount: varchar("acceptance_received_amount", { length: 50 }), // 验收实收金额
     acceptanceDate: timestamp("acceptance_date", { withTimezone: true }), // 验收日期
     acceptanceInvoiceAmount: varchar("acceptance_invoice_amount", { length: 50 }), // 验收开票金额
     acceptanceInvoiceDate: timestamp("acceptance_invoice_date", { withTimezone: true }), // 验收开票日期
     acceptanceInvoiced: boolean("acceptance_invoiced").notNull().default(false), // 验收是否已开票
+    acceptanceInvoiceNumber: varchar("acceptance_invoice_number", { length: 100 }), // 验收发票号
+    acceptanceInvoiceNotes: text("acceptance_invoice_notes"), // 验收发票备注
+    acceptanceTransactionNotes: text("acceptance_transaction_notes"), // 验收交易备注
     warrantyRatio: varchar("warranty_ratio", { length: 50 }), // 质保款比率
     warrantyAmount: varchar("warranty_amount", { length: 50 }), // 质保金额
     warrantyReceived: boolean("warranty_received").notNull().default(false), // 质保是否已收款
+    warrantyStatus: varchar("warranty_status", { length: 50 }), // 质保收款状态1
+    warrantyReceivedAmount: varchar("warranty_received_amount", { length: 50 }), // 质保实收金额
     warrantyDate: timestamp("warranty_date", { withTimezone: true }), // 质保金付款日期
     warrantyInvoiceAmount: varchar("warranty_invoice_amount", { length: 50 }), // 质保款开票金额
     warrantyInvoiceDate: timestamp("warranty_invoice_date", { withTimezone: true }), // 质保款开票日期
     warrantyInvoiced: boolean("warranty_invoiced").notNull().default(false), // 质保是否已开票
+    warrantyInvoiceNumber: varchar("warranty_invoice_number", { length: 100 }), // 质保发票号
+    warrantyInvoiceNotes: text("warranty_invoice_notes"), // 质保发票备注
+    warrantyTransactionNotes: text("warranty_transaction_notes"), // 质保交易备注
     notes: text("notes"), // 备注
     approvalStatus: varchar("approval_status", { length: 20 }).notNull().default("none"), // 审批状态：none-无需审批，pending-待审批，approved-已通过，rejected-已拒绝
     approvalRequestId: varchar("approval_request_id", { length: 36 }), // 关联的审批申请ID
@@ -975,14 +995,17 @@ export const insertOrderSchema = createCoercedInsertSchema(orders).pick({
   paymentTerms: true,
   orderAmount: true,
   prepayAmount: true,
+  prepayReceivedAmount: true,
   prepayDate: true,
   prepayInvoiceAmount: true,
   prepayInvoiceDate: true,
   arrivalAmount: true,
+  arrivalReceivedAmount: true,
   arrivalDate: true,
   arrivalInvoiceAmount: true,
   arrivalInvoiceDate: true,
   acceptanceAmount: true,
+  acceptanceReceivedAmount: true,
   acceptanceDate: true,
   acceptanceInvoiceAmount: true,
   acceptanceInvoiceDate: true,
@@ -1007,14 +1030,17 @@ export const updateOrderSchema = createCoercedInsertSchema(orders)
     paymentTerms: true,
     orderAmount: true,
     prepayAmount: true,
+    prepayReceivedAmount: true,
     prepayDate: true,
     prepayInvoiceAmount: true,
     prepayInvoiceDate: true,
     arrivalAmount: true,
+    arrivalReceivedAmount: true,
     arrivalDate: true,
     arrivalInvoiceAmount: true,
     arrivalInvoiceDate: true,
     acceptanceAmount: true,
+    acceptanceReceivedAmount: true,
     acceptanceDate: true,
     acceptanceInvoiceAmount: true,
     acceptanceInvoiceDate: true,

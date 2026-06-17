@@ -3,7 +3,7 @@ import { getDb } from "coze-coding-dev-sdk";
 import { userPermissions } from "./shared/schema";
 
 // 资源类型定义
-export type ResourceType = "projects" | "tasks" | "users" | "customers" | "customer_contacts" | "contracts" | "orders" | "products" | "config";
+export type ResourceType = "projects" | "tasks" | "users" | "customers" | "customer_contacts" | "contracts" | "orders" | "products" | "config" | "financial";
 
 // 权限类型定义
 export type PermissionType = "view" | "edit" | "delete" | "use";

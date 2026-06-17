@@ -10,7 +10,7 @@ const MOCK_NEWS = [
     source: '工信部官网',
     category: '智能制造',
     summary: '工业和信息化部近日发布《智能制造发展规划（2026-2030 年）》，提出到 2026 年，我国智能制造装备产业规模将突破 5 万亿元，年均增长率超过 15%。',
-    url: 'https://example.com/news/1',
+    url: 'http://jjckb.xinhuanet.com/20260601/3ef3409a96544739bc45d815bd8ee859/c.html',
     relevance: 'high' as const,
   },
   {
@@ -19,7 +19,7 @@ const MOCK_NEWS = [
     source: '机器之心',
     category: 'AI',
     summary: '某科技公司发布的新一代 AI 质检系统，检测准确率达到 99.9%，误检率降低至 0.01%，已在多家制造企业成功应用。',
-    url: 'https://example.com/news/2',
+    url: 'https://m.sohu.com/a/1037185363_122507264/',
     relevance: 'high' as const,
   },
   {
@@ -28,7 +28,7 @@ const MOCK_NEWS = [
     source: '智能制造网',
     category: '自动化',
     summary: '通过引入先进的自动化生产线和 MES 系统，该企业生产效率提升 300%，人力成本降低 60%，产品质量显著提升。',
-    url: 'https://example.com/news/3',
+    url: 'https://www.ithome.com/0/964/946.htm',
     relevance: 'medium' as const,
   },
   {
@@ -37,7 +37,7 @@ const MOCK_NEWS = [
     source: '国际机器人联合会',
     category: '自动化',
     summary: '国际机器人联合会（IFR）发布报告显示，2026 年全球工业机器人销量预计达到 58 万台，同比增长 25%，中国市场份额占比超过 50%。',
-    url: 'https://example.com/news/4',
+    url: 'https://www.cnii.com.cn/gxxww/dzxx/202605/t20260520_739126.html',
     relevance: 'medium' as const,
   },
   {
@@ -46,7 +46,7 @@ const MOCK_NEWS = [
     source: '36 氪',
     category: 'AI',
     summary: '深度解析 AI 技术如何赋能传统制造业，实现智能化转型。包括预测性维护、智能排产、质量管控等应用场景。',
-    url: 'https://example.com/news/5',
+    url: 'http://www.cnr.cn/tech/gstj/20260608/t20260608_527652699.shtml',
     relevance: 'high' as const,
   },
 ];

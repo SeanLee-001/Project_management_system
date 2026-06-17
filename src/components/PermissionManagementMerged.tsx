@@ -27,6 +27,7 @@ const resources = [
   { key: "deliveries", label: "送货管理", hasSubModules: true },
   { key: "users", label: "用户管理" },
   { key: "config", label: "系统配置" },
+  { key: "financial", label: "财务管理" },
 ];
 
 // 权限类型

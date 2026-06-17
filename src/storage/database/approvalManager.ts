@@ -236,6 +236,12 @@ export const approvalManager = {
             .update(orders)
             .set(updateOrderData)
             .where(eq(orders.id, approval.requestId));
+
+          // 审批完成后清除 approvalRequestId，允许后续再次编辑
+          await db
+            .update(orders)
+            .set({ approvalRequestId: null })
+            .where(eq(orders.id, approval.requestId));
         }
       } else if (approval.requestType === "contract") {
         if (isDeleteOperation) {
@@ -271,6 +277,11 @@ export const approvalManager = {
           await db
             .update(contracts)
             .set(updateContractData)
+            .where(eq(contracts.id, approval.requestId));
+
+          await db
+            .update(contracts)
+            .set({ approvalRequestId: null })
             .where(eq(contracts.id, approval.requestId));
         }
       }
@@ -333,6 +344,7 @@ export const approvalManager = {
         .update(orders)
         .set({
           approvalStatus: "rejected",
+          approvalRequestId: null,
         })
         .where(eq(orders.id, approval.requestId));
     } else if (approval.requestType === "contract") {
@@ -340,6 +352,7 @@ export const approvalManager = {
         .update(contracts)
         .set({
           approvalStatus: "rejected",
+          approvalRequestId: null,
         })
         .where(eq(contracts.id, approval.requestId));
     }
@@ -435,6 +448,11 @@ export const approvalManager = {
           .update(orders)
           .set(updateOrderData)
           .where(eq(orders.id, approval.requestId));
+
+        await db
+          .update(orders)
+          .set({ approvalRequestId: null })
+          .where(eq(orders.id, approval.requestId));
       }
     } else if (approval.requestType === "contract") {
       if (isDeleteOperation) {
@@ -470,6 +488,11 @@ export const approvalManager = {
         await db
           .update(contracts)
           .set(updateContractData)
+          .where(eq(contracts.id, approval.requestId));
+
+        await db
+          .update(contracts)
+          .set({ approvalRequestId: null })
           .where(eq(contracts.id, approval.requestId));
       }
     }

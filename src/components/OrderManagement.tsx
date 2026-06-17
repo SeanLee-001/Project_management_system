@@ -71,12 +71,14 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     prepayRatio: "",
     prepayAmount: "",
     prepayReceived: false,
+    prepayStatus: "",
     prepayDate: "",
     prepayInvoiceAmount: "",
     prepayInvoiceDate: "",
     prepayInvoiced: false,
     arrivalAmount: "",
     arrivalReceived: false,
+    arrivalStatus: "",
     arrivalDate: "",
     arrivalInvoiceAmount: "",
     arrivalInvoiceDate: "",
@@ -84,6 +86,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     arrivalRatio: "",
     acceptanceAmount: "",
     acceptanceReceived: false,
+    acceptanceStatus: "",
     acceptanceDate: "",
     acceptanceInvoiceAmount: "",
     acceptanceInvoiceDate: "",
@@ -92,6 +95,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     warrantyRatio: "",
     warrantyAmount: "",
     warrantyReceived: false,
+    warrantyStatus: "",
     warrantyDate: "",
     warrantyInvoiceAmount: "",
     warrantyInvoiceDate: "",
@@ -107,6 +111,30 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
   const [showProductDropdown, setShowProductDropdown] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 财务数据联动
+  const [projectFinancials, setProjectFinancials] = useState<any[]>([]);
+  const [projectInvoices, setProjectInvoices] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (orderForm.projectName) {
+      fetch(`/api/finance?projectName=${encodeURIComponent(orderForm.projectName)}`)
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.success && json.data) {
+            setProjectFinancials(json.data.payments || []);
+            setProjectInvoices(json.data.invoices || []);
+          }
+        })
+        .catch(() => {
+          setProjectFinancials([]);
+          setProjectInvoices([]);
+        });
+    } else {
+      setProjectFinancials([]);
+      setProjectInvoices([]);
+    }
+  }, [orderForm.projectName]);
 
   // 分页状态
   const [pageSize, setPageSize] = useState<number>(() => {
@@ -187,6 +215,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
   useEffect(() => {
     const quantity = parseFloat(orderForm.quantity) || 0;
     const contractAmount = parseFloat(orderForm.contractAmount) || 0;
+    if (contractAmount <= 0) return;
     const calculatedAmount = (quantity * contractAmount).toFixed(2);
     
     setOrderForm(prev => {
@@ -619,7 +648,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     }
 
     // 检查是否已存在待审批的申请
-    if (editingOrder.approvalRequestId) {
+    if (editingOrder.approvalStatus === "pending") {
       alert("该订单有待审批的申请，请等待审批完成或撤销当前审批后再编辑");
       return;
     }
@@ -712,6 +741,38 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     }
   };
 
+  const handleSyncOrderFinancial = async () => {
+    if (!editingOrder) return;
+    try {
+      const financialData: Record<string, any> = {};
+      const categories = ['prepay', 'arrival', 'acceptance', 'warranty'] as const;
+      for (const cat of categories) {
+        financialData[`${cat}Amount`] = (orderForm as any)[`${cat}Amount`] || '';
+        financialData[`${cat}Date`] = (orderForm as any)[`${cat}Date`] || '';
+        financialData[`${cat}Received`] = (orderForm as any)[`${cat}Received`] || false;
+        financialData[`${cat}InvoiceAmount`] = (orderForm as any)[`${cat}InvoiceAmount`] || '';
+        financialData[`${cat}InvoiceDate`] = (orderForm as any)[`${cat}InvoiceDate`] || '';
+        financialData[`${cat}Invoiced`] = (orderForm as any)[`${cat}Invoiced`] || false;
+      }
+
+      const res = await fetch('/api/orders/sync-financial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: editingOrder.id, ...financialData }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        alert('财务数据同步保存成功');
+        await fetchOrders();
+      } else {
+        alert('同步失败：' + (json.error || '未知错误'));
+      }
+    } catch (error) {
+      console.error('同步财务数据失败:', error);
+      alert('同步财务数据失败，请稍后重试');
+    }
+  };
+
   const handleDeleteOrder = async (order: any) => {
     // 检查审批状态，如果正在审批中，不允许重复提交
     const approvalStatus = order.approvalStatus;
@@ -786,7 +847,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
           requestType: "order",
           requestId: order.id,
           title: `删除订单：${orderData.projectName}`,
-          content: `订单编号：${orderData.orderNumber}\n项目名称：${orderData.projectName}\n客户名称：${orderData.customerName}\n订单金额：${orderData.orderAmount}\n操作：删除`,
+          content: `订单编号：${orderData.orderNumber}\n项目名称：${orderData.projectName}\n客户名称：${orderData.customerName}\n订单金额：${orderData.amount}\n操作：删除`,
           applicantId: user.id,
           applicantName: user.username || user.id,
           currentApproverId: currentApproverId,
@@ -881,62 +942,86 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     }
   };
 
-  const handleEditOrder = (order: any) => {
-    // 检查审批状态，只有 none、rejected 状态才能编辑
+  const handleEditOrder = async (order: any) => {
     const approvalStatus = order.approvalStatus;
-    if (approvalStatus && approvalStatus.status === "pending") {
+    if (approvalStatus === "pending") {
       alert("该订单正在审批中，不允许编辑。请先撤销审批后再编辑。");
       return;
     }
 
-    setEditingOrder(order);
+    // 重新从API获取最新的订单数据（确保财务管理同步的数据已加载）
+    let freshOrder = order;
+    try {
+      const res = await fetch(`/api/orders/${order.id}`);
+      const json = await res.json();
+      if (json.success) {
+        freshOrder = json.data;
+      }
+    } catch (e) {
+      console.error('获取最新订单数据失败，使用缓存数据:', e);
+    }
+
+    setEditingOrder(freshOrder);
+    const prepayInvoiced = freshOrder.prepayInvoiced || false;
+    const arrivalInvoiced = freshOrder.arrivalInvoiced || false;
+    const acceptanceInvoiced = freshOrder.acceptanceInvoiced || false;
+    const warrantyInvoiced = freshOrder.warrantyInvoiced || false;
+    const prepayAmt = freshOrder.prepayAmount ? parseFloat(freshOrder.prepayAmount).toFixed(2) : "";
+    const arrivalAmt = freshOrder.arrivalAmount ? parseFloat(freshOrder.arrivalAmount).toFixed(2) : "";
+    const acceptanceAmt = freshOrder.acceptanceAmount ? parseFloat(freshOrder.acceptanceAmount).toFixed(2) : "";
+    const warrantyAmt = freshOrder.warrantyAmount ? parseFloat(freshOrder.warrantyAmount).toFixed(2) : "";
+
     setOrderForm({
-      orderNumber: order.orderNumber || "",
-      orderDate: order.orderDate ? order.orderDate.split('T')[0] : "",
-      contractCode: order.contractCode || "",
-      customerCode: order.customerCode || "",
-      customerName: order.customerName || "",
-      materialCode: order.materialCode || "",
-      projectName: order.projectName || "",
-      specification: order.specification || "",
-      quantity: order.quantity || "",
-      contractAmount: order.contractAmount || "", // 加载合同金额
-      deliveryDate: order.deliveryDate ? order.deliveryDate.split('T')[0] : "",
-      actualDeliveryDate: order.actualDeliveryDate ? order.actualDeliveryDate.split('T')[0] : "",
-      status: order.status as OrderStatus,
-      projectProgress: order.projectProgress || "",
-      paymentTerms: order.paymentTerms || "",
-      orderAmount: order.orderAmount ? parseFloat(order.orderAmount).toFixed(2) : "",
-      prepayRatio: order.prepayRatio || "",
-      prepayAmount: order.prepayAmount ? parseFloat(order.prepayAmount).toFixed(2) : "",
-      prepayReceived: order.prepayReceived || false,
-      prepayDate: order.prepayDate ? order.prepayDate.split('T')[0] : "",
-      prepayInvoiceAmount: order.prepayInvoiceAmount ? parseFloat(order.prepayInvoiceAmount).toFixed(2) : "",
-      prepayInvoiceDate: order.prepayInvoiceDate ? order.prepayInvoiceDate.split('T')[0] : "",
-      prepayInvoiced: order.prepayInvoiced || false,
-      arrivalAmount: order.arrivalAmount ? parseFloat(order.arrivalAmount).toFixed(2) : "",
-      arrivalReceived: order.arrivalReceived || false,
-      arrivalDate: order.arrivalDate ? order.arrivalDate.split('T')[0] : "",
-      arrivalInvoiceAmount: order.arrivalInvoiceAmount ? parseFloat(order.arrivalInvoiceAmount).toFixed(2) : "",
-      arrivalInvoiceDate: order.arrivalInvoiceDate ? order.arrivalInvoiceDate.split('T')[0] : "",
-      arrivalInvoiced: order.arrivalInvoiced || false,
-      arrivalRatio: order.arrivalRatio || "",
-      acceptanceAmount: order.acceptanceAmount ? parseFloat(order.acceptanceAmount).toFixed(2) : "",
-      acceptanceReceived: order.acceptanceReceived || false,
-      acceptanceDate: order.acceptanceDate ? order.acceptanceDate.split('T')[0] : "",
-      acceptanceInvoiceAmount: order.acceptanceInvoiceAmount ? parseFloat(order.acceptanceInvoiceAmount).toFixed(2) : "",
-      acceptanceInvoiceDate: order.acceptanceInvoiceDate ? order.acceptanceInvoiceDate.split('T')[0] : "",
-      acceptanceInvoiced: order.acceptanceInvoiced || false,
-      acceptanceRatio: order.acceptanceRatio || "",
-      warrantyRatio: order.warrantyRatio || "",
-      warrantyAmount: order.warrantyAmount ? parseFloat(order.warrantyAmount).toFixed(2) : "",
-      warrantyReceived: order.warrantyReceived || false,
-      warrantyDate: order.warrantyDate ? order.warrantyDate.split('T')[0] : "",
-      warrantyInvoiceAmount: order.warrantyInvoiceAmount ? parseFloat(order.warrantyInvoiceAmount).toFixed(2) : "",
-      warrantyInvoiceDate: order.warrantyInvoiceDate ? order.warrantyInvoiceDate.split('T')[0] : "",
-      warrantyInvoiced: order.warrantyInvoiced || false,
-      notes: order.notes || "",
-      needApproval: false, // 编辑时不允许修改审批状态
+      orderNumber: freshOrder.orderNumber || "",
+      orderDate: freshOrder.orderDate ? freshOrder.orderDate.split('T')[0] : "",
+      contractCode: freshOrder.contractCode || "",
+      customerCode: freshOrder.customerCode || "",
+      customerName: freshOrder.customerName || "",
+      materialCode: freshOrder.materialCode || "",
+      projectName: freshOrder.projectName || "",
+      specification: freshOrder.specification || "",
+      quantity: freshOrder.quantity || "",
+      contractAmount: freshOrder.contractAmount || "",
+      deliveryDate: freshOrder.deliveryDate ? freshOrder.deliveryDate.split('T')[0] : "",
+      actualDeliveryDate: freshOrder.actualDeliveryDate ? freshOrder.actualDeliveryDate.split('T')[0] : "",
+      status: freshOrder.status as OrderStatus,
+      projectProgress: freshOrder.projectProgress || "",
+      paymentTerms: freshOrder.paymentTerms || "",
+      orderAmount: freshOrder.orderAmount ? parseFloat(freshOrder.orderAmount).toFixed(2) : "",
+      prepayRatio: freshOrder.prepayRatio || "",
+      prepayAmount: prepayAmt,
+      prepayReceived: freshOrder.prepayReceived || false,
+      prepayStatus: freshOrder.prepayStatus || "",
+      prepayDate: freshOrder.prepayDate ? freshOrder.prepayDate.split('T')[0] : "",
+      prepayInvoiceAmount: prepayInvoiced ? prepayAmt : "",
+      prepayInvoiceDate: freshOrder.prepayInvoiceDate ? freshOrder.prepayInvoiceDate.split('T')[0] : "",
+      prepayInvoiced,
+      arrivalAmount: arrivalAmt,
+      arrivalReceived: freshOrder.arrivalReceived || false,
+      arrivalStatus: freshOrder.arrivalStatus || "",
+      arrivalDate: freshOrder.arrivalDate ? freshOrder.arrivalDate.split('T')[0] : "",
+      arrivalInvoiceAmount: arrivalInvoiced ? arrivalAmt : "",
+      arrivalInvoiceDate: freshOrder.arrivalInvoiceDate ? freshOrder.arrivalInvoiceDate.split('T')[0] : "",
+      arrivalInvoiced,
+      arrivalRatio: freshOrder.arrivalRatio || "",
+      acceptanceAmount: acceptanceAmt,
+      acceptanceReceived: freshOrder.acceptanceReceived || false,
+      acceptanceStatus: freshOrder.acceptanceStatus || "",
+      acceptanceDate: freshOrder.acceptanceDate ? freshOrder.acceptanceDate.split('T')[0] : "",
+      acceptanceInvoiceAmount: acceptanceInvoiced ? acceptanceAmt : "",
+      acceptanceInvoiceDate: freshOrder.acceptanceInvoiceDate ? freshOrder.acceptanceInvoiceDate.split('T')[0] : "",
+      acceptanceInvoiced,
+      acceptanceRatio: freshOrder.acceptanceRatio || "",
+      warrantyRatio: freshOrder.warrantyRatio || "",
+      warrantyAmount: warrantyAmt,
+      warrantyReceived: freshOrder.warrantyReceived || false,
+      warrantyStatus: freshOrder.warrantyStatus || "",
+      warrantyDate: freshOrder.warrantyDate ? freshOrder.warrantyDate.split('T')[0] : "",
+      warrantyInvoiceAmount: warrantyInvoiced ? warrantyAmt : "",
+      warrantyInvoiceDate: freshOrder.warrantyInvoiceDate ? freshOrder.warrantyInvoiceDate.split('T')[0] : "",
+      warrantyInvoiced,
+      notes: freshOrder.notes || "",
+      needApproval: false,
     });
     setShowOrderForm(true);
   };
@@ -952,6 +1037,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       projectName: "",
       specification: "",
       quantity: "",
+      contractAmount: "",
       deliveryDate: "",
       actualDeliveryDate: "",
       status: "active",
@@ -961,12 +1047,14 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       prepayRatio: "",
       prepayAmount: "",
       prepayReceived: false,
+      prepayStatus: "",
       prepayDate: "",
       prepayInvoiceAmount: "",
       prepayInvoiceDate: "",
       prepayInvoiced: false,
       arrivalAmount: "",
       arrivalReceived: false,
+      arrivalStatus: "",
       arrivalDate: "",
       arrivalInvoiceAmount: "",
       arrivalInvoiceDate: "",
@@ -974,6 +1062,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       arrivalRatio: "",
       acceptanceAmount: "",
       acceptanceReceived: false,
+      acceptanceStatus: "",
       acceptanceDate: "",
       acceptanceInvoiceAmount: "",
       acceptanceInvoiceDate: "",
@@ -982,6 +1071,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       warrantyRatio: "",
       warrantyAmount: "",
       warrantyReceived: false,
+      warrantyStatus: "",
       warrantyDate: "",
       warrantyInvoiceAmount: "",
       warrantyInvoiceDate: "",
@@ -1873,10 +1963,22 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       {showOrderForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 dark:bg-opacity-70 p-2 md:p-4 overflow-y-auto">
           <div className="w-full max-w-6xl max-h-[95vh] md:max-h-[90vh] flex flex-col rounded-lg bg-white shadow-lg dark:bg-gray-800">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 {editingOrder ? "编辑订单" : "新建订单"}
               </h2>
+              {editingOrder && (
+                <button
+                  type="button"
+                  onClick={handleSyncOrderFinancial}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-cyan-600 text-white text-sm font-medium shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-cyan-500 transition-all"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  同步数据
+                </button>
+              )}
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               <form id="orderForm" onSubmit={editingOrder ? handleUpdateOrder : handleCreateOrder}>
@@ -2155,355 +2257,321 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                     </div>
                   </div>
 
-                  {/* 付款和开票信息 */}
+                  {/* 收款和开票信息 - 数据从财务管理模块自动读取 */}
                   <div>
-                    <h3 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">付款和开票信息</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {/* 预付款 */}
-                      <div className="space-y-4">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">预付款</h4>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">预付款比率</label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={orderForm.prepayRatio}
-                              onChange={(e) => handleRatioChange('prepayRatio', e.target.value)}
-                              placeholder="0"
-                              className="w-full rounded-md border border-gray-300 px-3 py-2 pr-12 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">%</span>
-                          </div>
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-1 h-5 rounded-full bg-green-500" />
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">收款和开票信息</h3>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-600 border border-blue-200">
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          自动读取自财务管理
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-500 space-y-0.5">
+                        <div>订单号：{orderForm.orderNumber || '-'}　客户：{orderForm.customerName || '-'}　合同号：{orderForm.contractCode || '-'}</div>
+                      </div>
+                    </div>
+
+                    {/* 提醒横幅 */}
+                    <div className="mb-4 p-3 rounded-lg border border-pink-200 bg-gradient-to-r from-pink-50 to-rose-50">
+                      <div className="flex items-start gap-2">
+                        <svg className="w-4 h-4 text-pink-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                        <div className="text-xs text-pink-700">
+                          请填写各阶段的付款比率和金额，系统将自动计算应收款项。标记"已收款"后，可在财务管理模块查看实收状态。
                         </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">预付金额</label>
-                          <div className="flex items-center gap-2">
-                            <div className="relative flex-1">
+                      </div>
+                    </div>
+
+                    {/* 收款与开票表格 */}
+                    <div className="overflow-hidden rounded-lg border border-gray-200">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="bg-blue-50/50">
+                            <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600 border-b border-gray-200">付款类别</th>
+                            <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 border-b border-gray-200 w-20">比率</th>
+                            <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-600 border-b border-gray-200">金额（元）</th>
+                            <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 border-b border-gray-200 w-24">收款状态</th>
+                            <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 border-b border-gray-200 w-32">付款日期</th>
+                            <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-600 border-b border-gray-200">开票金额（元）</th>
+                            <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 border-b border-gray-200 w-32">开票日期</th>
+                            <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 border-b border-gray-200 w-20">开票状态</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {/* 预付款 */}
+                          <tr className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-4 py-3">
+                              <span className="text-sm font-medium text-gray-800">预付款</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  value={orderForm.prepayRatio}
+                                  onChange={(e) => handleRatioChange('prepayRatio', e.target.value)}
+                                  placeholder="0"
+                                  className="w-full text-center rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                                />
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
                               <input
                                 type="text"
                                 value={orderForm.prepayAmount}
-                                onChange={(e) => handleAmountChange('prepayAmount', e.target.value)}
-                                placeholder="0.00"
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 pr-12 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                disabled
+                                className="w-full text-right rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm font-mono text-gray-400 cursor-not-allowed outline-none"
                               />
-                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">元</span>
-                            </div>
-                            <label className="flex items-center gap-1 cursor-pointer">
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {(() => {
+                                const s = orderForm.prepayStatus;
+                                if (s === '收款完成') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 cursor-not-allowed"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>收款完成</span>;
+                                if (s === '部分收款') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600 cursor-not-allowed"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9a1 1 0 012 0v4a1 1 0 01-2 0V9zm1 7a1 1 0 110-2 1 1 0 010 2z" clipRule="evenodd" /></svg>部分收款</span>;
+                                return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 cursor-not-allowed">待收款</span>;
+                              })()}
+                            </td>
+                            <td className="px-4 py-3">
                               <input
-                                type="checkbox"
-                                checked={orderForm.prepayReceived}
-                                onChange={(e) => setOrderForm({ ...orderForm, prepayReceived: e.target.checked })}
-                                className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                                type="date"
+                                value={orderForm.prepayDate}
+                                disabled
+                                className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-400 cursor-not-allowed outline-none"
                               />
-                              <span className="text-xs text-green-600 font-medium">已收款</span>
-                            </label>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">付款日期</label>
-                          <input
-                            type="date"
-                            value={orderForm.prepayDate}
-                            onChange={(e) => setOrderForm({ ...orderForm, prepayDate: e.target.value })}
-                            disabled={!orderForm.prepayReceived}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-gray-600 dark:disabled:text-gray-500 disabled:cursor-not-allowed"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">开票金额</label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={orderForm.prepayInvoiceAmount}
-                              onChange={(e) => handleAmountChange('prepayInvoiceAmount', e.target.value)}
-                              placeholder="0.00"
-                              className="w-full rounded-md border border-gray-300 px-3 py-2 pr-12 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">元</span>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">开票日期</label>
-                          <input
-                            type="date"
-                            value={orderForm.prepayInvoiceDate}
-                            onChange={(e) => setOrderForm({ ...orderForm, prepayInvoiceDate: e.target.value })}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">已开票</label>
-                          <input
-                            type="checkbox"
-                            checked={orderForm.prepayInvoiced}
-                            onChange={(e) => setOrderForm({ ...orderForm, prepayInvoiced: e.target.checked })}
-                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                        </div>
-                      </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="text"
+                                value={orderForm.prepayInvoiceAmount}
+                                disabled
+                                className="w-full text-right rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm font-mono text-gray-400 cursor-not-allowed outline-none"
+                              />
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="date"
+                                value={orderForm.prepayInvoiceDate}
+                                disabled
+                                className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-400 cursor-not-allowed outline-none"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {orderForm.prepayInvoiced ? (
+                                <span className="text-xs text-green-600 font-medium cursor-not-allowed">完成</span>
+                              ) : (
+                                <span className="text-xs text-gray-700 cursor-not-allowed">待开票</span>
+                              )}
+                            </td>
+                          </tr>
 
-                      {/* 到货款 */}
-                      <div className="space-y-4">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">到货款</h4>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">到货款比率</label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={orderForm.arrivalRatio}
-                              onChange={(e) => handleRatioChange('arrivalRatio', e.target.value)}
-                              placeholder="0"
-                              className="w-full rounded-md border border-gray-300 px-3 py-2 pr-12 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">%</span>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">到货金额</label>
-                          <div className="flex items-center gap-2">
-                            <div className="relative flex-1">
+                          {/* 到货款 */}
+                          <tr className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-4 py-3">
+                              <span className="text-sm font-medium text-gray-800">到货款</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  value={orderForm.arrivalRatio}
+                                  onChange={(e) => handleRatioChange('arrivalRatio', e.target.value)}
+                                  placeholder="0"
+                                  className="w-full text-center rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                                />
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
                               <input
                                 type="text"
                                 value={orderForm.arrivalAmount}
-                                onChange={(e) => handleAmountChange('arrivalAmount', e.target.value)}
-                                placeholder="0.00"
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 pr-12 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                disabled
+                                className="w-full text-right rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm font-mono text-gray-400 cursor-not-allowed outline-none"
                               />
-                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">元</span>
-                            </div>
-                            <label className="flex items-center gap-1 cursor-pointer">
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {(() => {
+                                const s = orderForm.arrivalStatus;
+                                if (s === '收款完成') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 cursor-not-allowed"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>收款完成</span>;
+                                if (s === '部分收款') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600 cursor-not-allowed"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9a1 1 0 012 0v4a1 1 0 01-2 0V9zm1 7a1 1 0 110-2 1 1 0 010 2z" clipRule="evenodd" /></svg>部分收款</span>;
+                                return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 cursor-not-allowed">待收款</span>;
+                              })()}
+                            </td>
+                            <td className="px-4 py-3">
                               <input
-                                type="checkbox"
-                                checked={orderForm.arrivalReceived}
-                                onChange={(e) => setOrderForm({ ...orderForm, arrivalReceived: e.target.checked })}
-                                className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                                type="date"
+                                value={orderForm.arrivalDate}
+                                disabled
+                                className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-400 cursor-not-allowed outline-none"
                               />
-                              <span className="text-xs text-green-600 font-medium">已收款</span>
-                            </label>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">付款日期</label>
-                          <input
-                            type="date"
-                            value={orderForm.arrivalDate}
-                            onChange={(e) => setOrderForm({ ...orderForm, arrivalDate: e.target.value })}
-                            disabled={!orderForm.arrivalReceived}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-gray-600 dark:disabled:text-gray-500 disabled:cursor-not-allowed"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">开票金额</label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={orderForm.arrivalInvoiceAmount}
-                              onChange={(e) => handleAmountChange('arrivalInvoiceAmount', e.target.value)}
-                              placeholder="0.00"
-                              className="w-full rounded-md border border-gray-300 px-3 py-2 pr-12 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">元</span>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">开票日期</label>
-                          <input
-                            type="date"
-                            value={orderForm.arrivalInvoiceDate}
-                            onChange={(e) => setOrderForm({ ...orderForm, arrivalInvoiceDate: e.target.value })}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">已开票</label>
-                          <input
-                            type="checkbox"
-                            checked={orderForm.arrivalInvoiced}
-                            onChange={(e) => setOrderForm({ ...orderForm, arrivalInvoiced: e.target.checked })}
-                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                        </div>
-                      </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="text"
+                                value={orderForm.arrivalInvoiceAmount}
+                                disabled
+                                className="w-full text-right rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm font-mono text-gray-400 cursor-not-allowed outline-none"
+                              />
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="date"
+                                value={orderForm.arrivalInvoiceDate}
+                                disabled
+                                className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-400 cursor-not-allowed outline-none"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {orderForm.arrivalInvoiced ? (
+                                <span className="text-xs text-green-600 font-medium cursor-not-allowed">完成</span>
+                              ) : (
+                                <span className="text-xs text-gray-700 cursor-not-allowed">待开票</span>
+                              )}
+                            </td>
+                          </tr>
 
-                      {/* 验收款 */}
-                      <div className="space-y-4">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">验收款</h4>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">验收款比率</label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={orderForm.acceptanceRatio}
-                              onChange={(e) => handleRatioChange('acceptanceRatio', e.target.value)}
-                              placeholder="0"
-                              className="w-full rounded-md border border-gray-300 px-3 py-2 pr-12 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">%</span>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">验收金额</label>
-                          <div className="flex items-center gap-2">
-                            <div className="relative flex-1">
+                          {/* 验收款 */}
+                          <tr className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-4 py-3">
+                              <span className="text-sm font-medium text-gray-800">验收款</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  value={orderForm.acceptanceRatio}
+                                  onChange={(e) => handleRatioChange('acceptanceRatio', e.target.value)}
+                                  placeholder="0"
+                                  className="w-full text-center rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                                />
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
                               <input
                                 type="text"
                                 value={orderForm.acceptanceAmount}
-                                onChange={(e) => handleAmountChange('acceptanceAmount', e.target.value)}
-                                placeholder="0.00"
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 pr-12 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                disabled
+                                className="w-full text-right rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm font-mono text-gray-400 cursor-not-allowed outline-none"
                               />
-                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">元</span>
-                            </div>
-                            <label className="flex items-center gap-1 cursor-pointer">
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {(() => {
+                                const s = orderForm.acceptanceStatus;
+                                if (s === '收款完成') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 cursor-not-allowed"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>收款完成</span>;
+                                if (s === '部分收款') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600 cursor-not-allowed"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9a1 1 0 012 0v4a1 1 0 01-2 0V9zm1 7a1 1 0 110-2 1 1 0 010 2z" clipRule="evenodd" /></svg>部分收款</span>;
+                                return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 cursor-not-allowed">待收款</span>;
+                              })()}
+                            </td>
+                            <td className="px-4 py-3">
                               <input
-                                type="checkbox"
-                                checked={orderForm.acceptanceReceived}
-                                onChange={(e) => setOrderForm({ ...orderForm, acceptanceReceived: e.target.checked })}
-                                className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                                type="date"
+                                value={orderForm.acceptanceDate}
+                                disabled
+                                className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-400 cursor-not-allowed outline-none"
                               />
-                              <span className="text-xs text-green-600 font-medium">已收款</span>
-                            </label>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">付款日期</label>
-                          <input
-                            type="date"
-                            value={orderForm.acceptanceDate}
-                            onChange={(e) => setOrderForm({ ...orderForm, acceptanceDate: e.target.value })}
-                            disabled={!orderForm.acceptanceReceived}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-gray-600 dark:disabled:text-gray-500 disabled:cursor-not-allowed"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">开票金额</label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={orderForm.acceptanceInvoiceAmount}
-                              onChange={(e) => handleAmountChange('acceptanceInvoiceAmount', e.target.value)}
-                              placeholder="0.00"
-                              className="w-full rounded-md border border-gray-300 px-3 py-2 pr-12 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">元</span>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">开票日期</label>
-                          <input
-                            type="date"
-                            value={orderForm.acceptanceInvoiceDate}
-                            onChange={(e) => setOrderForm({ ...orderForm, acceptanceInvoiceDate: e.target.value })}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">已开票</label>
-                          <input
-                            type="checkbox"
-                            checked={orderForm.acceptanceInvoiced}
-                            onChange={(e) => setOrderForm({ ...orderForm, acceptanceInvoiced: e.target.checked })}
-                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                        </div>
-                      </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="text"
+                                value={orderForm.acceptanceInvoiceAmount}
+                                disabled
+                                className="w-full text-right rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm font-mono text-gray-400 cursor-not-allowed outline-none"
+                              />
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="date"
+                                value={orderForm.acceptanceInvoiceDate}
+                                disabled
+                                className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-400 cursor-not-allowed outline-none"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {orderForm.acceptanceInvoiced ? (
+                                <span className="text-xs text-green-600 font-medium cursor-not-allowed">完成</span>
+                              ) : (
+                                <span className="text-xs text-gray-700 cursor-not-allowed">待开票</span>
+                              )}
+                            </td>
+                          </tr>
 
-                      {/* 质保款 */}
-                      <div className="space-y-4">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">质保款</h4>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">质保款比率</label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={orderForm.warrantyRatio}
-                              onChange={(e) => handleRatioChange('warrantyRatio', e.target.value)}
-                              placeholder="0"
-                              className="w-full rounded-md border border-gray-300 px-3 py-2 pr-12 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">%</span>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">质保金额</label>
-                          <div className="flex items-center gap-2">
-                            <div className="relative flex-1">
+                          {/* 质保款 */}
+                          <tr className="hover:bg-gray-50/50 transition-colors bg-rose-50/30">
+                            <td className="px-4 py-3">
+                              <span className="text-sm font-medium text-gray-800">质保款</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  value={orderForm.warrantyRatio}
+                                  onChange={(e) => handleRatioChange('warrantyRatio', e.target.value)}
+                                  placeholder="0"
+                                  className="w-full text-center rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                                />
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
                               <input
                                 type="text"
                                 value={orderForm.warrantyAmount}
-                                onChange={(e) => handleAmountChange('warrantyAmount', e.target.value)}
-                                placeholder="0.00"
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 pr-12 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                disabled
+                                className="w-full text-right rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm font-mono text-gray-400 cursor-not-allowed outline-none"
                               />
-                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">元</span>
-                            </div>
-                            <label className="flex items-center gap-1 cursor-pointer">
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {(() => {
+                                const s = orderForm.warrantyStatus;
+                                if (s === '收款完成') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 cursor-not-allowed"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>收款完成</span>;
+                                if (s === '部分收款') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600 cursor-not-allowed"><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9a1 1 0 012 0v4a1 1 0 01-2 0V9zm1 7a1 1 0 110-2 1 1 0 010 2z" clipRule="evenodd" /></svg>部分收款</span>;
+                                return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 cursor-not-allowed">待收款</span>;
+                              })()}
+                            </td>
+                            <td className="px-4 py-3">
                               <input
-                                type="checkbox"
-                                checked={orderForm.warrantyReceived}
-                                onChange={(e) => setOrderForm({ ...orderForm, warrantyReceived: e.target.checked })}
-                                className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                                type="date"
+                                value={orderForm.warrantyDate}
+                                disabled
+                                className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-400 cursor-not-allowed outline-none"
                               />
-                              <span className="text-xs text-green-600 font-medium">已收款</span>
-                            </label>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">质保金付款日期</label>
-                          <input
-                            type="date"
-                            value={orderForm.warrantyDate}
-                            onChange={(e) => setOrderForm({ ...orderForm, warrantyDate: e.target.value })}
-                            disabled={!orderForm.warrantyReceived}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-gray-600 dark:disabled:text-gray-500 disabled:cursor-not-allowed"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">质保款开票金额</label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={orderForm.warrantyInvoiceAmount}
-                              onChange={(e) => handleAmountChange('warrantyInvoiceAmount', e.target.value)}
-                              placeholder="0.00"
-                              className="w-full rounded-md border border-gray-300 px-3 py-2 pr-12 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">元</span>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">质保款开票日期</label>
-                          <input
-                            type="date"
-                            value={orderForm.warrantyInvoiceDate}
-                            onChange={(e) => setOrderForm({ ...orderForm, warrantyInvoiceDate: e.target.value })}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">已开票</label>
-                          <input
-                            type="checkbox"
-                            checked={orderForm.warrantyInvoiced}
-                            onChange={(e) => setOrderForm({ ...orderForm, warrantyInvoiced: e.target.checked })}
-                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                        </div>
-                      </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="text"
+                                value={orderForm.warrantyInvoiceAmount}
+                                disabled
+                                className="w-full text-right rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm font-mono text-gray-400 cursor-not-allowed outline-none"
+                              />
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="date"
+                                value={orderForm.warrantyInvoiceDate}
+                                disabled
+                                className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-400 cursor-not-allowed outline-none"
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {orderForm.warrantyInvoiced ? (
+                                <span className="text-xs text-green-600 font-medium cursor-not-allowed">完成</span>
+                              ) : (
+                                <span className="text-xs text-gray-700 cursor-not-allowed">待开票</span>
+                              )}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
 
-                      {/* 备注 */}
-                      <div className="space-y-4">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">备注</h4>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">备注信息</label>
-                          <textarea
-                            value={orderForm.notes}
-                            onChange={(e) => setOrderForm({ ...orderForm, notes: e.target.value })}
-                            rows={8}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white resize-none"
-                          />
-                        </div>
-                      </div>
+                    {/* 备注 */}
+                    <div className="mt-4">
+                      <label className="mb-1 block text-xs font-medium text-gray-700">备注信息</label>
+                      <textarea
+                        value={orderForm.notes}
+                        onChange={(e) => setOrderForm({ ...orderForm, notes: e.target.value })}
+                        rows={3}
+                        placeholder="输入备注信息..."
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none resize-none"
+                      />
                     </div>
                   </div>
                 </div>
@@ -2525,7 +2593,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                 form="orderForm"
                 className="w-full sm:w-auto rounded-lg bg-green-600 px-4 py-4 text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
               >
-                {editingOrder ? "更新" : "创建"}
+                {editingOrder ? "保存" : "创建"}
               </button>
             </div>
           </div>

@@ -74,6 +74,8 @@ export default function KnowledgeBasePanel() {
   const [activeTab, setActiveTab] = useState<'news' | 'risks'>('news');
   const [summary, setSummary] = useState<any>(null);
   const [nextScheduleTime, setNextScheduleTime] = useState<string>('');
+  const [expandedNews, setExpandedNews] = useState<Set<string>>(new Set());
+  const [selectedRiskType, setSelectedRiskType] = useState<string | null>(null);
 
   const fetchNews = async () => {
     setLoading(true);
@@ -181,6 +183,28 @@ export default function KnowledgeBasePanel() {
     }
   };
 
+  const toggleNewsExpand = (id: string) => {
+    setExpandedNews(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const filteredNews = (() => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return news.filter(item => new Date(item.publishTime) >= thirtyDaysAgo);
+  })();
+
+  const filteredRiskAnalysis = selectedRiskType
+    ? riskAnalysis.filter(a => a.risks.some(r => r.type === selectedRiskType))
+    : riskAnalysis;
+
   return (
     <div className="w-full h-full bg-white rounded-lg shadow">
       <div className="border-b p-6">
@@ -203,7 +227,7 @@ export default function KnowledgeBasePanel() {
             onClick={() => setActiveTab('news')}
           >
             <TrendingUp className="w-4 h-4 inline mr-2" />
-            行业新闻 ({news.length})
+             行业新闻 ({filteredNews.length})
           </button>
           <button
             className={`px-4 py-2 rounded text-sm font-medium ${
@@ -231,19 +255,21 @@ export default function KnowledgeBasePanel() {
               <RefreshCw className={`w-3.5 h-3.5 mr-1.5 inline ${refreshing ? 'animate-spin' : ''}`} />
               立即刷新分析
             </button>
-          </div>
-        )}
+              </div>
+             )}
       </div>
 
       <div className="p-6 overflow-y-auto h-[calc(100vh-280px)]">
         {activeTab === 'news' && (
           <div className="space-y-4">
-            {news.length === 0 && !loading && (
+            {filteredNews.length === 0 && !loading && (
               <div className="text-center text-gray-500 py-10">
-                暂无新闻数据，点击刷新获取
+                暂无一个月内的新闻数据
               </div>
             )}
-            {news.map((item) => (
+            {filteredNews.map((item) => {
+              const isExpanded = expandedNews.has(item.id);
+              return (
               <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -254,26 +280,34 @@ export default function KnowledgeBasePanel() {
                         className={`w-2 h-2 rounded-full ${getRelevanceColor(item.relevance)}`}
                         title={`相关度：${item.relevance}`}
                       />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                    <p className="text-gray-600 text-sm mb-2">{item.summary}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-400">
                         {new Date(item.publishTime).toLocaleString('zh-CN')}
                       </span>
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline text-sm inline-flex items-center"
-                      >
-                        阅读原文 <ExternalLink className="w-3 h-3 ml-1" />
-                      </a>
                     </div>
+                    <h3
+                      className="text-lg font-semibold mb-1 cursor-pointer hover:text-blue-600 transition-colors"
+                      onClick={() => toggleNewsExpand(item.id)}
+                    >
+                      {item.title}
+                    </h3>
+                    {isExpanded && (
+                      <>
+                        <p className="text-gray-600 text-sm mt-3 mb-3 leading-relaxed">{item.summary}</p>
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline text-sm inline-flex items-center"
+                        >
+                          阅读原文 <ExternalLink className="w-3 h-3 ml-1" />
+                        </a>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -302,28 +336,40 @@ export default function KnowledgeBasePanel() {
                   </div>
                 </div>
                 <div className="grid grid-cols-4 gap-4">
-                  <div className="border rounded-lg p-3 bg-orange-50">
+                  <div
+                    className={`border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md ${selectedRiskType === 'financial_risk' ? 'ring-2 ring-orange-500 bg-orange-50' : 'bg-orange-50'}`}
+                    onClick={() => setSelectedRiskType(selectedRiskType === 'financial_risk' ? null : 'financial_risk')}
+                  >
                     <div className="flex items-center gap-2">
                       <ShieldAlert className="w-5 h-5 text-orange-500" />
                       <div className="text-lg font-bold text-orange-700">{summary.riskTypes?.financial_risk || 0}</div>
                     </div>
                     <div className="text-sm text-gray-600">客户财务风险</div>
                   </div>
-                  <div className="border rounded-lg p-3 bg-red-50">
+                  <div
+                    className={`border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md ${selectedRiskType === 'obsolete_project' ? 'ring-2 ring-red-500 bg-red-50' : 'bg-red-50'}`}
+                    onClick={() => setSelectedRiskType(selectedRiskType === 'obsolete_project' ? null : 'obsolete_project')}
+                  >
                     <div className="flex items-center gap-2">
                       <TrendingDown className="w-5 h-5 text-red-500" />
                       <div className="text-lg font-bold text-red-700">{summary.riskTypes?.obsolete_project || 0}</div>
                     </div>
                     <div className="text-sm text-gray-600">淘汰预警</div>
                   </div>
-                  <div className="border rounded-lg p-3 bg-blue-50">
+                  <div
+                    className={`border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md ${selectedRiskType === 'schedule_overdue' ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-blue-50'}`}
+                    onClick={() => setSelectedRiskType(selectedRiskType === 'schedule_overdue' ? null : 'schedule_overdue')}
+                  >
                     <div className="flex items-center gap-2">
                       <Calendar className="w-5 h-5 text-blue-500" />
                       <div className="text-lg font-bold text-blue-700">{summary.riskTypes?.schedule_overdue || 0}</div>
                     </div>
                     <div className="text-sm text-gray-600">项目延期</div>
                   </div>
-                  <div className="border rounded-lg p-3 bg-purple-50">
+                  <div
+                    className={`border rounded-lg p-3 cursor-pointer transition-all hover:shadow-md ${selectedRiskType === 'task_imbalance' ? 'ring-2 ring-purple-500 bg-purple-50' : 'bg-purple-50'}`}
+                    onClick={() => setSelectedRiskType(selectedRiskType === 'task_imbalance' ? null : 'task_imbalance')}
+                  >
                     <div className="flex items-center gap-2">
                       <Users className="w-5 h-5 text-purple-500" />
                       <div className="text-lg font-bold text-purple-700">{summary.riskTypes?.task_imbalance || 0}</div>
@@ -333,16 +379,45 @@ export default function KnowledgeBasePanel() {
                 </div>
               </div>
             )}
-
-            {riskAnalysis.length === 0 && !loading && (
-              <div className="text-center text-green-600 py-10">
-                <UserCheck className="w-16 h-16 mx-auto mb-4" />
-                <p className="text-xl font-semibold">所有项目运行正常！</p>
-                <p className="text-gray-500 mt-2">未发现风险项</p>
+            {selectedRiskType && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-500">已筛选风险类型：</span>
+                <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-xs font-medium">
+                  {RISK_TYPE_LABELS[selectedRiskType] || selectedRiskType}
+                </span>
+                <button
+                  className="text-blue-500 hover:text-blue-600 underline text-xs"
+                  onClick={() => setSelectedRiskType(null)}
+                >
+                  清除筛选
+                </button>
               </div>
             )}
 
-            {riskAnalysis.map((analysis) => {
+            {filteredRiskAnalysis.length === 0 && !loading && (
+              <div className="text-center py-10">
+                {selectedRiskType ? (
+                  <>
+                    <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-amber-500" />
+                    <p className="text-xl font-semibold text-gray-600">该风险类型下暂无匹配项目</p>
+                    <button
+                      className="mt-3 text-blue-500 hover:text-blue-600 underline text-sm"
+                      onClick={() => setSelectedRiskType(null)}
+                    >
+                      显示全部风险
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <UserCheck className="w-16 h-16 mx-auto mb-4 text-green-600" />
+                    <p className="text-xl font-semibold">所有项目运行正常！</p>
+                    <p className="text-gray-500 mt-2">未发现风险项</p>
+                  </>
+                )}
+              </div>
+            )}
+
+            {filteredRiskAnalysis.map((analysis) => {
               const hasObsolete = analysis.risks.some(r => r.type === 'obsolete_project');
               const hasFinancial = analysis.risks.some(r => r.type === 'financial_risk');
               let borderColor = 'border-l-red-500';

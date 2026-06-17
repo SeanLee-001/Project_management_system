@@ -47,7 +47,8 @@ export async function GET(request: NextRequest) {
         "contracts",
         "orders",
         "products",
-        "config"
+        "config",
+        "financial"
       ];
 
       const permissionsByResource: Record<string, string[]> = {};

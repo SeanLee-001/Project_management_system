@@ -110,48 +110,27 @@ export default function ChatAssistant() {
           }`}
         >
           {msg.role === "assistant" && (
-            <div className="w-12 h-12 flex-shrink-0 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white text-lg shadow-lg overflow-hidden ring-4 ring-pink-200">
-              {/* 卡通数字美女头像 */}
+            <div className="w-12 h-12 flex-shrink-0 rounded-full bg-gradient-to-br from-red-400 to-orange-500 flex items-center justify-center text-white text-lg shadow-lg overflow-hidden ring-4 ring-red-200">
               <svg viewBox="0 0 100 100" className="w-full h-full">
-                {/* 头发背景 */}
-                <circle cx="50" cy="50" r="48" fill="url(#hairGradient)"/>
-                {/* 脸 */}
-                <ellipse cx="50" cy="52" rx="35" ry="38" fill="#FFE4C4"/>
-                {/* 头发刘海 */}
-                <path d="M15 40 Q50 20 85 40 L85 55 Q50 35 15 55 Z" fill="url(#hairGradient)"/>
-                {/* 左眼睛 */}
-                <ellipse cx="38" cy="50" rx="8" ry="10" fill="white"/>
-                <circle cx="40" cy="50" r="5" fill="#4A5568"/>
-                <circle cx="41" cy="48" r="2" fill="white"/>
-                {/* 右眼睛 */}
-                <ellipse cx="62" cy="50" rx="8" ry="10" fill="white"/>
-                <circle cx="60" cy="50" r="5" fill="#4A5568"/>
-                <circle cx="61" cy="48" r="2" fill="white"/>
-                {/* 睫毛 */}
-                <path d="M30 42 L28 38" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-                <path d="M32 40 L30 36" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-                <path d="M34 38 L33 34" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-                <path d="M70 42 L72 38" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-                <path d="M68 40 L70 36" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-                <path d="M66 38 L67 34" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-                {/* 腮红 */}
-                <ellipse cx="30" cy="60" rx="6" ry="4" fill="#FFB6C1" opacity="0.6"/>
-                <ellipse cx="70" cy="60" rx="6" ry="4" fill="#FFB6C1" opacity="0.6"/>
-                {/* 嘴巴 */}
-                <path d="M43 68 Q50 73 57 68" stroke="#E53E3E" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-                {/* 头发装饰 */}
-                <circle cx="25" cy="35" r="4" fill="#FF69B4"/>
-                <circle cx="75" cy="35" r="4" fill="#FF69B4"/>
-                {/* 头发光泽 */}
-                <path d="M20 30 Q30 20 40 30" stroke="white" strokeWidth="2" fill="none" opacity="0.4"/>
-                <path d="M60 30 Q70 20 80 30" stroke="white" strokeWidth="2" fill="none" opacity="0.4"/>
-                {/* 渐变定义 */}
-                <defs>
-                  <linearGradient id="hairGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#9333EA"/>
-                    <stop offset="100%" stopColor="#EC4899"/>
-                  </linearGradient>
-                </defs>
+                <circle cx="50" cy="50" r="48" fill="#FF6B35"/>
+                <ellipse cx="50" cy="52" rx="36" ry="38" fill="#FFE0BD"/>
+                <path d="M15 40 Q50 20 85 40 L85 55 Q50 35 15 55 Z" fill="#1a1a2e"/>
+                <ellipse cx="38" cy="48" rx="9" ry="11" fill="white"/>
+                <circle cx="40" cy="48" r="6" fill="#1a1a2e"/>
+                <circle cx="42" cy="45" r="2.5" fill="white"/>
+                <ellipse cx="62" cy="48" rx="9" ry="11" fill="white"/>
+                <circle cx="60" cy="48" r="6" fill="#1a1a2e"/>
+                <circle cx="62" cy="45" r="2.5" fill="white"/>
+                <ellipse cx="28" cy="58" rx="5" ry="3.5" fill="#FF8C94" opacity="0.6"/>
+                <ellipse cx="72" cy="58" rx="5" ry="3.5" fill="#FF8C94" opacity="0.6"/>
+                <path d="M44 66 Q50 72 56 66" stroke="#E53E3E" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+                <path d="M46 18 Q48 8 52 18" stroke="#1a1a2e" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+                <circle cx="50" cy="8" r="7" fill="#1a1a2e"/>
+                <ellipse cx="46" cy="6" rx="2" ry="1.5" fill="#FF6B35" opacity="0.5"/>
+                <circle cx="20" cy="30" r="3" fill="#EF4444"/>
+                <circle cx="80" cy="30" r="3" fill="#EF4444"/>
+                <path d="M15 55 Q8 60 12 72" stroke="#EF4444" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                <path d="M85 55 Q92 60 88 72" stroke="#EF4444" strokeWidth="3" fill="none" strokeLinecap="round"/>
               </svg>
             </div>
           )}
@@ -335,50 +314,30 @@ export default function ChatAssistant() {
         className={`fixed bottom-6 right-6 z-50 bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-400 hover:via-purple-400 hover:to-indigo-400 text-white rounded-full p-1 shadow-2xl transition-all duration-300 hover:scale-110 ${isBouncing ? 'animate-bounce' : ''}`}
         title="打开非凡小助手"
       >
-        {/* 卡通数字美女头像 */}
+        {/* 卡通哪吒头像 */}
         <svg
           className="w-14 h-14 drop-shadow-lg"
           viewBox="0 0 100 100"
         >
-          {/* 头发背景 */}
-          <circle cx="50" cy="50" r="48" fill="url(#hairGradient2)"/>
-          {/* 脸 */}
-          <ellipse cx="50" cy="52" rx="35" ry="38" fill="#FFE4C4"/>
-          {/* 头发刘海 */}
-          <path d="M15 40 Q50 20 85 40 L85 55 Q50 35 15 55 Z" fill="url(#hairGradient2)"/>
-          {/* 左眼睛 */}
-          <ellipse cx="38" cy="50" rx="8" ry="10" fill="white"/>
-          <circle cx="40" cy="50" r="5" fill="#4A5568"/>
-          <circle cx="41" cy="48" r="2" fill="white"/>
-          {/* 右眼睛 */}
-          <ellipse cx="62" cy="50" rx="8" ry="10" fill="white"/>
-          <circle cx="60" cy="50" r="5" fill="#4A5568"/>
-          <circle cx="61" cy="48" r="2" fill="white"/>
-          {/* 睫毛 */}
-          <path d="M30 42 L28 38" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-          <path d="M32 40 L30 36" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-          <path d="M34 38 L33 34" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-          <path d="M70 42 L72 38" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-          <path d="M68 40 L70 36" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-          <path d="M66 38 L67 34" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-          {/* 腮红 */}
-          <ellipse cx="30" cy="60" rx="6" ry="4" fill="#FFB6C1" opacity="0.6"/>
-          <ellipse cx="70" cy="60" rx="6" ry="4" fill="#FFB6C1" opacity="0.6"/>
-          {/* 嘴巴 */}
-          <path d="M43 68 Q50 73 57 68" stroke="#E53E3E" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-          {/* 头发装饰 */}
-          <circle cx="25" cy="35" r="4" fill="#FF69B4"/>
-          <circle cx="75" cy="35" r="4" fill="#FF69B4"/>
-          {/* 头发光泽 */}
-          <path d="M20 30 Q30 20 40 30" stroke="white" strokeWidth="2" fill="none" opacity="0.4"/>
-          <path d="M60 30 Q70 20 80 30" stroke="white" strokeWidth="2" fill="none" opacity="0.4"/>
-          {/* 渐变定义 */}
-          <defs>
-            <linearGradient id="hairGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#9333EA"/>
-              <stop offset="100%" stopColor="#EC4899"/>
-            </linearGradient>
-          </defs>
+          <circle cx="50" cy="50" r="48" fill="#FF6B35"/>
+          <ellipse cx="50" cy="52" rx="36" ry="38" fill="#FFE0BD"/>
+          <path d="M15 40 Q50 20 85 40 L85 55 Q50 35 15 55 Z" fill="#1a1a2e"/>
+          <ellipse cx="38" cy="48" rx="9" ry="11" fill="white"/>
+          <circle cx="40" cy="48" r="6" fill="#1a1a2e"/>
+          <circle cx="42" cy="45" r="2.5" fill="white"/>
+          <ellipse cx="62" cy="48" rx="9" ry="11" fill="white"/>
+          <circle cx="60" cy="48" r="6" fill="#1a1a2e"/>
+          <circle cx="62" cy="45" r="2.5" fill="white"/>
+          <ellipse cx="28" cy="58" rx="5" ry="3.5" fill="#FF8C94" opacity="0.6"/>
+          <ellipse cx="72" cy="58" rx="5" ry="3.5" fill="#FF8C94" opacity="0.6"/>
+          <path d="M44 66 Q50 72 56 66" stroke="#E53E3E" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+          <path d="M46 18 Q48 8 52 18" stroke="#1a1a2e" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+          <circle cx="50" cy="8" r="7" fill="#1a1a2e"/>
+          <ellipse cx="46" cy="6" rx="2" ry="1.5" fill="#FF6B35" opacity="0.5"/>
+          <circle cx="20" cy="30" r="3" fill="#EF4444"/>
+          <circle cx="80" cy="30" r="3" fill="#EF4444"/>
+          <path d="M15 55 Q8 60 12 72" stroke="#EF4444" strokeWidth="3" fill="none" strokeLinecap="round"/>
+          <path d="M85 55 Q92 60 88 72" stroke="#EF4444" strokeWidth="3" fill="none" strokeLinecap="round"/>
         </svg>
         <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-ping"></div>
         <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
@@ -392,44 +351,25 @@ export default function ChatAssistant() {
       <div className="flex items-center justify-between p-4 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white rounded-t-2xl shadow-lg">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl animate-[chatFloat_3s_ease-in-out_infinite] overflow-hidden">
-            {/* 卡通数字美女小头像 */}
             <svg viewBox="0 0 100 100" className="w-full h-full">
-              {/* 头发背景 */}
-              <circle cx="50" cy="50" r="48" fill="url(#hairGradient3)"/>
-              {/* 脸 */}
-              <ellipse cx="50" cy="52" rx="35" ry="38" fill="#FFE4C4"/>
-              {/* 头发刘海 */}
-              <path d="M15 40 Q50 20 85 40 L85 55 Q50 35 15 55 Z" fill="url(#hairGradient3)"/>
-              {/* 左眼睛 */}
-              <ellipse cx="38" cy="50" rx="8" ry="10" fill="white"/>
-              <circle cx="40" cy="50" r="5" fill="#4A5568"/>
-              <circle cx="41" cy="48" r="2" fill="white"/>
-              {/* 右眼睛 */}
-              <ellipse cx="62" cy="50" rx="8" ry="10" fill="white"/>
-              <circle cx="60" cy="50" r="5" fill="#4A5568"/>
-              <circle cx="61" cy="48" r="2" fill="white"/>
-              {/* 睫毛 */}
-              <path d="M30 42 L28 38" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-              <path d="M32 40 L30 36" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-              <path d="M34 38 L33 34" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-              <path d="M70 42 L72 38" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-              <path d="M68 40 L70 36" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-              <path d="M66 38 L67 34" stroke="#2D3748" strokeWidth="1.5" fill="none"/>
-              {/* 腮红 */}
-              <ellipse cx="30" cy="60" rx="6" ry="4" fill="#FFB6C1" opacity="0.6"/>
-              <ellipse cx="70" cy="60" rx="6" ry="4" fill="#FFB6C1" opacity="0.6"/>
-              {/* 嘴巴 */}
-              <path d="M43 68 Q50 73 57 68" stroke="#E53E3E" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-              {/* 头发装饰 */}
-              <circle cx="25" cy="35" r="4" fill="#FF69B4"/>
-              <circle cx="75" cy="35" r="4" fill="#FF69B4"/>
-              {/* 渐变定义 */}
-              <defs>
-                <linearGradient id="hairGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#9333EA"/>
-                  <stop offset="100%" stopColor="#EC4899"/>
-                </linearGradient>
-              </defs>
+              <circle cx="50" cy="50" r="48" fill="#FF6B35"/>
+              <ellipse cx="50" cy="52" rx="36" ry="38" fill="#FFE0BD"/>
+              <path d="M15 40 Q50 20 85 40 L85 55 Q50 35 15 55 Z" fill="#1a1a2e"/>
+              <ellipse cx="38" cy="48" rx="9" ry="11" fill="white"/>
+              <circle cx="40" cy="48" r="6" fill="#1a1a2e"/>
+              <circle cx="42" cy="45" r="2.5" fill="white"/>
+              <ellipse cx="62" cy="48" rx="9" ry="11" fill="white"/>
+              <circle cx="60" cy="48" r="6" fill="#1a1a2e"/>
+              <circle cx="62" cy="45" r="2.5" fill="white"/>
+              <ellipse cx="28" cy="58" rx="5" ry="3.5" fill="#FF8C94" opacity="0.6"/>
+              <ellipse cx="72" cy="58" rx="5" ry="3.5" fill="#FF8C94" opacity="0.6"/>
+              <path d="M44 66 Q50 72 56 66" stroke="#E53E3E" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+              <path d="M46 18 Q48 8 52 18" stroke="#1a1a2e" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+              <circle cx="50" cy="8" r="7" fill="#1a1a2e"/>
+              <circle cx="20" cy="30" r="3" fill="#EF4444"/>
+              <circle cx="80" cy="30" r="3" fill="#EF4444"/>
+              <path d="M15 55 Q8 60 12 72" stroke="#EF4444" strokeWidth="3" fill="none" strokeLinecap="round"/>
+              <path d="M85 55 Q92 60 88 72" stroke="#EF4444" strokeWidth="3" fill="none" strokeLinecap="round"/>
             </svg>
           </div>
           <div>
@@ -484,8 +424,27 @@ export default function ChatAssistant() {
         {messagesList}
         {(isLoading || isStreaming) && (
           <div className="flex items-start gap-2">
-            <div className="w-10 h-10 flex-shrink-0 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white text-lg shadow-lg">
-              🤖
+            <div className="w-10 h-10 flex-shrink-0 rounded-full bg-gradient-to-br from-red-400 to-orange-500 flex items-center justify-center text-white text-lg shadow-lg overflow-hidden">
+              <svg viewBox="0 0 100 100" className="w-full h-full">
+                <circle cx="50" cy="50" r="48" fill="#FF6B35"/>
+                <ellipse cx="50" cy="52" rx="36" ry="38" fill="#FFE0BD"/>
+                <path d="M15 40 Q50 20 85 40 L85 55 Q50 35 15 55 Z" fill="#1a1a2e"/>
+                <ellipse cx="38" cy="48" rx="9" ry="11" fill="white"/>
+                <circle cx="40" cy="48" r="6" fill="#1a1a2e"/>
+                <circle cx="42" cy="45" r="2.5" fill="white"/>
+                <ellipse cx="62" cy="48" rx="9" ry="11" fill="white"/>
+                <circle cx="60" cy="48" r="6" fill="#1a1a2e"/>
+                <circle cx="62" cy="45" r="2.5" fill="white"/>
+                <ellipse cx="28" cy="58" rx="5" ry="3.5" fill="#FF8C94" opacity="0.6"/>
+                <ellipse cx="72" cy="58" rx="5" ry="3.5" fill="#FF8C94" opacity="0.6"/>
+                <path d="M44 66 Q50 72 56 66" stroke="#E53E3E" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+                <path d="M46 18 Q48 8 52 18" stroke="#1a1a2e" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+                <circle cx="50" cy="8" r="7" fill="#1a1a2e"/>
+                <circle cx="20" cy="30" r="3" fill="#EF4444"/>
+                <circle cx="80" cy="30" r="3" fill="#EF4444"/>
+                <path d="M15 55 Q8 60 12 72" stroke="#EF4444" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                <path d="M85 55 Q92 60 88 72" stroke="#EF4444" strokeWidth="3" fill="none" strokeLinecap="round"/>
+              </svg>
             </div>
             <div className="bg-gradient-to-br from-white to-pink-50 border-2 border-pink-200 px-4 py-3 rounded-2xl rounded-bl-md shadow-lg">
               <div className="flex items-center gap-2">

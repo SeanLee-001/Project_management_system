@@ -151,12 +151,14 @@ export const orderManager = {
     orderAmount?: string;
     prepayRatio?: string;
     prepayAmount?: string;
+    prepayReceivedAmount?: string;
     prepayReceived?: boolean;
     prepayDate?: Date | string;
     prepayInvoiceAmount?: string;
     prepayInvoiceDate?: Date | string;
     prepayInvoiced?: boolean;
     arrivalAmount?: string;
+    arrivalReceivedAmount?: string;
     arrivalReceived?: boolean;
     arrivalDate?: Date | string;
     arrivalInvoiceAmount?: string;
@@ -165,6 +167,7 @@ export const orderManager = {
     arrivalRatio?: string;
     acceptanceRatio?: string;
     acceptanceAmount?: string;
+    acceptanceReceivedAmount?: string;
     acceptanceReceived?: boolean;
     acceptanceDate?: Date | string;
     acceptanceInvoiceAmount?: string;
@@ -172,6 +175,7 @@ export const orderManager = {
     acceptanceInvoiced?: boolean;
     warrantyRatio?: string;
     warrantyAmount?: string;
+    warrantyReceivedAmount?: string;
     warrantyReceived?: boolean;
     warrantyDate?: Date | string;
     warrantyInvoiceAmount?: string;
@@ -254,12 +258,14 @@ export const orderManager = {
       actualDeliveryDate: orderData.actualDeliveryDate ? new Date(orderData.actualDeliveryDate) : undefined,
       prepayRatio: orderData.prepayRatio || undefined,
       prepayAmount: orderData.prepayAmount || undefined,
+      prepayReceivedAmount: orderData.prepayReceivedAmount || undefined,
       prepayReceived: orderData.prepayReceived ?? false,
       prepayDate: orderData.prepayDate ? new Date(orderData.prepayDate) : undefined,
       prepayInvoiceAmount: orderData.prepayInvoiceAmount || undefined,
       prepayInvoiceDate: orderData.prepayInvoiceDate ? new Date(orderData.prepayInvoiceDate) : undefined,
       prepayInvoiced: orderData.prepayInvoiced ?? false,
       arrivalAmount: orderData.arrivalAmount || undefined,
+      arrivalReceivedAmount: orderData.arrivalReceivedAmount || undefined,
       arrivalReceived: orderData.arrivalReceived ?? false,
       arrivalDate: orderData.arrivalDate ? new Date(orderData.arrivalDate) : undefined,
       arrivalInvoiceAmount: orderData.arrivalInvoiceAmount || undefined,
@@ -268,6 +274,7 @@ export const orderManager = {
       arrivalRatio: orderData.arrivalRatio || undefined,
       acceptanceRatio: orderData.acceptanceRatio || undefined,
       acceptanceAmount: orderData.acceptanceAmount || undefined,
+      acceptanceReceivedAmount: orderData.acceptanceReceivedAmount || undefined,
       acceptanceReceived: orderData.acceptanceReceived ?? false,
       acceptanceDate: orderData.acceptanceDate ? new Date(orderData.acceptanceDate) : undefined,
       acceptanceInvoiceAmount: orderData.acceptanceInvoiceAmount || undefined,
@@ -275,6 +282,7 @@ export const orderManager = {
       acceptanceInvoiced: orderData.acceptanceInvoiced ?? false,
       warrantyRatio: orderData.warrantyRatio || undefined,
       warrantyAmount: orderData.warrantyAmount || undefined,
+      warrantyReceivedAmount: orderData.warrantyReceivedAmount || undefined,
       warrantyReceived: orderData.warrantyReceived ?? false,
       warrantyDate: (orderData as any).warrantyDate ? new Date((orderData as any).warrantyDate) : undefined,
       warrantyInvoiceAmount: (orderData as any).warrantyInvoiceAmount || undefined,
@@ -306,32 +314,52 @@ export const orderManager = {
       orderAmount?: string;
       prepayRatio?: string;
       prepayAmount?: string;
+      prepayReceivedAmount?: string;
       prepayReceived?: boolean;
+      prepayStatus?: string;
       prepayDate?: Date | string;
       prepayInvoiceAmount?: string;
       prepayInvoiceDate?: Date | string;
       prepayInvoiced?: boolean;
+      prepayInvoiceNumber?: string;
+      prepayInvoiceNotes?: string;
+      prepayTransactionNotes?: string;
       arrivalAmount?: string;
+      arrivalReceivedAmount?: string;
       arrivalReceived?: boolean;
+      arrivalStatus?: string;
       arrivalDate?: Date | string;
       arrivalInvoiceAmount?: string;
       arrivalInvoiceDate?: Date | string;
       arrivalInvoiced?: boolean;
+      arrivalInvoiceNumber?: string;
+      arrivalInvoiceNotes?: string;
+      arrivalTransactionNotes?: string;
       arrivalRatio?: string;
       acceptanceRatio?: string;
       acceptanceAmount?: string;
+      acceptanceReceivedAmount?: string;
       acceptanceReceived?: boolean;
+      acceptanceStatus?: string;
       acceptanceDate?: Date | string;
       acceptanceInvoiceAmount?: string;
       acceptanceInvoiceDate?: Date | string;
       acceptanceInvoiced?: boolean;
+      acceptanceInvoiceNumber?: string;
+      acceptanceInvoiceNotes?: string;
+      acceptanceTransactionNotes?: string;
       warrantyRatio?: string;
       warrantyAmount?: string;
+      warrantyReceivedAmount?: string;
       warrantyReceived?: boolean;
+      warrantyStatus?: string;
       warrantyDate?: Date | string;
       warrantyInvoiceAmount?: string;
       warrantyInvoiceDate?: Date | string;
       warrantyInvoiced?: boolean;
+      warrantyInvoiceNumber?: string;
+      warrantyInvoiceNotes?: string;
+      warrantyTransactionNotes?: string;
       notes?: string;
     }
   ) {
@@ -345,12 +373,14 @@ export const orderManager = {
       actualDeliveryDate: data.actualDeliveryDate ? new Date(data.actualDeliveryDate) : undefined,
       prepayRatio: data.prepayRatio || undefined,
       prepayAmount: data.prepayAmount || undefined,
+      prepayReceivedAmount: data.prepayReceivedAmount || undefined,
       prepayReceived: data.prepayReceived ?? false,
       prepayDate: data.prepayDate ? new Date(data.prepayDate) : undefined,
       prepayInvoiceAmount: data.prepayInvoiceAmount || undefined,
       prepayInvoiceDate: data.prepayInvoiceDate ? new Date(data.prepayInvoiceDate) : undefined,
       prepayInvoiced: data.prepayInvoiced ?? false,
       arrivalAmount: data.arrivalAmount || undefined,
+      arrivalReceivedAmount: data.arrivalReceivedAmount || undefined,
       arrivalReceived: data.arrivalReceived ?? false,
       arrivalDate: data.arrivalDate ? new Date(data.arrivalDate) : undefined,
       arrivalInvoiceAmount: data.arrivalInvoiceAmount || undefined,
@@ -359,6 +389,7 @@ export const orderManager = {
       arrivalRatio: data.arrivalRatio || undefined,
       acceptanceRatio: data.acceptanceRatio || undefined,
       acceptanceAmount: data.acceptanceAmount || undefined,
+      acceptanceReceivedAmount: data.acceptanceReceivedAmount || undefined,
       acceptanceReceived: data.acceptanceReceived ?? false,
       acceptanceDate: data.acceptanceDate ? new Date(data.acceptanceDate) : undefined,
       acceptanceInvoiceAmount: data.acceptanceInvoiceAmount || undefined,
@@ -366,6 +397,7 @@ export const orderManager = {
       acceptanceInvoiced: data.acceptanceInvoiced ?? false,
       warrantyRatio: data.warrantyRatio || undefined,
       warrantyAmount: data.warrantyAmount || undefined,
+      warrantyReceivedAmount: data.warrantyReceivedAmount || undefined,
       warrantyReceived: data.warrantyReceived ?? false,
       warrantyDate: (data as any).warrantyDate ? new Date((data as any).warrantyDate) : undefined,
       warrantyInvoiceAmount: (data as any).warrantyInvoiceAmount || undefined,

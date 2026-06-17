@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-type ResourceType = "projects" | "tasks" | "users" | "customers" | "customer_contacts" | "contracts" | "orders" | "products" | "deliveries" | "config";
+type ResourceType = "projects" | "tasks" | "users" | "customers" | "customer_contacts" | "contracts" | "orders" | "products" | "deliveries" | "config" | "financial";
 type PermissionType = "view" | "edit" | "delete" | "use";
 
 const RESOURCE_NAMES: Record<ResourceType, string> = {
@@ -16,6 +16,7 @@ const RESOURCE_NAMES: Record<ResourceType, string> = {
   products: "产品管理",
   deliveries: "送货管理",
   config: "编码管理",
+  financial: "财务管理",
 };
 
 const PERMISSION_NAMES: Record<PermissionType, string> = {

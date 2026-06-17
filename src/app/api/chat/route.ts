@@ -1,8 +1,7 @@
 import { NextRequest } from "next/server";
-import { LLMClient, Config } from "coze-coding-dev-sdk";
+import Anthropic from "@anthropic-ai/sdk";
 import { getUserFromToken } from "@/lib/auth";
 
-// 系统提示词 - 定义智能体的角色和能力
 const SYSTEM_PROMPT = `你是一个专业的项目管理系统智能助手，名字叫"非凡小助手"。你的职责是帮助用户理解和使用项目管理系统。
 
 系统功能介绍：
@@ -70,66 +69,103 @@ const SYSTEM_PROMPT = `你是一个专业的项目管理系统智能助手，名
 7. 对于数据库配置问题，提醒用户需要管理员权限
 8. 对于导入导出问题，引导用户下载导入模板参考字段说明`;
 
-// POST /api/chat - 聊天接口（流式输出）
+function getAnthropicClient(): Anthropic {
+  const apiKey =
+    process.env.MCAI_LLM_API_KEY ||
+    process.env.COZE_WORKLOAD_IDENTITY_API_KEY ||
+    process.env.OPENAI_API_KEY ||
+    "";
+
+  const baseURL =
+    process.env.MCAI_LLM_BASE_URL ||
+    process.env.COZE_INTEGRATION_MODEL_BASE_URL ||
+    "https://proxy.monkeycode-ai.com/v1";
+
+  if (!apiKey) {
+    throw new Error("LLM API key not configured");
+  }
+
+  return new Anthropic({
+    apiKey,
+    baseURL,
+  });
+}
+
+function getModel(): string {
+  return (
+    process.env.MCAI_LLM_MODEL ||
+    process.env.COZE_INTEGRATION_MODEL ||
+    "monkeycode-basic/qwen3.5-plus"
+  );
+}
+
+function buildMessages(
+  history: Array<{ role: string; content: string }>,
+  userMessage: string,
+): Array<Anthropic.Messages.MessageParam> {
+  const messages: Array<Anthropic.Messages.MessageParam> = [];
+
+  for (const h of history) {
+    if (h.role === "user" || h.role === "assistant") {
+      messages.push({ role: h.role as "user" | "assistant", content: h.content });
+    }
+  }
+
+  messages.push({ role: "user", content: userMessage });
+  return messages;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // 验证用户身份（可选，根据需求决定是否需要登录）
     const user = await getUserFromToken(request);
     if (!user) {
-      return new Response(JSON.stringify({ success: false, error: "未授权，请先登录" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ success: false, error: "未授权，请先登录" }),
+        { status: 401, headers: { "Content-Type": "application/json" } },
+      );
     }
 
     const body = await request.json();
     const { message, history = [] } = body;
 
     if (!message || typeof message !== "string") {
-      return new Response(JSON.stringify({ success: false, error: "请提供有效的消息内容" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ success: false, error: "请提供有效的消息内容" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
     }
 
-    // 构建消息历史
-    const messages: any[] = [
-      { role: "system", content: SYSTEM_PROMPT },
-      ...history,
-      { role: "user", content: message },
-    ];
+    const client = getAnthropicClient();
+    const model = getModel();
+    const messages = buildMessages(history, message);
 
-    // 初始化LLM客户端
-    const config = new Config();
-    const client = new LLMClient(config);
-
-    // 创建转换流
     const encoder = new TextEncoder();
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // 使用流式调用
-          const llmStream = client.stream(messages, {
-            model: "doubao-seed-1-6-251015",
-            temperature: 0.7,
-            caching: "disabled",
+          const llmStream = client.messages.stream({
+            model,
+            max_tokens: 4096,
+            system: SYSTEM_PROMPT,
+            messages,
           });
 
-          for await (const chunk of llmStream) {
-            if (chunk.content) {
-              const text = chunk.content.toString();
-              // 发送数据块
+          for await (const event of llmStream) {
+            if (
+              event.type === "content_block_delta" &&
+              event.delta.type === "text_delta"
+            ) {
+              const text = event.delta.text;
               const data = JSON.stringify({ content: text });
               controller.enqueue(encoder.encode(`data: ${data}\n\n`));
             }
           }
 
-          // 发送结束标记
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
-        } catch (error) {
-          console.error("LLM streaming error:", error);
+        } catch (error: any) {
+          console.error("LLM streaming error:", error?.message || error);
           const errorData = JSON.stringify({ error: "AI响应失败，请稍后重试" });
           controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
           controller.close();
@@ -137,20 +173,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 返回SSE流
     return new Response(stream, {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache, no-transform",
-        "Connection": "keep-alive",
+        Connection: "keep-alive",
         "X-Accel-Buffering": "no",
       },
     });
-  } catch (error) {
-    console.error("Chat API error:", error);
-    return new Response(JSON.stringify({ success: false, error: "聊天服务异常" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+  } catch (error: any) {
+    console.error("Chat API error:", error?.message || error);
+    return new Response(
+      JSON.stringify({ success: false, error: "聊天服务异常" }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
   }
 }

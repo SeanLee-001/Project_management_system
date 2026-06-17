@@ -64,7 +64,7 @@ const TAB_RESOURCE_MAP: Record<Tab, string | null> = {
   approvals: null, // 审批中心不需要权限
   knowledge_base: null, // 知识库不需要权限
   task_profile: null, // 任务画像不需要权限
-  financial_management: null, // 财务管理不需要权限
+  financial_management: "financial", // 财务管理需要权限
 };
 
 // 计算项目持续时间
@@ -970,8 +970,7 @@ export default function AppPage() {
       const project = customEvent.detail;
 
       // 检查审批状态，只有none、rejected状态的项目才能编辑
-      const approvalStatus = (project as any).approvalStatus;
-      if (approvalStatus && approvalStatus.status === "pending") {
+      if ((project as any).approvalStatus === "pending") {
         alert("该项目正在审批中，不允许编辑。请先撤销审批后再编辑。");
         return;
       }

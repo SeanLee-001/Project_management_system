@@ -119,8 +119,8 @@ export async function POST(
         // 这里应该从审批流程配置中获取下一级审批人
         // 简化处理，暂时使用默认逻辑
         // 实际应该查询 projectApprovalFlows 表
-        nextApproverId = approval.applicantId; // 临时使用申请人作为下一级
-        nextApproverName = approval.applicantName;
+        let nextApproverId = approval.applicantId; // 临时使用申请人作为下一级
+        let nextApproverName = approval.applicantName;
 
         await tx.insert(projectApprovalSteps).values({
           approvalId: id,

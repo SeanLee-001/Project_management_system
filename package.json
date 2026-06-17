@@ -11,6 +11,7 @@
     "cleanup": "node scripts/cleanup-unused-imports.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.104.2",
     "@aws-sdk/client-s3": "^3.958.0",
     "@aws-sdk/lib-storage": "^3.958.0",
     "@hello-pangea/dnd": "^18.0.1",
@@ -28,6 +29,7 @@
     "lucide-react": "^1.16.0",
     "next": "16.0.10",
     "next-intl": "^4.8.3",
+    "openai": "^6.42.0",
     "pg": "^8.16.3",
     "pinyin-pro": "^3.28.0",
     "pptxgenjs": "^4.0.1",

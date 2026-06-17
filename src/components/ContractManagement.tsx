@@ -341,7 +341,7 @@ export default function ContractManagement() {
     }
 
     // 检查合同是否有待审批的申请
-    if (editingContract.approvalRequestId) {
+    if (editingContract.approvalStatus === "pending") {
       alert("该合同有待审批的申请，请等待审批完成或撤销当前审批后再编辑");
       return;
     }
@@ -547,9 +547,7 @@ export default function ContractManagement() {
   };
 
   const handleEditContract = (contract: any) => {
-    // 检查审批状态，只有none、rejected状态才能编辑
-    const approvalStatus = contract.approvalStatus;
-    if (approvalStatus && approvalStatus.status === "pending") {
+    if (contract.approvalStatus === "pending") {
       alert("该合同正在审批中，不允许编辑。请先撤销审批后再编辑。");
       return;
     }
