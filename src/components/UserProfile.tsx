@@ -1246,61 +1246,75 @@ export default function UserProfile() {
               </p>
 
               {/* 筛选栏 */}
-              <div className="flex flex-wrap gap-2 mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <input
-                  type="text"
-                  placeholder="代理人姓名"
-                  value={filterAgentName}
-                  onChange={(e) => setFilterAgentName(e.target.value)}
-                  className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-28"
-                />
-                <select
-                  value={filterApprovalType}
-                  onChange={(e) => setFilterApprovalType(e.target.value)}
-                  className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                >
-                  <option value="">全部类型</option>
-                  {APPROVAL_TYPE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <input
-                  type="date"
-                  value={filterStartDate}
-                  onChange={(e) => setFilterStartDate(e.target.value)}
-                  className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-36"
-                  title="代理开始日期"
-                />
-                <input
-                  type="date"
-                  value={filterEndDate}
-                  onChange={(e) => setFilterEndDate(e.target.value)}
-                  className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-36"
-                  title="代理结束日期"
-                />
-                <input
-                  type="date"
-                  value={filterCreatedStart}
-                  onChange={(e) => setFilterCreatedStart(e.target.value)}
-                  className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-36"
-                  title="创建开始日期"
-                />
-                <input
-                  type="date"
-                  value={filterCreatedEnd}
-                  onChange={(e) => setFilterCreatedEnd(e.target.value)}
-                  className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-36"
-                  title="创建结束日期"
-                />
+              <div className="flex flex-wrap items-end gap-2 mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">代理人</span>
+                  <input
+                    type="text"
+                    placeholder="姓名"
+                    value={filterAgentName}
+                    onChange={(e) => setFilterAgentName(e.target.value)}
+                    className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-24"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">审批类型</span>
+                  <select
+                    value={filterApprovalType}
+                    onChange={(e) => setFilterApprovalType(e.target.value)}
+                    className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="">全部</option>
+                    {APPROVAL_TYPE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">开始日期</span>
+                  <input
+                    type="date"
+                    value={filterStartDate}
+                    onChange={(e) => setFilterStartDate(e.target.value)}
+                    className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-32"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">结束日期</span>
+                  <input
+                    type="date"
+                    value={filterEndDate}
+                    onChange={(e) => setFilterEndDate(e.target.value)}
+                    className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-32"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">创建起始</span>
+                  <input
+                    type="date"
+                    value={filterCreatedStart}
+                    onChange={(e) => setFilterCreatedStart(e.target.value)}
+                    className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-32"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">创建截止</span>
+                  <input
+                    type="date"
+                    value={filterCreatedEnd}
+                    onChange={(e) => setFilterCreatedEnd(e.target.value)}
+                    className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-32"
+                  />
+                </div>
                 <button
                   onClick={handleFilterSearch}
-                  className="px-3 py-1.5 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
+                  className="px-3 py-1.5 text-sm bg-orange-500 text-white rounded hover:bg-orange-600 h-9"
                 >
                   查询
                 </button>
                 <button
                   onClick={handleResetFilter}
-                  className="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 h-9"
                 >
                   重置
                 </button>
