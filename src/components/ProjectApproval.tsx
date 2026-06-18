@@ -10,11 +10,12 @@ interface ProjectApprovalProps {
   userId?: string;
   userRole?: string;
   targetApprovalId?: string | null;
+  targetApprovalType?: string | null;
   onApprovalViewed?: () => void;
   onApprovalCompleted?: () => void;
 }
 
-export default function ProjectApproval({ projectId, userId, userRole, targetApprovalId, onApprovalViewed, onApprovalCompleted }: ProjectApprovalProps) {
+export default function ProjectApproval({ projectId, userId, userRole, targetApprovalId, targetApprovalType, onApprovalViewed, onApprovalCompleted }: ProjectApprovalProps) {
   const [approvals, setApprovals] = useState<ProjectApproval[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showRejectDialog, setShowRejectDialog] = useState(false);

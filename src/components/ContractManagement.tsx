@@ -436,7 +436,7 @@ export default function ContractManagement() {
   const handleDeleteContract = async (contract: any) => {
     // 检查审批状态，如果正在审批中，不允许重复提交
     const approvalStatus = contract.approvalStatus;
-    if (approvalStatus && approvalStatus.status === "pending") {
+    if (approvalStatus === "pending") {
       alert("该合同正在审批中，不允许删除。请先撤销审批后再操作。");
       return;
     }
@@ -918,7 +918,7 @@ export default function ContractManagement() {
       render: (_, row) => {
         const approvalStatus = row.approvalStatus;
         const approvalRequestId = row.approvalRequestId;
-        const isPending = approvalStatus && approvalStatus.status === "pending";
+        const isPending = approvalStatus === "pending";
 
         return (
           <div className="flex gap-1 items-center justify-end">

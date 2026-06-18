@@ -76,6 +76,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     prepayInvoiceAmount: "",
     prepayInvoiceDate: "",
     prepayInvoiced: false,
+    prepayInvoiceNumber: "",
     arrivalAmount: "",
     arrivalReceived: false,
     arrivalStatus: "",
@@ -83,6 +84,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     arrivalInvoiceAmount: "",
     arrivalInvoiceDate: "",
     arrivalInvoiced: false,
+    arrivalInvoiceNumber: "",
     arrivalRatio: "",
     acceptanceAmount: "",
     acceptanceReceived: false,
@@ -91,6 +93,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     acceptanceInvoiceAmount: "",
     acceptanceInvoiceDate: "",
     acceptanceInvoiced: false,
+    acceptanceInvoiceNumber: "",
     acceptanceRatio: "",
     warrantyRatio: "",
     warrantyAmount: "",
@@ -100,6 +103,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     warrantyInvoiceAmount: "",
     warrantyInvoiceDate: "",
     warrantyInvoiced: false,
+    warrantyInvoiceNumber: "",
     notes: "",
     needApproval: false,
   });
@@ -560,9 +564,10 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
             console.error("获取用户信息失败，无法创建审批申请");
           } else {
             // 获取审批流程配置
-            let currentApproverId = "1";
+            let currentApproverId = "00000000-0000-0000-0000-000000001000";
             let currentApproverName = "系统管理员";
             let totalSteps = "level1";
+            let flowFound = false;
             
             try {
               const flowsRes = await fetch("/api/approval-flows?approvalType=new_order&includeDisabled=false");
@@ -573,6 +578,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                 if (flow.level1ApproverId) {
                   currentApproverId = flow.level1ApproverId;
                   currentApproverName = flow.level1ApproverRole || "审批人";
+                  flowFound = true;
                   if (flow.level3ApproverId) {
                     totalSteps = "level3";
                   } else if (flow.level2ApproverId) {
@@ -582,6 +588,9 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
               }
             } catch (e) {
               console.warn("获取审批流程失败，使用默认配置:", e);
+            }
+            if (!flowFound) {
+              console.warn("未找到订单新建审批流程配置，使用默认审批人");
             }
 
             // 创建审批申请
@@ -668,9 +677,10 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
 
     try {
       // 获取审批流程配置
-      let currentApproverId = "1";
+      let currentApproverId = "00000000-0000-0000-0000-000000001000";
       let currentApproverName = "系统管理员";
       let totalSteps = "level1";
+      let flowFound = false;
       
       try {
         const flowsRes = await fetch("/api/approval-flows?approvalType=edit_order&includeDisabled=false");
@@ -681,6 +691,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
           if (flow.level1ApproverId) {
             currentApproverId = flow.level1ApproverId;
             currentApproverName = flow.level1ApproverRole || "审批人";
+            flowFound = true;
             if (flow.level3ApproverId) {
               totalSteps = "level3";
             } else if (flow.level2ApproverId) {
@@ -690,6 +701,9 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
         }
       } catch (e) {
         console.warn("获取审批流程失败，使用默认配置:", e);
+      }
+      if (!flowFound) {
+        console.warn("未找到订单编辑审批流程配置，使用默认审批人");
       }
 
       // 构建变更内容
@@ -776,7 +790,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
   const handleDeleteOrder = async (order: any) => {
     // 检查审批状态，如果正在审批中，不允许重复提交
     const approvalStatus = order.approvalStatus;
-    if (approvalStatus && approvalStatus.status === "pending") {
+    if (approvalStatus === "pending") {
       alert("该订单正在审批中，不允许删除。请先撤销审批后再操作。");
       return;
     }
@@ -803,12 +817,12 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       };
 
       // 获取审批流程配置
-      let currentApproverId = "1"; // 默认系统管理员
+      let currentApproverId = "00000000-0000-0000-0000-000000001000";
       let currentApproverName = "系统管理员";
       let totalSteps = "level1";
+      let flowFound = false;
       
       try {
-        // 尝试获取订单删除审批流程配置
         const flowsRes = await fetch("/api/approval-flows?approvalType=delete_order&includeDisabled=false");
         const flowsJson = await flowsRes.json();
         console.log("审批流程查询结果:", flowsJson);
@@ -817,17 +831,19 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
           if (flow.level1ApproverId) {
             currentApproverId = flow.level1ApproverId;
             currentApproverName = flow.level1ApproverRole || "审批人";
+            flowFound = true;
             if (flow.level3ApproverId) {
               totalSteps = "level3";
             } else if (flow.level2ApproverId) {
               totalSteps = "level2";
             }
           }
-        } else {
-          console.log("未找到 delete_order 审批流程，使用默认配置");
         }
       } catch (e) {
-        console.error("获取审批流程失败:", e);
+        console.warn("获取审批流程失败，使用默认配置:", e);
+      }
+      if (!flowFound) {
+        console.warn("未找到订单删除审批流程配置，使用默认审批人");
       }
 
       // 创建删除订单审批记录
@@ -945,8 +961,33 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
   const handleEditOrder = async (order: any) => {
     const approvalStatus = order.approvalStatus;
     if (approvalStatus === "pending") {
-      alert("该订单正在审批中，不允许编辑。请先撤销审批后再编辑。");
-      return;
+      // 检查关联的审批请求是否仍存在
+      if (order.approvalRequestId) {
+        try {
+          const checkRes = await fetch(`/api/approvals/${order.approvalRequestId}`);
+          const checkJson = await checkRes.json();
+          if (!checkJson.success) {
+            // 审批请求已不存在，自动清除残留状态
+            await fetch(`/api/orders/${order.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ approvalStatus: "none", approvalRequestId: null }),
+            });
+            order.approvalStatus = "none";
+            order.approvalRequestId = null;
+          } else {
+            alert("该订单正在审批中，不允许编辑。请先撤销审批后再编辑。");
+            return;
+          }
+        } catch {
+          // 网络错误时保守处理
+          alert("该订单正在审批中，不允许编辑。请先撤销审批后再编辑。");
+          return;
+        }
+      } else {
+        alert("该订单正在审批中，不允许编辑。请先撤销审批后再编辑。");
+        return;
+      }
     }
 
     // 重新从API获取最新的订单数据（确保财务管理同步的数据已加载）
@@ -996,6 +1037,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       prepayInvoiceAmount: prepayInvoiced ? prepayAmt : "",
       prepayInvoiceDate: freshOrder.prepayInvoiceDate ? freshOrder.prepayInvoiceDate.split('T')[0] : "",
       prepayInvoiced,
+      prepayInvoiceNumber: freshOrder.prepayInvoiceNumber || "",
       arrivalAmount: arrivalAmt,
       arrivalReceived: freshOrder.arrivalReceived || false,
       arrivalStatus: freshOrder.arrivalStatus || "",
@@ -1003,6 +1045,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       arrivalInvoiceAmount: arrivalInvoiced ? arrivalAmt : "",
       arrivalInvoiceDate: freshOrder.arrivalInvoiceDate ? freshOrder.arrivalInvoiceDate.split('T')[0] : "",
       arrivalInvoiced,
+      arrivalInvoiceNumber: freshOrder.arrivalInvoiceNumber || "",
       arrivalRatio: freshOrder.arrivalRatio || "",
       acceptanceAmount: acceptanceAmt,
       acceptanceReceived: freshOrder.acceptanceReceived || false,
@@ -1011,6 +1054,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       acceptanceInvoiceAmount: acceptanceInvoiced ? acceptanceAmt : "",
       acceptanceInvoiceDate: freshOrder.acceptanceInvoiceDate ? freshOrder.acceptanceInvoiceDate.split('T')[0] : "",
       acceptanceInvoiced,
+      acceptanceInvoiceNumber: freshOrder.acceptanceInvoiceNumber || "",
       acceptanceRatio: freshOrder.acceptanceRatio || "",
       warrantyRatio: freshOrder.warrantyRatio || "",
       warrantyAmount: warrantyAmt,
@@ -1020,6 +1064,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       warrantyInvoiceAmount: warrantyInvoiced ? warrantyAmt : "",
       warrantyInvoiceDate: freshOrder.warrantyInvoiceDate ? freshOrder.warrantyInvoiceDate.split('T')[0] : "",
       warrantyInvoiced,
+      warrantyInvoiceNumber: freshOrder.warrantyInvoiceNumber || "",
       notes: freshOrder.notes || "",
       needApproval: false,
     });
@@ -1052,6 +1097,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       prepayInvoiceAmount: "",
       prepayInvoiceDate: "",
       prepayInvoiced: false,
+      prepayInvoiceNumber: "",
       arrivalAmount: "",
       arrivalReceived: false,
       arrivalStatus: "",
@@ -1059,6 +1105,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       arrivalInvoiceAmount: "",
       arrivalInvoiceDate: "",
       arrivalInvoiced: false,
+      arrivalInvoiceNumber: "",
       arrivalRatio: "",
       acceptanceAmount: "",
       acceptanceReceived: false,
@@ -1067,6 +1114,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       acceptanceInvoiceAmount: "",
       acceptanceInvoiceDate: "",
       acceptanceInvoiced: false,
+      acceptanceInvoiceNumber: "",
       acceptanceRatio: "",
       warrantyRatio: "",
       warrantyAmount: "",
@@ -1076,6 +1124,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       warrantyInvoiceAmount: "",
       warrantyInvoiceDate: "",
       warrantyInvoiced: false,
+      warrantyInvoiceNumber: "",
       notes: "",
       needApproval: false,
     });
@@ -1204,10 +1253,10 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
           row.warrantyReceived;
 
         const allInvoicesIssued =
-          row.prepayInvoiced &&
-          row.arrivalInvoiced &&
-          row.acceptanceInvoiced &&
-          row.warrantyInvoiced;
+          !!row.prepayInvoiceNumber &&
+          !!row.arrivalInvoiceNumber &&
+          !!row.acceptanceInvoiceNumber &&
+          !!row.warrantyInvoiceNumber;
 
         const isComplete = allPaymentReceived && allInvoicesIssued;
 
@@ -1362,35 +1411,26 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       width: 220,
       sortable: false,
       render: (_, row) => {
-        const parts = [];
-        const prepayAmount = parseFloat(row.prepayAmount || "0");
-        const arrivalAmount = parseFloat(row.arrivalAmount || "0");
-        const acceptanceAmount = parseFloat(row.acceptanceAmount || "0");
-        const warrantyAmount = parseFloat(row.warrantyAmount || "0");
-
-        if (prepayAmount > 0) {
-          const receivedIcon = row.prepayReceived ? "✅ " : "";
-          parts.push(`${receivedIcon}预付: ¥${Number(prepayAmount).toLocaleString()}`);
-        }
-        if (arrivalAmount > 0) {
-          const receivedIcon = row.arrivalReceived ? "✅ " : "";
-          parts.push(`${receivedIcon}到货: ¥${Number(arrivalAmount).toLocaleString()}`);
-        }
-        if (acceptanceAmount > 0) {
-          const receivedIcon = row.acceptanceReceived ? "✅ " : "";
-          parts.push(`${receivedIcon}验收: ¥${Number(acceptanceAmount).toLocaleString()}`);
-        }
-        if (warrantyAmount > 0) {
-          const receivedIcon = row.warrantyReceived ? "✅ " : "";
-          parts.push(`${receivedIcon}质保: ¥${Number(warrantyAmount).toLocaleString()}`);
-        }
-        return parts.length > 0 ? (
+        const items = [
+          { label: '预付', amount: parseFloat(row.prepayAmount || "0"), received: row.prepayReceived },
+          { label: '到货', amount: parseFloat(row.arrivalAmount || "0"), received: row.arrivalReceived },
+          { label: '验收', amount: parseFloat(row.acceptanceAmount || "0"), received: row.acceptanceReceived },
+          { label: '质保', amount: parseFloat(row.warrantyAmount || "0"), received: row.warrantyReceived },
+        ];
+        const visible = items.filter(i => i.amount > 0);
+        if (visible.length === 0) return '-';
+        return (
           <div className="text-xs space-y-1">
-            {parts.map((part, idx) => (
-              <div key={idx} className="text-gray-600 dark:text-gray-400">{part}</div>
+            {visible.map((item, idx) => (
+              <div key={idx} className="flex items-center justify-between gap-1 text-gray-600 dark:text-gray-400">
+                <span>{item.label}: ¥{Number(item.amount).toLocaleString()}</span>
+                {item.received && (
+                  <svg className="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                )}
+              </div>
             ))}
           </div>
-        ) : '-';
+        );
       },
     },
     {
@@ -1419,7 +1459,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       render: (_, row) => {
         const approvalStatus = row.approvalStatus;
         const approvalRequestId = row.approvalRequestId;
-        const isPending = approvalStatus && approvalStatus.status === "pending";
+        const isPending = approvalStatus === "pending";
 
         return (
           <div className="flex gap-1 items-center justify-end">
@@ -2356,7 +2396,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                               />
                             </td>
                             <td className="px-4 py-3 text-center">
-                              {orderForm.prepayInvoiced ? (
+                              {orderForm.prepayInvoiceNumber ? (
                                 <span className="text-xs text-green-600 font-medium cursor-not-allowed">完成</span>
                               ) : (
                                 <span className="text-xs text-gray-700 cursor-not-allowed">待开票</span>
@@ -2421,7 +2461,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                               />
                             </td>
                             <td className="px-4 py-3 text-center">
-                              {orderForm.arrivalInvoiced ? (
+                              {orderForm.arrivalInvoiceNumber ? (
                                 <span className="text-xs text-green-600 font-medium cursor-not-allowed">完成</span>
                               ) : (
                                 <span className="text-xs text-gray-700 cursor-not-allowed">待开票</span>
@@ -2486,7 +2526,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                               />
                             </td>
                             <td className="px-4 py-3 text-center">
-                              {orderForm.acceptanceInvoiced ? (
+                              {orderForm.acceptanceInvoiceNumber ? (
                                 <span className="text-xs text-green-600 font-medium cursor-not-allowed">完成</span>
                               ) : (
                                 <span className="text-xs text-gray-700 cursor-not-allowed">待开票</span>
@@ -2551,7 +2591,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                               />
                             </td>
                             <td className="px-4 py-3 text-center">
-                              {orderForm.warrantyInvoiced ? (
+                              {orderForm.warrantyInvoiceNumber ? (
                                 <span className="text-xs text-green-600 font-medium cursor-not-allowed">完成</span>
                               ) : (
                                 <span className="text-xs text-gray-700 cursor-not-allowed">待开票</span>

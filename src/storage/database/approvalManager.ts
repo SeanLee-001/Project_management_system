@@ -220,10 +220,21 @@ export const approvalManager = {
                 : approval.relatedData;
               
               if (relatedData.operation === "edit" && relatedData.changes) {
+                const dateFields = [
+                  'orderDate','deliveryDate','actualDeliveryDate',
+                  'prepayDate','prepayInvoiceDate',
+                  'arrivalDate','arrivalInvoiceDate',
+                  'acceptanceDate','acceptanceInvoiceDate',
+                  'warrantyDate','warrantyInvoiceDate',
+                ];
                 // 应用订单编辑的变更
                 Object.entries(relatedData.changes).forEach(([key, value]: [string, any]) => {
                   if (value?.new !== undefined) {
-                    updateOrderData[key] = value.new;
+                    let v = value.new;
+                    if (dateFields.includes(key) && typeof v === 'string') {
+                      v = new Date(v);
+                    }
+                    updateOrderData[key] = v;
                   }
                 });
               }
@@ -262,10 +273,15 @@ export const approvalManager = {
                 : approval.relatedData;
               
               if (relatedData.operation === "edit" && relatedData.changes) {
+                const contractDateFields = ['contractDate'];
                 // 应用合同编辑的变更
                 Object.entries(relatedData.changes).forEach(([key, value]: [string, any]) => {
                   if (value?.new !== undefined) {
-                    updateContractData[key] = value.new;
+                    let v = value.new;
+                    if (contractDateFields.includes(key) && typeof v === 'string') {
+                      v = new Date(v);
+                    }
+                    updateContractData[key] = v;
                   }
                 });
               }
@@ -617,6 +633,27 @@ export const approvalManager = {
    * @returns 删除的记录数
    */
   deleteByStatus: async (status: string) => {
+    // 先获取所有待删除的审批记录，以便更新关联订单/合同
+    const recordsToDelete = await db
+      .select()
+      .from(approvalRequests)
+      .where(eq(approvalRequests.status, status));
+
+    // 重置关联订单和合同的审批状态
+    for (const record of recordsToDelete) {
+      if (record.requestType === 'order') {
+        await db
+          .update(orders)
+          .set({ approvalStatus: 'none', approvalRequestId: null })
+          .where(eq(orders.id, record.requestId));
+      } else if (record.requestType === 'contract') {
+        await db
+          .update(contracts)
+          .set({ approvalStatus: 'none', approvalRequestId: null })
+          .where(eq(contracts.id, record.requestId));
+      }
+    }
+
     const result = await db.delete(approvalRequests)
       .where(eq(approvalRequests.status, status));
     return result.rowCount || 0;

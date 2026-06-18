@@ -290,14 +290,34 @@ export default function FinancialManagement() {
       const res = await fetch(`/api/invoices?${params.toString()}`);
       const json = await res.json();
       if (json.success) {
-        setInvoiceRows(json.data);
+    setInvoiceRows(json.data);
       }
-    } catch (err) {
-      console.error('加载发票数据失败:', err);
+    } catch (error) {
+      console.error('Error fetching invoice data:', error);
     } finally {
       setInvoiceLoading(false);
     }
   }, [invoiceKeyword, advCustomer, advOrderNumber, advContractCode, advDeliveryDate, advInvoiceDate, advInvoiceStatus]);
+
+  // 计算行合并信息：相同 orderId 的行合并"项目名称/客户、订单号、合同号、交付日期"
+  const invoiceMergeInfo = useMemo(() => {
+    const info: { rowSpan: number; isFirst: boolean; groupIndex: number }[] = [];
+    let i = 0;
+    let groupIdx = 0;
+    while (i < invoiceRows.length) {
+      const orderId = invoiceRows[i].orderId;
+      let span = 1;
+      while (i + span < invoiceRows.length && invoiceRows[i + span].orderId === orderId) {
+        span++;
+      }
+      for (let j = 0; j < span; j++) {
+        info.push({ rowSpan: span, isFirst: j === 0, groupIndex: groupIdx });
+      }
+      groupIdx++;
+      i += span;
+    }
+    return info;
+  }, [invoiceRows]);
 
   useEffect(() => {
     fetchInvoices();
@@ -362,6 +382,26 @@ export default function FinancialManagement() {
     const timer = setTimeout(() => fetchTransactions(), 300);
     return () => clearTimeout(timer);
   }, [fetchTransactions]);
+
+  // 计算交易明细行合并信息：相同 orderId 的行合并"序号、项目名称/客户、订单号、合同号、交付日期"
+  const txnMergeInfo = useMemo(() => {
+    const info: { rowSpan: number; isFirst: boolean; groupIndex: number }[] = [];
+    let i = 0;
+    let groupIdx = 0;
+    while (i < transactionRows.length) {
+      const orderId = transactionRows[i].orderId;
+      let span = 1;
+      while (i + span < transactionRows.length && transactionRows[i + span].orderId === orderId) {
+        span++;
+      }
+      for (let j = 0; j < span; j++) {
+        info.push({ rowSpan: span, isFirst: j === 0, groupIndex: groupIdx });
+      }
+      groupIdx++;
+      i += span;
+    }
+    return info;
+  }, [transactionRows]);
 
   const handleEditTxnRow = (row: TransactionRow) => {
     setEditingTxnRow(row);
@@ -838,30 +878,51 @@ export default function FinancialManagement() {
                   ) : (
                     invoiceRows.map((row, idx) => {
                       const hasInvoice = !!row.invoiceNumber;
+                      const mergeInfo = invoiceMergeInfo[idx];
+                      const renderMergeCell = mergeInfo.isFirst;
+                      const groupEven = mergeInfo.groupIndex % 2 === 0;
                       return (
                         <tr
                           key={row.id}
                           className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                            idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'
+                            groupEven ? 'bg-gray-50' : 'bg-white'
                           }`}
                         >
-                          <td className="px-4 py-3 text-center text-base text-gray-600">{idx + 1}</td>
-                          <td className="px-4 py-3">
-                            <div className="text-base text-gray-900">{row.projectName}</div>
-                            <div className="text-base text-gray-600">{row.customerName}</div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <button
-                              onClick={() => handleEditInvoiceRow(row)}
-                              className="text-base text-orange-400 hover:text-orange-300 hover:underline font-mono cursor-pointer"
-                            >
-                              {row.orderNumber}
-                            </button>
-                          </td>
-                          <td className="px-4 py-3 text-base text-gray-700">{row.contractCode || '-'}</td>
-                          <td className="px-4 py-3 text-base text-gray-700">
-                            {row.deliveryDate ? formatDate(row.deliveryDate) : '-'}
-                          </td>
+                          {/* 序号 - 合并 */}
+                          {renderMergeCell ? (
+                            <td rowSpan={mergeInfo.rowSpan} className="px-4 py-3 text-center text-base text-gray-600 align-middle border-r border-gray-200">
+                              {mergeInfo.groupIndex + 1}
+                            </td>
+                          ) : null}
+                          {renderMergeCell ? (
+                            <td rowSpan={mergeInfo.rowSpan} className="px-4 py-3 align-middle border-r border-gray-200">
+                              <div className="text-base text-gray-900">{row.projectName}</div>
+                              <div className="text-base text-gray-600">{row.customerName}</div>
+                            </td>
+                          ) : null}
+                          {/* 订单号 - 合并 */}
+                          {renderMergeCell ? (
+                            <td rowSpan={mergeInfo.rowSpan} className="px-4 py-3 align-middle border-r border-gray-200">
+                              <button
+                                onClick={() => handleEditInvoiceRow(row)}
+                                className="text-base text-orange-400 hover:text-orange-300 hover:underline font-mono cursor-pointer"
+                              >
+                                {row.orderNumber}
+                              </button>
+                            </td>
+                          ) : null}
+                          {/* 合同号 - 合并 */}
+                          {renderMergeCell ? (
+                            <td rowSpan={mergeInfo.rowSpan} className="px-4 py-3 align-middle text-base text-gray-700 border-r border-gray-200">
+                              {row.contractCode || '-'}
+                            </td>
+                          ) : null}
+                          {/* 交付日期 - 合并 */}
+                          {renderMergeCell ? (
+                            <td rowSpan={mergeInfo.rowSpan} className="px-4 py-3 align-middle text-base text-gray-700 border-r border-gray-200">
+                              {row.deliveryDate ? formatDate(row.deliveryDate) : '-'}
+                            </td>
+                          ) : null}
                           <td className="px-4 py-3">
                             <span className="px-2 py-0.5 rounded-md bg-gray-100 text-base text-gray-700">
                               {row.category}
@@ -1063,28 +1124,53 @@ export default function FinancialManagement() {
                       </td>
                     </tr>
                   ) : (
-                    transactionRows.map((row, idx) => (
+                    transactionRows.map((row, idx) => {
+                      const mergeInfo = txnMergeInfo[idx];
+                      const renderMergeCell = mergeInfo.isFirst;
+                      const groupEven = mergeInfo.groupIndex % 2 === 0;
+                      return (
                       <tr
                         key={row.id}
                         className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                          idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'
+                          groupEven ? 'bg-gray-50' : 'bg-white'
                         }`}
                       >
-                        <td className="px-3 py-3 text-center text-base text-gray-600">{idx + 1}</td>
-                        <td className="px-3 py-3">
-                          <div className="text-base text-gray-900">{row.projectName}</div>
-                          <div className="text-base text-gray-600">{row.customerName}</div>
-                        </td>
-                        <td className="px-3 py-3">
-                          <button
-                            onClick={() => handleEditTxnRow(row)}
-                            className="text-base text-blue-400 hover:text-blue-300 hover:underline transition-colors"
-                          >
-                            {row.orderNumber}
-                          </button>
-                        </td>
-                        <td className="px-3 py-3 text-base text-gray-700">{row.contractCode}</td>
-                        <td className="px-3 py-3 text-base text-gray-700">{row.deliveryDate || '-'}</td>
+                        {/* 序号 - 合并 */}
+                        {renderMergeCell ? (
+                          <td rowSpan={mergeInfo.rowSpan} className="px-3 py-3 text-center text-base text-gray-600 align-middle border-r border-gray-200">
+                            {mergeInfo.groupIndex + 1}
+                          </td>
+                        ) : null}
+                        {/* 项目名称/客户 - 合并 */}
+                        {renderMergeCell ? (
+                          <td rowSpan={mergeInfo.rowSpan} className="px-3 py-3 align-middle border-r border-gray-200">
+                            <div className="text-base text-gray-900">{row.projectName}</div>
+                            <div className="text-base text-gray-600">{row.customerName}</div>
+                          </td>
+                        ) : null}
+                        {/* 订单号 - 合并 */}
+                        {renderMergeCell ? (
+                          <td rowSpan={mergeInfo.rowSpan} className="px-3 py-3 align-middle border-r border-gray-200">
+                            <button
+                              onClick={() => handleEditTxnRow(row)}
+                              className="text-base text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+                            >
+                              {row.orderNumber}
+                            </button>
+                          </td>
+                        ) : null}
+                        {/* 合同号 - 合并 */}
+                        {renderMergeCell ? (
+                          <td rowSpan={mergeInfo.rowSpan} className="px-3 py-3 align-middle text-base text-gray-700 border-r border-gray-200">
+                            {row.contractCode}
+                          </td>
+                        ) : null}
+                        {/* 交付日期 - 合并 */}
+                        {renderMergeCell ? (
+                          <td rowSpan={mergeInfo.rowSpan} className="px-3 py-3 align-middle text-base text-gray-700 border-r border-gray-200">
+                            {row.deliveryDate || '-'}
+                          </td>
+                        ) : null}
                         <td className="px-3 py-3">
                           <span className="px-2 py-0.5 rounded-md bg-gray-100 text-base text-gray-700">
                             {row.category}
@@ -1147,7 +1233,8 @@ export default function FinancialManagement() {
                           {row.notes || '-'}
                         </td>
                       </tr>
-                    ))
+                      );
+                    })
                   )}
                 </tbody>
               </table>

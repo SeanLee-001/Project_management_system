@@ -47,6 +47,7 @@ export default function MessageCenter({ userId, userRole: role }: { userId: stri
   const [selectedMessage, setSelectedMessage] = useState<MessageWithSender | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [latestAppVersion, setLatestAppVersion] = useState<any>(null);
+  const [resolvedApprovalIds, setResolvedApprovalIds] = useState<Set<string>>(new Set());
 
   const [messageForm, setMessageForm] = useState({
     title: "",
@@ -121,6 +122,31 @@ export default function MessageCenter({ userId, userRole: role }: { userId: stri
           })
         );
         setMessages(messagesWithSender);
+        // 检查审批类消息的审批状态（通用审批和项目审批）
+        const approvalMessages = messagesWithSender.filter(m =>
+          (m.relatedType === "approval" || m.relatedType === "project_approval") && m.relatedId
+        );
+        if (approvalMessages.length > 0) {
+          const statusChecks = await Promise.allSettled(
+            approvalMessages.map(async (m) => {
+              try {
+                const apiPath = m.relatedType === "project_approval"
+                  ? `/api/project-approvals/${m.relatedId}`
+                  : `/api/approvals/${m.relatedId}`;
+                const aRes = await fetch(apiPath);
+                const aJson = await aRes.json();
+                return { id: m.relatedId!, pending: aJson.success && aJson.data?.status === "pending" };
+              } catch { return { id: m.relatedId!, pending: true }; }
+            })
+          );
+          const nonPending = new Set<string>();
+          statusChecks.forEach(r => {
+            if (r.status === "fulfilled" && !r.value.pending) {
+              nonPending.add(r.value.id);
+            }
+          });
+          setResolvedApprovalIds(nonPending);
+        }
       }
     } catch (error) {
       console.error("获取消息列表失败:", error);
@@ -539,8 +565,8 @@ export default function MessageCenter({ userId, userRole: role }: { userId: stri
       sortable: false,
       render: (_, row) => (
         <div className="flex gap-2 justify-end flex-wrap">
-          {/* 审批消息显示前往审批按钮 */}
-          {(row.relatedType === "project_approval" || row.relatedType === "approval") && row.relatedId && (
+          {/* 审批消息显示前往审批按钮（已完成审批的不显示） */}
+          {(row.relatedType === "project_approval" || row.relatedType === "approval") && row.relatedId && !resolvedApprovalIds.has(row.relatedId) && (
             <button
               onClick={() => handleMessageClick(row)}
               className="rounded-md bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-700 transition-colors hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50"
@@ -1086,8 +1112,8 @@ export default function MessageCenter({ userId, userRole: role }: { userId: stri
 
             {/* 操作按钮 */}
             <div className="flex justify-end gap-3">
-              {/* 审批消息显示前往审批按钮 */}
-              {(selectedMessage.relatedType === "project_approval" || selectedMessage.relatedType === "approval") && selectedMessage.relatedId && (
+              {/* 审批消息显示前往审批按钮（已完成审批的不显示） */}
+              {(selectedMessage.relatedType === "project_approval" || selectedMessage.relatedType === "approval") && selectedMessage.relatedId && !resolvedApprovalIds.has(selectedMessage.relatedId) && (
                 <button
                   onClick={() => {
                     setShowMessageDetail(false);

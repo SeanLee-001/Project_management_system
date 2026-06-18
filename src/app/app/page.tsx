@@ -18,6 +18,7 @@ const DeliveryManagement = dynamic(() => import("@/components/DeliveryManagement
 const KnowledgeBaseManagement = dynamic(() => import("@/components/KnowledgeBaseManagement"), { ssr: false });
 const MessageCenter = dynamic(() => import("@/components/MessageCenter"), { ssr: false });
 const ProjectApproval = dynamic(() => import("@/components/ProjectApproval"), { ssr: false });
+const GeneralApprovalView = dynamic(() => import("@/components/GeneralApprovalView"), { ssr: false });
 const ProgressPlanTable = dynamic(() => import("@/components/ProgressPlanTable"), { ssr: false });
 const EditableProgressPlanTable = dynamic(() => import("@/components/EditableProgressPlanTable"), { ssr: false });
 const ChatAssistant = dynamic(() => import("@/components/ChatAssistant"), { ssr: false });
@@ -156,6 +157,7 @@ export default function AppPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userPermissions, setUserPermissions] = useState<Record<string, string[]>>({});
   const [targetApprovalId, setTargetApprovalId] = useState<string | null>(null);
+  const [targetApprovalType, setTargetApprovalType] = useState<string | null>(null);
   const [loginTime, setLoginTime] = useState<Date | null>(null);
   const [loginDuration, setLoginDuration] = useState<string>("");
 
@@ -166,6 +168,10 @@ export default function AppPage() {
 
   const handleApprovalIdChange = useCallback((approvalId: string | null) => {
     setTargetApprovalId(approvalId);
+  }, []);
+
+  const handleApprovalTypeChange = useCallback((type: string | null) => {
+    setTargetApprovalType(type);
   }, []);
 
   const [projects, setProjects] = useState<Project[]>([]);
@@ -2471,6 +2477,7 @@ export default function AppPage() {
         <URLParamsHandler
           onTabChange={handleTabChange}
           onApprovalIdChange={handleApprovalIdChange}
+          onApprovalTypeChange={handleApprovalTypeChange}
         />
       </Suspense>
 
@@ -5131,7 +5138,10 @@ export default function AppPage() {
 
           {activeTab === "messages" && <MessageCenter userId={currentUser?.id || ""} userRole={currentUser?.role || ""} />}
 
-          {activeTab === "approvals" && <ProjectApproval userId={currentUser?.id} userRole={currentUser?.role} targetApprovalId={targetApprovalId} onApprovalViewed={() => setTargetApprovalId(null)} onApprovalCompleted={fetchProjects} />}
+          {activeTab === "approvals" && targetApprovalType === "general" && (
+            <GeneralApprovalView userId={currentUser?.id} userRole={currentUser?.role} targetApprovalId={targetApprovalId} onApprovalViewed={() => { setTargetApprovalId(null); setTargetApprovalType(null); }} onApprovalCompleted={fetchProjects} />
+          )}
+          {activeTab === "approvals" && targetApprovalType !== "general" && <ProjectApproval userId={currentUser?.id} userRole={currentUser?.role} targetApprovalId={targetApprovalId} targetApprovalType={targetApprovalType} onApprovalViewed={() => { setTargetApprovalId(null); setTargetApprovalType(null); }} onApprovalCompleted={fetchProjects} />}
 
         </div>
       </div>
