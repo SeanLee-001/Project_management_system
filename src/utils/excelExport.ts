@@ -255,3 +255,42 @@ export async function exportOrders(orders: any[]): Promise<void> {
     subtitle: `导出时间: ${new Date().toLocaleString('zh-CN')}`,
   });
 }
+
+/**
+ * 导出代理设置数据到Excel
+ */
+export async function exportDelegations(delegations: any[]): Promise<void> {
+  const TYPE_LABELS: Record<string, string> = {
+    order: "订单审批",
+    contract: "合同审批",
+    new_project: "新增项目",
+    edit_project: "编辑项目",
+    delete_project: "删除项目",
+  };
+
+  const columns: ExportColumn<any>[] = [
+    { header: '序号', key: '_index', width: 8 },
+    { header: '代理编码', key: 'proxyCode', width: 14, formatter: (v) => v || '-' },
+    { header: '代理人', key: 'proxyName', width: 14, formatter: (v, row) => v || row.proxyUsername || '-' },
+    { header: '邮箱', key: 'proxyEmail', width: 22, formatter: (v) => v || '-' },
+    { header: '部门', key: 'proxyDepartmentName', width: 14, formatter: (v) => v || '-' },
+    { header: '代理类型', key: 'approvalTypes', width: 28, formatter: (v) => (v || []).map((t: string) => TYPE_LABELS[t] || t).join('、') || '-' },
+    { header: '开始日期', key: 'startDate', width: 14 },
+    { header: '结束日期', key: 'endDate', width: 14 },
+    { header: '创建日期', key: 'createdAt', width: 14, formatter: (v) => v ? v.slice(0, 10) : '-' },
+    { header: '状态', key: 'status', width: 10 },
+  ];
+
+  const today = new Date().toISOString().slice(0, 10);
+  const withIndex = delegations.map((d, i) => {
+    const isInRange = d.isActive && d.startDate <= today && d.endDate >= today;
+    const isPending = d.isActive && d.startDate > today;
+    const statusLabel = !d.isActive ? '已失效' : isInRange ? '生效中' : isPending ? '待生效' : '已过期';
+    return { ...d, _index: i + 1, status: statusLabel };
+  });
+
+  await exportToExcel(withIndex, columns as any, `代理设置_${today}`, '代理设置', {
+    title: '代理设置报表',
+    subtitle: `导出时间: ${new Date().toLocaleString('zh-CN')}`,
+  });
+}

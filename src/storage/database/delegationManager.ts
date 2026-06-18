@@ -116,10 +116,14 @@ export const delegationManager = {
     ];
 
     if (params.agentName) {
+      const searchPattern = `%${params.agentName}%`;
       conditions.push(
         or(
-          like(users.fullName, `%${params.agentName}%`),
-          like(users.username, `%${params.agentName}%`)
+          like(users.fullName, searchPattern),
+          like(users.username, searchPattern),
+          like(users.email, searchPattern),
+          like(users.phone, searchPattern),
+          like(users.employeeNumber, searchPattern)
         )
       );
     }

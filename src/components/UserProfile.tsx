@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { UserRoleDisplayNames, type User } from "@/storage/database/shared/schema";
 import { RESOURCE_NAMES, PERMISSION_NAMES } from "@/lib/permissionUtils";
+import { exportDelegations } from "@/utils/excelExport";
 
 type ResourceType = "projects" | "tasks" | "users" | "customers" | "customer_contacts" | "contracts" | "orders" | "products" | "config";
 type PermissionType = "view" | "edit" | "delete" | "use";
@@ -1264,11 +1265,11 @@ export default function UserProfile() {
               </p>
 
               {/* 当前生效中的代理 */}
-              <div className="mb-4 p-4 border-2 border-red-200 dark:border-red-800 rounded-lg bg-red-50/30 dark:bg-red-900/10">
-                <h4 className="text-sm font-medium text-red-700 dark:text-red-400 mb-3">当前生效代理</h4>
+              <div className="mb-4 p-4 border-2 border-emerald-200 dark:border-emerald-800 rounded-lg bg-emerald-50/50 dark:bg-emerald-900/10">
+                <h4 className="text-sm font-medium text-emerald-700 dark:text-emerald-400 mb-3">当前生效代理</h4>
                 {delegationsLoading ? (
                   <div className="flex items-center justify-center py-4">
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-red-500 border-t-transparent"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-500 border-t-transparent"></div>
                   </div>
                 ) : (() => {
                   const today = new Date().toISOString().slice(0, 10);
@@ -1282,19 +1283,19 @@ export default function UserProfile() {
                     <div className="overflow-x-auto">
                       <table className="min-w-full text-sm">
                         <thead>
-                          <tr className="border-b border-red-200 dark:border-red-800">
-                            <th className="text-left py-1.5 px-3 text-red-600 dark:text-red-400 font-medium text-xs">序号</th>
-                            <th className="text-left py-1.5 px-3 text-red-600 dark:text-red-400 font-medium text-xs">编码</th>
-                            <th className="text-left py-1.5 px-3 text-red-600 dark:text-red-400 font-medium text-xs">代理人</th>
-                            <th className="text-left py-1.5 px-3 text-red-600 dark:text-red-400 font-medium text-xs">代理类型</th>
-                            <th className="text-left py-1.5 px-3 text-red-600 dark:text-red-400 font-medium text-xs w-32">日期范围</th>
-                            <th className="text-left py-1.5 px-3 text-red-600 dark:text-red-400 font-medium text-xs">创建日期</th>
-                            <th className="text-left py-1.5 px-3 text-red-600 dark:text-red-400 font-medium text-xs">操作</th>
+                          <tr className="border-b border-emerald-200 dark:border-emerald-800">
+                            <th className="text-left py-1.5 px-3 text-emerald-600 dark:text-emerald-400 font-medium text-xs">序号</th>
+                            <th className="text-left py-1.5 px-3 text-emerald-600 dark:text-emerald-400 font-medium text-xs">编码</th>
+                            <th className="text-left py-1.5 px-3 text-emerald-600 dark:text-emerald-400 font-medium text-xs">代理人</th>
+                            <th className="text-left py-1.5 px-3 text-emerald-600 dark:text-emerald-400 font-medium text-xs">代理类型</th>
+                            <th className="text-left py-1.5 px-3 text-emerald-600 dark:text-emerald-400 font-medium text-xs w-32">日期范围</th>
+                            <th className="text-left py-1.5 px-3 text-emerald-600 dark:text-emerald-400 font-medium text-xs">创建日期</th>
+                            <th className="text-left py-1.5 px-3 text-emerald-600 dark:text-emerald-400 font-medium text-xs">操作</th>
                           </tr>
                         </thead>
                         <tbody>
                           {activeList.map((d: any, idx: number) => (
-                            <tr key={d.id} className="border-b border-red-100 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-900/20">
+                            <tr key={d.id} className="border-b border-emerald-100 dark:border-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
                               <td className="py-1.5 px-3 text-gray-700 dark:text-gray-300 text-xs">{idx + 1}</td>
                               <td className="py-1.5 px-3 text-gray-700 dark:text-gray-300 font-mono text-xs">{d.proxyCode || "-"}</td>
                               <td className="py-1.5 px-3">
@@ -1327,10 +1328,10 @@ export default function UserProfile() {
                   <span className="text-xs text-gray-500 dark:text-gray-400">代理人</span>
                   <input
                     type="text"
-                    placeholder="姓名"
+                    placeholder="姓名/工号/邮箱/手机"
                     value={filterAgentName}
                     onChange={(e) => setFilterAgentName(e.target.value)}
-                    className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-24"
+                    className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-40"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -1389,6 +1390,18 @@ export default function UserProfile() {
                   查询
                 </button>
                 <button
+                  onClick={() => {
+                    if (queryDelegations && queryDelegations.length > 0) {
+                      exportDelegations(queryDelegations);
+                    } else {
+                      alert("暂无查询结果可导出");
+                    }
+                  }}
+                  className="px-3 py-1.5 text-sm bg-green-500 text-white rounded hover:bg-green-600 h-9"
+                >
+                  导出
+                </button>
+                <button
                   onClick={handleResetFilter}
                   className="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 h-9"
                 >
@@ -1409,19 +1422,18 @@ export default function UserProfile() {
                         <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium w-32">日期范围</th>
                         <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">创建日期</th>
                         <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">状态</th>
-                        <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">操作</th>
                       </tr>
                     </thead>
                     <tbody>
                       {queryLoading ? (
                         <tr>
-                          <td colSpan={8} className="py-8 text-center text-gray-400">
+                          <td colSpan={7} className="py-8 text-center text-gray-400">
                             <div className="animate-spin rounded-full h-5 w-5 border-2 border-orange-500 border-t-transparent mx-auto"></div>
                           </td>
                         </tr>
                       ) : queryDelegations.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="py-8 text-center text-gray-400">未找到匹配记录</td>
+                          <td colSpan={7} className="py-8 text-center text-gray-400">未找到匹配记录</td>
                         </tr>
                       ) : (
                         queryDelegations.map((d: any, idx: number) => {
@@ -1449,12 +1461,6 @@ export default function UserProfile() {
                               }`}>
                                 {statusLabel}
                               </span>
-                            </td>
-                            <td className="py-2 px-3">
-                              <div className="flex gap-2">
-                                <button onClick={() => handleEditProxy(d)} className="text-orange-500 hover:text-orange-600 text-sm">编辑</button>
-                                <button onClick={() => handleDeleteDelegation(d.id)} className="text-red-500 hover:text-red-600 text-sm">删除</button>
-                              </div>
                             </td>
                           </tr>
                           );
@@ -1551,7 +1557,7 @@ export default function UserProfile() {
                                   }
                                 }}
                                 className="w-full h-10 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                placeholder="输入姓名搜索..."
+                                placeholder="输入姓名/工号/邮箱/手机搜索..."
                               />
                               {searchResults.length > 0 && (
                                 <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
