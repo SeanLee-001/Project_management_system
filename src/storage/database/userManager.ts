@@ -1,6 +1,6 @@
 import { eq, and, SQL, like, or } from "drizzle-orm";
 import { getDb } from "coze-coding-dev-sdk";
-import { users, insertUserSchema, updateUserSchema } from "./shared/schema";
+import { users, departments, insertUserSchema, updateUserSchema } from "./shared/schema";
 import type { User, InsertUser, UpdateUser } from "./shared/schema";
 import * as bcrypt from "bcryptjs";
 
@@ -343,15 +343,32 @@ export class UserManager {
   }
 
   // 模糊查询用户（按工号、用户名、全名、邮箱、手机）
-  async searchUsers(query: string): Promise<{ id: string; fullName: string | null; username: string; employeeNumber: string | null; email: string; phone: string | null }[]> {
-    if (!query || query.trim().length === 0) {
+  async searchUsers(query: string, departmentId?: string): Promise<{ id: string; fullName: string | null; username: string; employeeNumber: string | null; email: string; phone: string | null; departmentName: string | null }[]> {
+    if ((!query || query.trim().length === 0) && !departmentId) {
       return [];
     }
 
     const db = await getDb();
-    const searchPattern = `%${query.trim()}%`;
 
-    // 查询工号、用户名、全名、邮箱或手机匹配的用户
+    const conditions: SQL[] = [eq(users.isActive, true)];
+
+    if (departmentId) {
+      conditions.push(eq(users.departmentId, departmentId));
+    }
+
+    if (query && query.trim().length > 0) {
+      const searchPattern = `%${query.trim()}%`;
+      conditions.push(
+        or(
+          like(users.employeeNumber, searchPattern),
+          like(users.username, searchPattern),
+          like(users.fullName, searchPattern),
+          like(users.email, searchPattern),
+          like(users.phone, searchPattern)
+        )
+      );
+    }
+
     const results = await db
       .select({
         id: users.id,
@@ -360,23 +377,13 @@ export class UserManager {
         employeeNumber: users.employeeNumber,
         email: users.email,
         phone: users.phone,
+        departmentName: departments.departmentName,
       })
       .from(users)
-      .where(
-        and(
-          eq(users.isActive, true),
-          // 模糊查询工号、用户名、全名、邮箱或手机
-          or(
-            like(users.employeeNumber, searchPattern),
-            like(users.username, searchPattern),
-            like(users.fullName, searchPattern),
-            like(users.email, searchPattern),
-            like(users.phone, searchPattern)
-          )
-        )
-      )
+      .leftJoin(departments, eq(users.departmentId, departments.id))
+      .where(and(...conditions))
       .orderBy(users.fullName)
-      .limit(20); // 限制返回数量
+      .limit(20);
 
     return results;
   }

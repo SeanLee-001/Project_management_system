@@ -6,6 +6,7 @@ import {
   projects,
 } from "@/storage/database/shared/schema";
 import { eq } from "drizzle-orm";
+import { delegationManager } from "@/storage/database/delegationManager";
 
 // POST /api/project-approvals/[id]/reject - 拒绝审批
 export async function POST(
@@ -60,10 +61,18 @@ export async function POST(
 
     // 系统管理员/超级管理员可以跳过审批人检查
     if (!isSystemAdmin && approval.currentApproverId && approval.currentApproverId !== approverId) {
-      return NextResponse.json(
-        { success: false, error: "您不是当前审批人，无法审批" },
-        { status: 403 }
+      // 检查是否是代理人
+      const isProxy = await delegationManager.isProxyFor(
+        approverId,
+        approval.currentApproverId,
+        approval.approvalType
       );
+      if (!isProxy) {
+        return NextResponse.json(
+          { success: false, error: "您不是当前审批人，无法审批" },
+          { status: 403 }
+        );
+      }
     }
 
     if (!rejectReason || !rejectReason.trim()) {

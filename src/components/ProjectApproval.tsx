@@ -159,12 +159,6 @@ export default function ProjectApproval({ projectId, userId, userRole, targetApp
     // 系统管理员和超级管理员可以跳过所有审核流程，直接审核
     // 支持多种角色格式：system_admin, admin, 管理员，系统管理员等
     const roleStr = String(userRole || "");
-    console.log('[DEBUG handleApprove]', {
-      userRole,
-      roleStr,
-      userId,
-      currentApproverId: approval.currentApproverId,
-    });
     
     // 判断是否为系统管理员（支持中英文）
     const isAdmin = roleStr === "system_admin" || 
@@ -175,11 +169,6 @@ export default function ProjectApproval({ projectId, userId, userRole, targetApp
     
     const isCurrentApprover = approval.currentApproverId === userId;
     
-    console.log('[DEBUG handleApprove result]', {
-      isAdmin,
-      isCurrentApprover,
-      canApprove: isAdmin || isCurrentApprover,
-    });
     
     if (!isAdmin && !isCurrentApprover) {
       alert("您不是当前审批人，无法审批\n\n调试信息:\nuserRole: " + userRole + "\nroleStr: " + roleStr + "\nisAdmin: " + isAdmin);
@@ -247,14 +236,6 @@ export default function ProjectApproval({ projectId, userId, userRole, targetApp
                     roleStr.toLowerCase().includes("管理员");
     
     const isCurrentApprover = rejectingApproval.currentApproverId === userId;
-    
-    console.log('[DEBUG handleRejectSubmit]', {
-      userRole,
-      roleStr,
-      isAdmin,
-      isCurrentApprover,
-      canApprove: isAdmin || isCurrentApprover,
-    });
     
     if (!isAdmin && !isCurrentApprover) {
       alert("您不是当前审批人，无法审批\n\n调试信息:\nuserRole: " + userRole + "\nroleStr: " + roleStr + "\nisAdmin: " + isAdmin);
@@ -1013,15 +994,6 @@ export default function ProjectApproval({ projectId, userId, userRole, targetApp
                                roleStr.toLowerCase().includes("管理员");
                 const isCurrentApprover = row.currentApproverId === userId;
                 const showButtons = isAdmin || isCurrentApprover;
-                
-                console.log('[DEBUG Button Render]', {
-                  userRole,
-                  roleStr,
-                  isAdmin,
-                  isCurrentApprover,
-                  showButtons,
-                });
-                
                 return showButtons;
               })() && (
                 <>

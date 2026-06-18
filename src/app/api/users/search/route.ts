@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { userManager } from "@/storage/database";
+import { userManager } from "@/storage/database/userManager";
+import { getUserFromToken } from "@/lib/auth";
 
-// GET /api/users/search?q=xxx - 模糊查询用户
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const query = searchParams.get("q");
-
-    if (!query) {
-      return NextResponse.json(
-        { success: false, error: "查询参数不能为空" },
-        { status: 400 }
-      );
+    const user = await getUserFromToken(request);
+    if (!user) {
+      return NextResponse.json({ error: "未登录" }, { status: 401 });
     }
 
-    const users = await userManager.searchUsers(query);
-    return NextResponse.json({ success: true, data: users });
+    const searchParams = request.nextUrl.searchParams;
+    const q = searchParams.get("q") || "";
+    const departmentId = searchParams.get("departmentId") || undefined;
+
+    if (!q.trim() && !departmentId) {
+      return NextResponse.json([]);
+    }
+
+    const results = await userManager.searchUsers(q.trim(), departmentId);
+    return NextResponse.json(results);
   } catch (error) {
-    console.error("Error searching users:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to search users" },
-      { status: 500 }
-    );
+    console.error("搜索用户失败:", error);
+    return NextResponse.json({ error: "搜索用户失败" }, { status: 500 });
   }
 }

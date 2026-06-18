@@ -10,6 +10,7 @@ import {
 import { eq } from "drizzle-orm";
 import { projectManager } from "@/storage/database";
 import { messageManager } from "@/storage/database/messageManager";
+import { delegationManager } from "@/storage/database/delegationManager";
 
 // POST /api/project-approvals/[id]/approve - 通过审批
 export async function POST(
@@ -57,10 +58,18 @@ export async function POST(
 
     // 系统管理员/超级管理员可以跳过审批人检查
     if (!isSystemAdmin && approval.currentApproverId && approval.currentApproverId !== approverId) {
-      return NextResponse.json(
-        { success: false, error: "您不是当前审批人，无法审批" },
-        { status: 403 }
+      // 检查是否是代理人
+      const isProxy = await delegationManager.isProxyFor(
+        approverId,
+        approval.currentApproverId,
+        approval.approvalType
       );
+      if (!isProxy) {
+        return NextResponse.json(
+          { success: false, error: "您不是当前审批人，无法审批" },
+          { status: 403 }
+        );
+      }
     }
 
     // 系统管理员/超级管理员跳过所有审核流程，直接到最后一级

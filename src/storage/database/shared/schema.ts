@@ -6,6 +6,8 @@ import {
   timestamp,
   boolean,
   integer,
+  date,
+  jsonb,
   index,
 } from "drizzle-orm/pg-core";
 import { createSchemaFactory } from "drizzle-zod";
@@ -2034,3 +2036,43 @@ export type UpdateKnowledgeBase = z.infer<typeof updateKnowledgeBaseSchema>;
 export type KnowledgeBaseAttachment = typeof knowledgeBaseAttachments.$inferSelect;
 export type InsertKnowledgeBaseAttachment = z.infer<typeof insertKnowledgeBaseAttachmentSchema>;
 export type UpdateKnowledgeBaseAttachment = z.infer<typeof updateKnowledgeBaseAttachmentSchema>;
+
+// ============================================
+// 代理人设置表 delegation_settings
+// ============================================
+
+export const delegationSettings = pgTable(
+  "delegation_settings",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    delegatorId: varchar("delegator_id", { length: 36 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    proxyId: varchar("proxy_id", { length: 36 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    approvalTypes: jsonb("approval_types").$type<string[]>().notNull(),
+    proxyCode: varchar("proxy_code", { length: 20 }),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date").notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => ({
+    delegatorIdx: index("delegation_delegator_idx").on(table.delegatorId),
+    proxyIdx: index("delegation_proxy_idx").on(table.proxyId),
+    activeIdx: index("delegation_active_idx").on(table.isActive),
+  })
+);
+
+export const insertDelegationSchema = createCoercedInsertSchema(delegationSettings);
+export const updateDelegationSchema = createCoercedInsertSchema(delegationSettings).partial();
+
+export type DelegationSetting = typeof delegationSettings.$inferSelect;
+export type InsertDelegationSetting = z.infer<typeof insertDelegationSchema>;
+export type UpdateDelegationSetting = z.infer<typeof updateDelegationSchema>;

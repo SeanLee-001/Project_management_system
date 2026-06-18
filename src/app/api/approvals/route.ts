@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { approvalManager } from "@/storage/database/approvalManager";
 import { messageManager } from "@/storage/database/messageManager";
 import { userManager } from "@/storage/database/userManager";
+import { delegationManager } from "@/storage/database/delegationManager";
 
 // GET /api/approvals - 获取审批列表
 export async function GET(request: NextRequest) {
@@ -18,6 +19,15 @@ export async function GET(request: NextRequest) {
     if (approverId) {
       // 获取指定审批人的待审批列表
       approvals = await approvalManager.getByApproverId(approverId);
+      // 同时获取代理人身份下的审批
+      const activeProxies = await delegationManager.getActiveProxiesForApprover(approverId);
+      for (const proxy of activeProxies) {
+        const delegatedApprovals = await approvalManager.getByApproverId(proxy.delegatorId);
+        // 过滤：只包含匹配代理审批类型的审批
+        const matchingTypes = proxy.approvalTypes as string[];
+        const filtered = delegatedApprovals.filter((a: any) => matchingTypes.includes(a.requestType));
+        approvals.push(...filtered);
+      }
     } else if (status) {
       // 获取指定状态的审批列表
       approvals = await approvalManager.getByStatus(status);

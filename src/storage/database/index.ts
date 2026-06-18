@@ -4,6 +4,8 @@ export { userManager } from "./userManager";
 export { systemManager } from "./systemManager";
 export { systemLogManager } from "./systemLogManager";
 export { loginLogManager } from "./loginLogManager";
+export { approvalManager } from "./approvalManager";
+export { delegationManager } from "./delegationManager";
 export { customerManager } from "./customerManager";
 export { contractManager } from "./contractManager";
 export { orderManager } from "./orderManager";

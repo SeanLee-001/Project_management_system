@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from 'next-intl';
@@ -198,7 +198,7 @@ export default function AppPage() {
   const editingCodeSearchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // 看板状态
-  const [dashboardType, setDashboardType] = useState<"project" | "stats">("project" as any); // 项目看板 vs 数据统计看板
+  const [dashboardType, setDashboardType] = useState<"project" | "stats">("project");
   const [dashboardFilterStatus, setDashboardFilterStatus] = useState<"all" | "active" | "completed" | "paused" | "cancelled">("all");
   const [dashboardViewMode, setDashboardViewMode] = useState<"table" | "card">("table");
   const [showDashboardSearch, setShowDashboardSearch] = useState(false);
@@ -446,7 +446,7 @@ export default function AppPage() {
   });
 
   // 合同看板状态
-  const [contractsDashboardType, setContractsDashboardType] = useState<"contracts" | "stats">("contracts" as any); // 合同列表 vs 合同统计看板
+  const [contractsDashboardType, setContractsDashboardType] = useState<"contracts" | "stats">("contracts");
 
   // 订单看板分页状态
   const [ordersDashboardCurrentPage, setOrdersDashboardCurrentPage] = useState(1);
@@ -1193,7 +1193,6 @@ export default function AppPage() {
     setCurrentUser(null);
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     router.push("/login");
-    console.log("由于长时间无操作，已自动登出");
   };
 
   useAutoLogout({
@@ -2334,9 +2333,6 @@ export default function AppPage() {
       return;
     }
 
-    console.log("[handleCreateTask] Selected project:", selectedProject);
-    console.log("[handleCreateTask] Task form data:", taskForm);
-
     try {
       const res = await fetch(`/api/projects/${selectedProject.id}/tasks`, {
         method: "POST",
@@ -2345,10 +2341,7 @@ export default function AppPage() {
         body: JSON.stringify(taskForm),
       });
 
-      console.log("[handleCreateTask] Response status:", res.status);
-
       const json = await res.json();
-      console.log("[handleCreateTask] Response JSON:", json);
 
       if (json.success) {
         setShowTaskForm(false);
@@ -2389,8 +2382,6 @@ export default function AppPage() {
         Object.entries(editTaskForm).filter(([_, value]) => value !== "" && value !== null && value !== undefined)
       );
 
-      console.log("Updating task with data:", updateData);
-
       const res = await fetch(`/api/tasks/${editingTask.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -2398,8 +2389,6 @@ export default function AppPage() {
         body: JSON.stringify(updateData),
       });
       const json = await res.json();
-
-      console.log("Update response:", json);
 
       if (json.success) {
         setShowEditTaskForm(false);
@@ -2997,6 +2986,21 @@ export default function AppPage() {
                   知识库
                 </button>
               )}
+              {hasTabPermission("financial_management") && (
+                <button
+                  onClick={() => setActiveTab("financial_management")}
+                  className={`flex flex-col items-center px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                    activeTab === "financial_management"
+                      ? "bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400"
+                      : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  <svg className="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  财务
+                </button>
+              )}
             </div>
           </nav>
         </div>
@@ -3025,9 +3029,8 @@ export default function AppPage() {
                       项目看板
                     </button>
                     <button
-                      onClick={() => setDashboardType("stats" as any)}
+                      onClick={() => setDashboardType("stats")}
                       className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        // @ts-ignore
                         dashboardType === "stats"
                           ? "bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-white"
                           : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
@@ -5078,9 +5081,8 @@ export default function AppPage() {
                       合同列表
                     </button>
                     <button
-                      onClick={() => setContractsDashboardType("stats" as any)}
+                      onClick={() => setContractsDashboardType("stats")}
                       className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        // @ts-ignore
                         contractsDashboardType === "stats"
                           ? "bg-white text-gray-900 shadow-sm dark:bg-gray-600 dark:text-white"
                           : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"

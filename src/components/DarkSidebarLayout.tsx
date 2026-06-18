@@ -21,6 +21,7 @@ import {
   X,
   Bell,
   Search,
+  DollarSign,
 } from "lucide-react";
 
 interface DarkSidebarLayoutProps {
@@ -39,6 +40,7 @@ const menuItems = [
   { href: "/app?tab=orders", icon: Package, label: "订单管理", color: "from-indigo-400 to-indigo-600" },
   { href: "/app?tab=products", icon: Package, label: "产品管理", color: "from-red-400 to-red-600" },
   { href: "/app?tab=approvals", icon: Shield, label: "项目审批", color: "from-teal-400 to-teal-600" },
+  { href: "/app?tab=financial_management", icon: DollarSign, label: "财务管理", color: "from-amber-400 to-amber-600" },
   { href: "/login-logs", icon: History, label: "登录日志", color: "from-orange-400 to-orange-600" },
   { href: "/admin", icon: Settings, label: "系统管理", color: "from-cyan-400 to-cyan-600" },
 ];

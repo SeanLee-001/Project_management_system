@@ -1,7 +1,7 @@
-import { eq, and, SQL, like } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getDb } from "coze-coding-dev-sdk";
-import { systemSettings, insertSystemSettingSchema, updateSystemSettingSchema } from "./shared/schema";
-import type { SystemSetting, InsertSystemSetting, UpdateSystemSetting } from "./shared/schema";
+import { systemSettings } from "./shared/schema";
+import type { SystemSetting } from "./shared/schema";
 
 export class SystemManager {
   async getSetting(key: string): Promise<SystemSetting | null> {

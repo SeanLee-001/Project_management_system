@@ -39,7 +39,6 @@ export async function readExcelFile(file: File): Promise<any[]> {
   });
 
   // 读取数据行
-  let rowIndex = 2;
   worksheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return; // 跳过表头
 

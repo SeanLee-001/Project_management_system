@@ -6,6 +6,7 @@ import {
   orders,
   contracts,
 } from "./shared/schema";
+import { delegationManager } from "./delegationManager";
 
 export const approvalManager = {
   // 获取所有审批申请
@@ -150,7 +151,15 @@ export const approvalManager = {
     }
 
     if (approval.currentApproverId !== approverId) {
-      throw new Error("您不是当前审批人");
+      // 检查是否是代理人
+      const isProxy = await delegationManager.isProxyFor(
+        approverId,
+        approval.currentApproverId!,
+        approval.requestType
+      );
+      if (!isProxy) {
+        throw new Error("您不是当前审批人");
+      }
     }
 
     // 添加审批历史
@@ -327,7 +336,15 @@ export const approvalManager = {
     }
 
     if (approval.currentApproverId !== approverId) {
-      throw new Error("您不是当前审批人");
+      // 检查是否是代理人
+      const isProxy = await delegationManager.isProxyFor(
+        approverId,
+        approval.currentApproverId!,
+        approval.requestType
+      );
+      if (!isProxy) {
+        throw new Error("您不是当前审批人");
+      }
     }
 
     // 添加审批历史
@@ -633,6 +650,7 @@ export const approvalManager = {
    * @returns 删除的记录数
    */
   deleteByStatus: async (status: string) => {
+    const db = await getDb();
     // 先获取所有待删除的审批记录，以便更新关联订单/合同
     const recordsToDelete = await db
       .select()

@@ -473,7 +473,7 @@ export default function FinancialManagement() {
   };
 
   return (
-    <div className="w-full h-full bg-white text-gray-900 p-6 overflow-auto">
+    <div className="w-full h-full bg-white text-gray-900 p-3 sm:p-6 overflow-auto">
       {/* 顶部标题栏 */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
@@ -481,7 +481,7 @@ export default function FinancialManagement() {
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">财务管理</h1>
             <p className="text-sm text-gray-400 mt-1">项目收支与资金流向实时监控</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value as any)}
@@ -537,7 +537,7 @@ export default function FinancialManagement() {
       {activeTab === 'overview' && (
         <div className="space-y-6">
           {/* KPI 卡片行 */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="rounded-xl border border-gray-200 bg-white p-5">
               <div className="flex items-center gap-3 mb-3">
                 <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
@@ -1248,8 +1248,8 @@ export default function FinancialManagement() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-xl border border-gray-200 bg-white shadow-2xl p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">编辑交易信息</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="col-span-1 sm:col-span-2">
                 <label className="block text-xs text-gray-600 mb-1">项目名称 / 客户</label>
                 <input type="text" value={`${editingTxnRow.projectName} / ${editingTxnRow.customerName}`} disabled className="w-full h-9 rounded-lg border border-gray-200 bg-white/50 px-3 text-sm text-gray-400 outline-none" />
               </div>
@@ -1308,7 +1308,7 @@ export default function FinancialManagement() {
           <div className="w-full max-w-lg rounded-xl border border-gray-200 bg-white shadow-2xl p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">编辑发票信息</h2>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">项目名称</label>
                   <input type="text" value={editingInvoiceRow.projectName} disabled className="w-full h-9 rounded-lg border border-gray-200 bg-white/50 px-3 text-sm text-gray-400 outline-none" />
@@ -1334,7 +1334,7 @@ export default function FinancialManagement() {
                   <input type="text" value={editingInvoiceRow.amount} disabled className="w-full h-9 rounded-lg border border-gray-200 bg-white/50 px-3 text-sm text-gray-400 outline-none" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-gray-600 mb-1">发票号 <span className="text-orange-400">*手动输入</span></label>
                   <input

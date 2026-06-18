@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { exportOrders } from "@/utils/excelExport";
 import { generateImportTemplate, orderImportColumns } from "@/utils/excelImport";
 import { Pencil, Trash2, Undo2 } from "lucide-react";
@@ -572,7 +572,6 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
             try {
               const flowsRes = await fetch("/api/approval-flows?approvalType=new_order&includeDisabled=false");
               const flowsJson = await flowsRes.json();
-              console.log("订单新建审批流程查询结果:", flowsJson);
               if (flowsJson.success && flowsJson.data && flowsJson.data.length > 0) {
                 const flow = flowsJson.data[0];
                 if (flow.level1ApproverId) {
@@ -618,7 +617,6 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
 
             if (approvalRes.ok) {
               const approvalJson = await approvalRes.json();
-              console.log("订单新建审批申请已创建:", approvalJson.data);
             } else {
               console.error("创建审批申请失败:", await approvalRes.text());
               alert("订单已创建，但创建审批申请失败");
@@ -685,7 +683,6 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       try {
         const flowsRes = await fetch("/api/approval-flows?approvalType=edit_order&includeDisabled=false");
         const flowsJson = await flowsRes.json();
-        console.log("订单编辑审批流程查询结果:", flowsJson);
         if (flowsJson.success && flowsJson.data && flowsJson.data.length > 0) {
           const flow = flowsJson.data[0];
           if (flow.level1ApproverId) {
@@ -825,7 +822,6 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       try {
         const flowsRes = await fetch("/api/approval-flows?approvalType=delete_order&includeDisabled=false");
         const flowsJson = await flowsRes.json();
-        console.log("审批流程查询结果:", flowsJson);
         if (flowsJson.success && flowsJson.data && flowsJson.data.length > 0) {
           const flow = flowsJson.data[0];
           if (flow.level1ApproverId) {
@@ -847,13 +843,6 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       }
 
       // 创建删除订单审批记录
-      console.log("提交删除订单审批:", {
-        requestType: "order",
-        requestId: order.id,
-        title: `删除订单：${orderData.projectName}`,
-        applicantId: user.id,
-        currentApproverId: currentApproverId,
-      });
 
       const approvalRes = await fetch("/api/approvals", {
         method: "POST",
@@ -878,9 +867,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
         }),
       });
 
-      console.log("审批 API 响应状态:", approvalRes.status);
       const approvalJson = await approvalRes.json();
-      console.log("审批 API 响应内容:", approvalJson);
       
       if (approvalJson.success) {
         alert("删除申请已提交，等待审批");
@@ -2333,7 +2320,6 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                             <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-600 border-b border-gray-200">金额（元）</th>
                             <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 border-b border-gray-200 w-24">收款状态</th>
                             <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 border-b border-gray-200 w-32">付款日期</th>
-                            <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-600 border-b border-gray-200">开票金额（元）</th>
                             <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 border-b border-gray-200 w-32">开票日期</th>
                             <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 border-b border-gray-200 w-20">开票状态</th>
                           </tr>
@@ -2377,14 +2363,6 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                                 value={orderForm.prepayDate}
                                 disabled
                                 className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-400 cursor-not-allowed outline-none"
-                              />
-                            </td>
-                            <td className="px-4 py-3">
-                              <input
-                                type="text"
-                                value={orderForm.prepayInvoiceAmount}
-                                disabled
-                                className="w-full text-right rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm font-mono text-gray-400 cursor-not-allowed outline-none"
                               />
                             </td>
                             <td className="px-4 py-3">
@@ -2446,14 +2424,6 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                             </td>
                             <td className="px-4 py-3">
                               <input
-                                type="text"
-                                value={orderForm.arrivalInvoiceAmount}
-                                disabled
-                                className="w-full text-right rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm font-mono text-gray-400 cursor-not-allowed outline-none"
-                              />
-                            </td>
-                            <td className="px-4 py-3">
-                              <input
                                 type="date"
                                 value={orderForm.arrivalInvoiceDate}
                                 disabled
@@ -2511,14 +2481,6 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                             </td>
                             <td className="px-4 py-3">
                               <input
-                                type="text"
-                                value={orderForm.acceptanceInvoiceAmount}
-                                disabled
-                                className="w-full text-right rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm font-mono text-gray-400 cursor-not-allowed outline-none"
-                              />
-                            </td>
-                            <td className="px-4 py-3">
-                              <input
                                 type="date"
                                 value={orderForm.acceptanceInvoiceDate}
                                 disabled
@@ -2572,14 +2534,6 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                                 value={orderForm.warrantyDate}
                                 disabled
                                 className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-400 cursor-not-allowed outline-none"
-                              />
-                            </td>
-                            <td className="px-4 py-3">
-                              <input
-                                type="text"
-                                value={orderForm.warrantyInvoiceAmount}
-                                disabled
-                                className="w-full text-right rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm font-mono text-gray-400 cursor-not-allowed outline-none"
                               />
                             </td>
                             <td className="px-4 py-3">

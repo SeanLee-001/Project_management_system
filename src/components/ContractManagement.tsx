@@ -264,7 +264,6 @@ export default function ContractManagement() {
             try {
               const flowsRes = await fetch("/api/approval-flows?approvalType=new_contract&includeDisabled=false");
               const flowsJson = await flowsRes.json();
-              console.log("合同新建审批流程查询结果:", flowsJson);
               if (flowsJson.success && flowsJson.data && flowsJson.data.length > 0) {
                 const flow = flowsJson.data[0];
                 if (flow.level1ApproverId) {
@@ -306,7 +305,6 @@ export default function ContractManagement() {
 
             if (approvalRes.ok) {
               const approvalJson = await approvalRes.json();
-              console.log("合同新建审批申请已创建:", approvalJson.data);
             } else {
               console.error("创建审批申请失败:", await approvalRes.text());
               alert("合同已创建，但创建审批申请失败");
@@ -469,7 +467,6 @@ export default function ContractManagement() {
       try {
         const flowsRes = await fetch("/api/approval-flows?approvalType=delete_contract&includeDisabled=false");
         const flowsJson = await flowsRes.json();
-        console.log("合同删除审批流程查询结果:", flowsJson);
         if (flowsJson.success && flowsJson.data && flowsJson.data.length > 0) {
           const flow = flowsJson.data[0];
           if (flow.level1ApproverId) {
