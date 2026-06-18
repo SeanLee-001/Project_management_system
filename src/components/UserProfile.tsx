@@ -21,6 +21,22 @@ const RESOURCE_DISPLAY_ORDER: { key: ResourceType; name: string }[] = [
   { key: "config", name: "编码管理" },
 ];
 
+const APPROVAL_TYPE_OPTIONS = [
+  { value: "order", label: "订单审批" },
+  { value: "contract", label: "合同审批" },
+  { value: "new_project", label: "新增项目审批" },
+  { value: "edit_project", label: "编辑项目审批" },
+  { value: "delete_project", label: "删除项目审批" },
+];
+
+const APPROVAL_TYPE_LABELS: Record<string, string> = {
+  order: "订单审批",
+  contract: "合同审批",
+  new_project: "新增项目",
+  edit_project: "编辑项目",
+  delete_project: "删除项目",
+};
+
 export default function UserProfile() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -43,6 +59,33 @@ export default function UserProfile() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // 代理人设置状态
+  const [delegations, setDelegations] = useState<any[]>([]);
+  const [delegationsLoading, setDelegationsLoading] = useState(false);
+  const [showProxyModal, setShowProxyModal] = useState(false);
+  const [editingProxyId, setEditingProxyId] = useState<string | null>(null);
+  const [proxyModalData, setProxyModalData] = useState({
+    proxyId: "",
+    approvalTypes: [] as string[],
+    startDate: "",
+    endDate: "",
+  });
+  const [proxySearchText, setProxySearchText] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [proxyActionLoading, setProxyActionLoading] = useState(false);
+  const [proxyError, setProxyError] = useState("");
+  const [departments, setDepartments] = useState<{ id: string; departmentName: string }[]>([]);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
+  const [showDeptDropdown, setShowDeptDropdown] = useState(false);
+
+  // 代理记录筛选
+  const [filterAgentName, setFilterAgentName] = useState("");
+  const [filterApprovalType, setFilterApprovalType] = useState("");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
+  const [filterCreatedStart, setFilterCreatedStart] = useState("");
+  const [filterCreatedEnd, setFilterCreatedEnd] = useState("");
+
   // 用户权限状态
   const [userPermissions, setUserPermissions] = useState<Record<string, string[]>>({});
   const [permissionsLoading, setPermissionsLoading] = useState(false);
@@ -51,7 +94,15 @@ export default function UserProfile() {
   useEffect(() => {
     loadUserProfile();
     loadUserPermissions();
+    fetchDelegations();
   }, []);
+
+  // 关闭部门下拉菜单（点击外部）
+  useEffect(() => {
+    const handler = () => setShowDeptDropdown(false);
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [showDeptDropdown]);
 
   // 加载用户权限
   const loadUserPermissions = async () => {
@@ -409,6 +460,154 @@ export default function UserProfile() {
     }
   };
 
+  // 代理人设置相关
+  const fetchDelegations = async (params?: Record<string, string>) => {
+    setDelegationsLoading(true);
+    try {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      const res = await fetch("/api/delegations" + qs);
+      if (res.ok) {
+        const data = await res.json();
+        setDelegations(data);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setDelegationsLoading(false);
+    }
+  };
+
+  const handleUserSearch = async (query: string, deptId?: string) => {
+    const hasQuery = query.trim().length > 0;
+    const hasDept = !!deptId;
+    if (!hasQuery && !hasDept) {
+      setSearchResults([]);
+      return;
+    }
+    try {
+      const params = new URLSearchParams();
+      if (hasQuery) params.set("q", query.trim());
+      if (hasDept) params.set("departmentId", deptId!);
+      const res = await fetch(`/api/users/search?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSearchResults(data || []);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleProxySubmit = async () => {
+    const { proxyId, approvalTypes, startDate, endDate } = proxyModalData;
+    if (!proxyId) {
+      setProxyError("请选择代理人");
+      return;
+    }
+    if (approvalTypes.length === 0) {
+      setProxyError("请至少选择一种代理审批类型");
+      return;
+    }
+    if (!startDate || !endDate) {
+      setProxyError("请设置日期范围");
+      return;
+    }
+    if (startDate > endDate) {
+      setProxyError("开始日期不能晚于结束日期");
+      return;
+    }
+
+    setProxyActionLoading(true);
+    setProxyError("");
+
+    try {
+      const url = editingProxyId ? `/api/delegations/${editingProxyId}` : "/api/delegations";
+      const method = editingProxyId ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ proxyId, approvalTypes, startDate, endDate }),
+      });
+
+      if (res.ok) {
+        setShowProxyModal(false);
+        setSearchResults([]);
+        fetchDelegations();
+      } else {
+        const data = await res.json();
+        setProxyError(data.error || "操作失败");
+      }
+    } catch {
+      setProxyError("网络错误，请稍后重试");
+    } finally {
+      setProxyActionLoading(false);
+    }
+  };
+
+  const handleFilterSearch = () => {
+    const params: Record<string, string> = {};
+    if (filterAgentName.trim()) params.agentName = filterAgentName.trim();
+    if (filterApprovalType) params.approvalType = filterApprovalType;
+    if (filterStartDate) params.startDate = filterStartDate;
+    if (filterEndDate) params.endDate = filterEndDate;
+    if (filterCreatedStart) params.createdAtStart = filterCreatedStart;
+    if (filterCreatedEnd) params.createdAtEnd = filterCreatedEnd;
+    fetchDelegations(params);
+  };
+
+  const handleResetFilter = () => {
+    setFilterAgentName("");
+    setFilterApprovalType("");
+    setFilterStartDate("");
+    setFilterEndDate("");
+    setFilterCreatedStart("");
+    setFilterCreatedEnd("");
+    fetchDelegations();
+  };
+
+  const handleNewProxy = () => {
+    setEditingProxyId(null);
+    setProxyModalData({ proxyId: "", approvalTypes: [], startDate: "", endDate: "" });
+    setProxySearchText("");
+    setSearchResults([]);
+    setSelectedDepartmentId("");
+    setProxyError("");
+    setShowProxyModal(true);
+  };
+
+  const handleEditProxy = (d: any) => {
+    setEditingProxyId(d.id);
+    setProxyModalData({
+      proxyId: d.proxyId,
+      approvalTypes: d.approvalTypes || [],
+      startDate: d.startDate || "",
+      endDate: d.endDate || "",
+    });
+    setProxySearchText(d.proxyName || d.proxyUsername || "");
+    setSearchResults([]);
+    setSelectedDepartmentId("");
+    setProxyError("");
+    setShowProxyModal(true);
+  };
+
+  const handleDeleteDelegation = async (id: string) => {
+    if (!confirm("确定要删除此代理设置吗？")) {
+      return;
+    }
+
+    setProxyActionLoading(true);
+    try {
+      const res = await fetch(`/api/delegations/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        fetchDelegations();
+      }
+    } catch {
+      // ignore
+    } finally {
+      setProxyActionLoading(false);
+    }
+  };
+
   const handleBack = () => {
     router.push("/");
   };
@@ -516,9 +715,366 @@ export default function UserProfile() {
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
                       未激活
                     </span>
-                  )}
+              )}
+            </div>
+
+            {showProxyModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                    {editingProxyId ? "编辑代理设置" : "新增代理设置"}
+                  </h2>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">代理人</label>
+                      {editingProxyId ? (
+                        <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                          {proxySearchText}
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="flex gap-2">
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (departments.length === 0) {
+                                    fetch("/api/departments")
+                                      .then((r) => r.json())
+                                      .then((data) => setDepartments(data || []))
+                                      .catch(() => {});
+                                  }
+                                  setShowDeptDropdown(!showDeptDropdown);
+                                }}
+                                className="h-10 px-3 border border-gray-300 rounded-lg text-sm text-gray-700 bg-white hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 whitespace-nowrap flex items-center gap-1"
+                              >
+                                {selectedDepartmentId
+                                  ? departments.find((d) => d.id === selectedDepartmentId)?.departmentName || "已选部门"
+                                  : "选择部门"}
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </button>
+                              {showDeptDropdown && (
+                                <div className="absolute z-10 mt-1 w-44 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedDepartmentId("");
+                                      setShowDeptDropdown(false);
+                                      if (proxySearchText.trim()) {
+                                        handleUserSearch(proxySearchText);
+                                      }
+                                    }}
+                                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 ${!selectedDepartmentId ? "bg-orange-50 dark:bg-orange-900/30 text-orange-600" : "text-gray-700 dark:text-gray-300"}`}
+                                  >
+                                    全部部门
+                                  </button>
+                                  {departments.map((dept) => (
+                                    <button
+                                      key={dept.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedDepartmentId(dept.id);
+                                        setShowDeptDropdown(false);
+                                        handleUserSearch(proxySearchText, dept.id);
+                                      }}
+                                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 ${selectedDepartmentId === dept.id ? "bg-orange-50 dark:bg-orange-900/30 text-orange-600" : "text-gray-700 dark:text-gray-300"}`}
+                                    >
+                                      {dept.departmentName}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="relative flex-1">
+                              <input
+                                type="text"
+                                value={proxySearchText}
+                                onChange={(e) => {
+                                  setProxySearchText(e.target.value);
+                                  if (e.target.value.trim().length > 0 || selectedDepartmentId) {
+                                    handleUserSearch(e.target.value, selectedDepartmentId || undefined);
+                                  } else {
+                                    setSearchResults([]);
+                                  }
+                                }}
+                                className="w-full h-10 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                placeholder="输入姓名搜索..."
+                              />
+                              {searchResults.length > 0 && (
+                                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                  {searchResults.map((u: any) => (
+                                    <button
+                                      key={u.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setProxyModalData({ ...proxyModalData, proxyId: u.id });
+                                        setProxySearchText(u.fullName || u.username);
+                                        setSearchResults([]);
+                                      }}
+                                      className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                                    >
+                                      <div className="text-sm text-gray-900 dark:text-white font-medium">
+                                        {u.fullName || u.username}
+                                      </div>
+                                      <div className="text-xs text-gray-400 mt-0.5">
+                                        {u.departmentName && <span>{u.departmentName} · </span>}
+                                        {u.email}
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+            </div>
+
+            {/* 代理人设置卡片 */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  代理人设置
+                </h3>
+                <button
+                  onClick={handleNewProxy}
+                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                >
+                  新增代理
+                </button>
+              </div>
+
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                设置代理人后，代理人可在指定时间范围内代为处理对应类型的审批。
+              </p>
+
+              {/* 筛选栏 */}
+              <div className="flex flex-wrap gap-2 mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <input
+                  type="text"
+                  placeholder="代理人姓名"
+                  value={filterAgentName}
+                  onChange={(e) => setFilterAgentName(e.target.value)}
+                  className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-28"
+                />
+                <select
+                  value={filterApprovalType}
+                  onChange={(e) => setFilterApprovalType(e.target.value)}
+                  className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="">全部类型</option>
+                  {APPROVAL_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <input
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => setFilterStartDate(e.target.value)}
+                  className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-36"
+                  title="代理开始日期"
+                />
+                <input
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => setFilterEndDate(e.target.value)}
+                  className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-36"
+                  title="代理结束日期"
+                />
+                <input
+                  type="date"
+                  value={filterCreatedStart}
+                  onChange={(e) => setFilterCreatedStart(e.target.value)}
+                  className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-36"
+                  title="创建开始日期"
+                />
+                <input
+                  type="date"
+                  value={filterCreatedEnd}
+                  onChange={(e) => setFilterCreatedEnd(e.target.value)}
+                  className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white w-36"
+                  title="创建结束日期"
+                />
+                <button
+                  onClick={handleFilterSearch}
+                  className="px-3 py-1.5 text-sm bg-orange-500 text-white rounded hover:bg-orange-600"
+                >
+                  查询
+                </button>
+                <button
+                  onClick={handleResetFilter}
+                  className="px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  重置
+                </button>
+              </div>
+
+              {/* 表格 */}
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">序号</th>
+                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">编码</th>
+                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">代理人</th>
+                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">代理类型</th>
+                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium w-32">日期范围</th>
+                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">创建日期</th>
+                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">状态</th>
+                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {delegationsLoading ? (
+                      <tr>
+                        <td colSpan={8} className="py-8 text-center text-gray-400">
+                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-orange-500 border-t-transparent mx-auto"></div>
+                        </td>
+                      </tr>
+                    ) : delegations.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="py-8 text-center text-gray-400">暂无代理设置</td>
+                      </tr>
+                    ) : (
+                      delegations.map((d: any, idx: number) => {
+                        const today = new Date().toISOString().slice(0, 10);
+                        const isInRange = d.isActive && d.startDate <= today && d.endDate >= today;
+                        const isPending = d.isActive && d.startDate > today;
+                        const statusLabel = !d.isActive ? "已失效" : isInRange ? "生效中" : isPending ? "待生效" : "已过期";
+                        const statusColor = isInRange ? "green" : !d.isActive || !isPending ? "red" : "yellow";
+                        return (
+                        <tr key={d.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                          <td className="py-2 px-3 text-gray-700 dark:text-gray-300">{idx + 1}</td>
+                          <td className="py-2 px-3 text-gray-700 dark:text-gray-300 font-mono text-xs">{d.proxyCode || "-"}</td>
+                          <td className="py-2 px-3">
+                            <div className="text-gray-900 dark:text-white font-medium text-sm">{d.proxyName || d.proxyUsername || "-"}</div>
+                            <div className="text-xs text-gray-400">{d.proxyEmail || ""}</div>
+                          </td>
+                          <td className="py-2 px-3 text-gray-700 dark:text-gray-300 text-xs">{(d.approvalTypes || []).map((t: string) => APPROVAL_TYPE_LABELS[t] || t).join("、") || "-"}</td>
+                          <td className="py-2 px-3 text-gray-700 dark:text-gray-300 text-xs whitespace-nowrap">{d.startDate || "-"} ~ {d.endDate || "-"}</td>
+                          <td className="py-2 px-3 text-gray-700 dark:text-gray-300 text-xs">{d.createdAt ? d.createdAt.slice(0, 10) : "-"}</td>
+                          <td className="py-2 px-3">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              statusColor === "green" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" :
+                              statusColor === "yellow" ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" :
+                              "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+                            }`}>
+                              {statusLabel}
+                            </span>
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleEditProxy(d)}
+                                className="text-orange-500 hover:text-orange-600 text-sm"
+                              >
+                                编辑
+                              </button>
+                              <button
+                                onClick={() => handleDeleteDelegation(d.id)}
+                                className="text-red-500 hover:text-red-600 text-sm"
+                              >
+                                删除
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+                        </div>
+                      )}
+                      {proxyModalData.proxyId && (
+                        <p className="mt-1 text-xs text-orange-500">
+                          已选择：{proxySearchText}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">代理审批类型</label>
+                      <div className="flex flex-wrap gap-3">
+                        {APPROVAL_TYPE_OPTIONS.map((opt) => (
+                          <label key={opt.value} className="flex items-center gap-1.5 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={proxyModalData.approvalTypes.includes(opt.value)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setProxyModalData({
+                                    ...proxyModalData,
+                                    approvalTypes: [...proxyModalData.approvalTypes, opt.value],
+                                  });
+                                } else {
+                                  setProxyModalData({
+                                    ...proxyModalData,
+                                    approvalTypes: proxyModalData.approvalTypes.filter((v) => v !== opt.value),
+                                  });
+                                }
+                              }}
+                              className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
+                            />
+                            {opt.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">开始日期</label>
+                        <input
+                          type="date"
+                          value={proxyModalData.startDate}
+                          onChange={(e) => setProxyModalData({ ...proxyModalData, startDate: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">结束日期</label>
+                        <input
+                          type="date"
+                          value={proxyModalData.endDate}
+                          onChange={(e) => setProxyModalData({ ...proxyModalData, endDate: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        />
+                      </div>
+                    </div>
+
+                    {proxyError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-600">{proxyError}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end gap-3 mt-6">
+                    <button
+                      onClick={() => {
+                        setShowProxyModal(false);
+                        setProxyError("");
+                        setSearchResults([]);
+                      }}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                    >
+                      取消
+                    </button>
+                    <button
+                      onClick={handleProxySubmit}
+                      disabled={proxyActionLoading}
+                      className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {proxyActionLoading ? "保存中..." : editingProxyId ? "确认修改" : "确认添加"}
+                    </button>
+                  </div>
                 </div>
               </div>
+            )}
+          </div>
 
               <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <div className="space-y-3 text-sm">
