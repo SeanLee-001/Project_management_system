@@ -119,7 +119,7 @@ export default function PermissionManagement() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         alert("登录已过期，请重新登录");
-        router.push("/login");
+        router.push("/login?redirect=/app");
         return;
       }
       
@@ -153,7 +153,7 @@ export default function PermissionManagement() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         alert("登录已过期，请重新登录");
-        router.push("/login");
+        router.push("/login?redirect=/app");
         return;
       }
       
@@ -282,7 +282,7 @@ export default function PermissionManagement() {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         alert("登录已过期，请重新登录");
-        router.push("/login");
+        router.push("/login?redirect=/app");
         return;
       }
 

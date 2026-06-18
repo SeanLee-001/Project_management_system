@@ -79,7 +79,7 @@ export default function ForceChangePassword() {
         localStorage.setItem("user", JSON.stringify(data.data.user));
 
         alert("密码修改成功！欢迎使用系统");
-        router.push("/");
+        router.push("/app");
       } else {
         setError(data.error || "修改密码失败，请稍后重试");
       }

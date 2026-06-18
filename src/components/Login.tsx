@@ -71,8 +71,10 @@ export default function Login() {
         // 通知水印组件用户已切换
         notifyUserChanged();
 
-        // 直接跳转到首页
-        router.push("/");
+        // 直接跳转到应用首页（如果URL携带redirect参数则优先使用）
+        const params = new URLSearchParams(window.location.search);
+        const redirectTo = params.get("redirect") || "/app";
+        router.push(redirectTo);
       } else {
         const errorMessage = data.error || "登录失败，请检查用户名和密码";
 
@@ -142,8 +144,10 @@ export default function Login() {
         // 通知水印组件用户已切换
         notifyUserChanged();
 
-        // 直接跳转到首页
-        router.push("/");
+        // 直接跳转到应用首页（如果URL携带redirect参数则优先使用）
+        const params = new URLSearchParams(window.location.search);
+        const redirectTo = params.get("redirect") || "/app";
+        router.push(redirectTo);
       } else {
         const errorMessage = data.error || "MAC地址登录失败";
 

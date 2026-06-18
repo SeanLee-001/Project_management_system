@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { exportContracts } from "@/utils/excelExport";
 import { generateImportTemplate, contractImportColumns } from "@/utils/excelImport";
-import { Pencil, Trash2, Undo2 } from "lucide-react";
+import { Pencil, Trash2, Undo2, Unlock } from "lucide-react";
 import { ResizableTable, Column } from "@/components/ResizableTable";
 import { checkPermission, showNoPermissionAlert } from "@/lib/permissionUtils";
 
@@ -611,6 +611,35 @@ export default function ContractManagement() {
     }
   };
 
+  const handleForceClearApproval = async (contract: any) => {
+    const reason = contract.approvalRequestId
+      ? "该合同审批记录存在但无法通过正常流程撤销（可能已有审批人处理），强制清除后合同将恢复可编辑状态。"
+      : "该合同审批状态异常（审批已锁定但无关联审批记录），强制清除后合同将恢复可编辑状态。";
+
+    if (!confirm(`${reason}\n\n确定要强制清除审批锁定吗？`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/contracts/${contract.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "clear-approval" }),
+      });
+
+      const json = await res.json();
+      if (json.success) {
+        alert(json.message || "审批锁定已清除");
+        await fetchContracts(searchKeyword);
+      } else {
+        alert("清除失败：" + (json.error || "未知错误"));
+      }
+    } catch (error) {
+      console.error("Error force clearing approval:", error);
+      alert("清除失败，请稍后重试");
+    }
+  };
+
   const handleToggleStatus = async (contract: any) => {
     const newStatus = contract.status === "active" ? "inactive" : "active";
     const actionText = newStatus === "active" ? "恢复" : "终止";
@@ -962,6 +991,15 @@ export default function ContractManagement() {
                 title="撤销审批"
               >
                 <Undo2 className="w-4 h-4" />
+              </button>
+            )}
+            {isPending && (
+              <button
+                onClick={() => handleForceClearApproval(row)}
+                className="p-1.5 rounded-md text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors"
+                title="强制清除审批锁定"
+              >
+                <Unlock className="w-4 h-4" />
               </button>
             )}
           </div>

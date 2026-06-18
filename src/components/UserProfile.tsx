@@ -131,7 +131,7 @@ export default function UserProfile() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        router.push("/login");
+        router.push("/login?redirect=/app");
         return;
       }
 
@@ -151,11 +151,11 @@ export default function UserProfile() {
         });
         setMacAddress((data.data as any).macAddress || "");
       } else {
-        router.push("/login");
+        router.push("/login?redirect=/app");
       }
     } catch (err) {
       console.error("Error loading user profile:", err);
-      router.push("/login");
+      router.push("/login?redirect=/app");
     }
   };
 
@@ -466,7 +466,7 @@ export default function UserProfile() {
   };
 
   const handleBack = () => {
-    router.push("/");
+    router.push("/app");
   };
 
   // 代理人设置相关

@@ -14,8 +14,13 @@ function HomeContent() {
     // 检查登录状态
     const user = localStorage.getItem("user");
     if (!user) {
-      // 未登录，跳转到登录页
-      router.push("/login");
+      // 未登录，跳转到登录页，携带重定向参数
+      const redirect = searchParams.get("redirect");
+      if (redirect) {
+        router.push("/login?redirect=" + encodeURIComponent(redirect));
+      } else {
+        router.push("/login?redirect=/app");
+      }
       return;
     }
 

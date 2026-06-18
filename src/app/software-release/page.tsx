@@ -29,7 +29,7 @@ export default function SoftwareReleasePage() {
         return;
       }
     } else {
-      router.push("/login");
+      router.push("/login?redirect=/software-release");
     }
     setIsLoading(false);
   };

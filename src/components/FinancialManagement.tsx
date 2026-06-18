@@ -16,6 +16,22 @@ import {
   Edit,
   Filter,
 } from 'lucide-react';
+import { useColumnResize } from '@/hooks/useColumnResize';
+
+const TXN_COLUMNS = [
+  { key: 'index', label: '序号', width: 48, minWidth: 36 },
+  { key: 'project', label: '项目名称/客户', width: 160, minWidth: 100 },
+  { key: 'orderNumber', label: '订单号', width: 140, minWidth: 100 },
+  { key: 'contractCode', label: '合同号', width: 120, minWidth: 80 },
+  { key: 'deliveryDate', label: '交付日期', width: 100, minWidth: 80 },
+  { key: 'category', label: '类别', width: 80, minWidth: 60 },
+  { key: 'amount', label: '应收/实收（金额）', width: 150, minWidth: 120 },
+  { key: 'dueDate', label: '到期/实收', width: 130, minWidth: 100 },
+  { key: 'status1', label: '状态1', width: 90, minWidth: 70 },
+  { key: 'status2', label: '状态2', width: 120, minWidth: 80 },
+  { key: 'actions', label: '操作', width: 80, minWidth: 60 },
+  { key: 'notes', label: '备注', width: 120, minWidth: 80 },
+];
 
 // 财务管理数据类型
 interface PaymentRecord {
@@ -205,6 +221,8 @@ export default function FinancialManagement() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
+
+  const txnResize = useColumnResize({ storageKey: 'fin-txn-columns', columns: TXN_COLUMNS });
 
   const handleRefresh = () => {
     setLoading(true);
@@ -1099,21 +1117,23 @@ export default function FinancialManagement() {
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table style={{ tableLayout: 'fixed' }}>
                 <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="text-center text-sm font-semibold text-gray-900 px-3 py-3 w-12">序号</th>
-                    <th className="text-left text-sm font-semibold text-gray-900 px-3 py-3">项目名称/客户</th>
-                    <th className="text-left text-sm font-semibold text-gray-900 px-3 py-3">订单号</th>
-                    <th className="text-left text-sm font-semibold text-gray-900 px-3 py-3">合同号</th>
-                    <th className="text-left text-sm font-semibold text-gray-900 px-3 py-3">交付日期</th>
-                    <th className="text-left text-sm font-semibold text-gray-900 px-3 py-3">类别</th>
-                    <th className="text-right text-sm font-semibold text-gray-900 px-3 py-3">应收/实收（金额）</th>
-                    <th className="text-left text-sm font-semibold text-gray-900 px-3 py-3">到期/实收</th>
-                    <th className="text-center text-sm font-semibold text-gray-900 px-3 py-3">状态1</th>
-                    <th className="text-left text-sm font-semibold text-gray-900 px-3 py-3">状态2</th>
-                    <th className="text-center text-sm font-semibold text-gray-900 px-3 py-3">操作</th>
-                    <th className="text-left text-sm font-semibold text-gray-900 px-3 py-3">备注</th>
+                   <tr className="border-b border-gray-100">
+                    {TXN_COLUMNS.map((col) => (
+                      <th
+                        key={col.key}
+                        style={txnResize.getColumnStyle(col.key)}
+                        className={`relative text-sm font-semibold text-gray-900 px-3 py-3 ${col.key === 'index' || col.key === 'status1' || col.key === 'actions' ? 'text-center' : col.key === 'amount' ? 'text-right' : 'text-left'}`}
+                      >
+                        {col.label}
+                        <div
+                          {...txnResize.getResizeHandleProps(col.key)}
+                          className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-blue-400/30 transition-colors z-10"
+                          style={{ transform: 'translateX(50%)' }}
+                        />
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>

@@ -56,7 +56,7 @@ export default function ForceChangePassword() {
         }
 
         alert("密码修改成功！现在可以进入系统了");
-        router.push("/");
+        router.push("/app");
       } else {
         setError(data.error || "修改密码失败");
       }

@@ -83,7 +83,7 @@ export default function AdminPage() {
         return;
       }
     } else {
-      router.push("/login");
+      router.push("/login?redirect=/admin");
     }
     setIsLoading(false);
   };
@@ -97,7 +97,7 @@ export default function AdminPage() {
       if (res.status === 401) {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
-        router.push("/login");
+        router.push("/login?redirect=/admin");
         return;
       }
       if (res.ok) {
@@ -120,7 +120,7 @@ export default function AdminPage() {
     localStorage.removeItem("user");
     setCurrentUser(null);
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    router.push("/login");
+    router.push("/login?redirect=/admin");
     console.log("由于长时间无操作，已自动登出");
   };
 
@@ -146,7 +146,7 @@ export default function AdminPage() {
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     // 通知水印组件用户已登出
     notifyUserChanged();
-    router.push("/login");
+    router.push("/login?redirect=/admin");
   };
 
   const handleUpdateSystemSettings = async (e: React.FormEvent) => {
@@ -169,7 +169,7 @@ export default function AdminPage() {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
         alert("登录已过期，请重新登录");
-        router.push("/login");
+        router.push("/login?redirect=/admin");
         return;
       }
 
@@ -604,7 +604,7 @@ export default function AdminPage() {
                             localStorage.removeItem("user");
                             localStorage.removeItem("token");
                             alert("登录已过期，请重新登录");
-                            router.push("/login");
+                            router.push("/login?redirect=/admin");
                             return;
                           }
                           if (!response.ok) {
@@ -664,7 +664,7 @@ export default function AdminPage() {
                               localStorage.removeItem("user");
                               localStorage.removeItem("token");
                               alert("登录已过期，请重新登录");
-                              router.push("/login");
+      router.push("/login?redirect=/admin");
                               return;
                             }
 

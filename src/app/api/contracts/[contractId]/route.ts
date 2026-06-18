@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { contractManager } from "@/storage/database";
+import { getDb } from "coze-coding-dev-sdk";
+import { contracts } from "@/storage/database/shared/schema";
+import { eq } from "drizzle-orm";
 
 // GET /api/contracts/[contractId] - 获取单个合同
 export async function GET(
@@ -112,6 +115,59 @@ export async function DELETE(
     const errorMessage = error?.message || error?.toString() || "删除合同失败";
     return NextResponse.json(
       { success: false, error: errorMessage, details: String(error) },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/contracts/[contractId] - 清除合同审批锁定状态
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ contractId: string }> }
+) {
+  try {
+    const { contractId } = await params;
+    const body = await request.json();
+
+    if (body.action === "clear-approval") {
+      const existing = await contractManager.getById(contractId);
+      if (!existing) {
+        return NextResponse.json(
+          { success: false, error: "合同不存在" },
+          { status: 404 }
+        );
+      }
+
+      if (existing.approvalStatus !== "pending") {
+        return NextResponse.json(
+          { success: false, error: "合同当前不在审批中状态" },
+          { status: 400 }
+        );
+      }
+
+      const db = await getDb();
+      await db
+        .update(contracts)
+        .set({
+          approvalStatus: "none" as any,
+          approvalRequestId: null as any,
+        })
+        .where(eq(contracts.id, contractId));
+
+      return NextResponse.json({
+        success: true,
+        message: `合同 ${existing.contractCode} 审批锁定已清除`,
+      });
+    }
+
+    return NextResponse.json(
+      { success: false, error: "未知操作" },
+      { status: 400 }
+    );
+  } catch (error: any) {
+    console.error("Error patching contract:", error);
+    return NextResponse.json(
+      { success: false, error: "操作失败" },
       { status: 500 }
     );
   }

@@ -2,6 +2,21 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Search, RefreshCw, Download, Eye, Edit3, X, Check, RotateCcw } from "lucide-react";
+import { useColumnResize } from "@/hooks/useColumnResize";
+
+const INV_COLUMNS = [
+  { key: 'index', label: '序号', width: 48, minWidth: 36 },
+  { key: 'project', label: '项目名称/客户', width: 140, minWidth: 100 },
+  { key: 'orderNumber', label: '订单号', width: 100, minWidth: 80 },
+  { key: 'contractCode', label: '合同号', width: 100, minWidth: 80 },
+  { key: 'deliveryDate', label: '交付日期', width: 90, minWidth: 70 },
+  { key: 'category', label: '类别', width: 70, minWidth: 50 },
+  { key: 'invoiceNumber', label: '发票号', width: 140, minWidth: 100 },
+  { key: 'amount', label: '金额', width: 90, minWidth: 70 },
+  { key: 'invoiceDate', label: '开票日期', width: 100, minWidth: 80 },
+  { key: 'status', label: '状态', width: 64, minWidth: 50 },
+  { key: 'remarks', label: '备注', width: 120, minWidth: 80 },
+];
 
 interface InvoiceRow {
   id: string;
@@ -42,6 +57,8 @@ export default function InvoiceManagement() {
   const [saving, setSaving] = useState(false);
   const pageSize = 20;
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const invResize = useColumnResize({ storageKey: 'inv-columns', columns: INV_COLUMNS });
 
   const fetchInvoices = useCallback(async () => {
     setLoading(true);
@@ -290,20 +307,23 @@ export default function InvoiceManagement() {
       {/* Table */}
       <div className="rounded-xl border border-slate-700/50 bg-[#111827] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+              <table style={{ tableLayout: 'fixed' }}>
             <thead>
               <tr className="border-b border-slate-700/30 bg-[#0d1220]">
-                <th className="text-center text-xs font-semibold text-slate-500 px-3 py-3 w-12">序号</th>
-                <th className="text-left text-xs font-semibold text-slate-500 px-3 py-3 min-w-[140px]">项目名称/客户</th>
-                <th className="text-left text-xs font-semibold text-slate-500 px-3 py-3 min-w-[100px]">订单号</th>
-                <th className="text-left text-xs font-semibold text-slate-500 px-3 py-3 min-w-[100px]">合同号</th>
-                <th className="text-left text-xs font-semibold text-slate-500 px-3 py-3 min-w-[90px]">交付日期</th>
-                <th className="text-left text-xs font-semibold text-slate-500 px-3 py-3 min-w-[70px]">类别</th>
-                <th className="text-left text-xs font-semibold text-slate-500 px-3 py-3 min-w-[140px]">发票号</th>
-                <th className="text-right text-xs font-semibold text-slate-500 px-3 py-3 min-w-[90px]">金额</th>
-                <th className="text-left text-xs font-semibold text-slate-500 px-3 py-3 min-w-[100px]">开票日期</th>
-                <th className="text-center text-xs font-semibold text-slate-500 px-3 py-3 w-16">状态</th>
-                <th className="text-left text-xs font-semibold text-slate-500 px-3 py-3 min-w-[120px]">备注</th>
+                {INV_COLUMNS.map((col) => (
+                  <th
+                    key={col.key}
+                    style={invResize.getColumnStyle(col.key)}
+                    className={`relative text-xs font-semibold text-slate-500 px-3 py-3 ${col.key === 'index' || col.key === 'status' ? 'text-center' : col.key === 'amount' ? 'text-right' : 'text-left'}`}
+                  >
+                    {col.label}
+                    <div
+                      {...invResize.getResizeHandleProps(col.key)}
+                      className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-blue-400/30 transition-colors z-10"
+                      style={{ transform: 'translateX(50%)' }}
+                    />
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>

@@ -1233,7 +1233,8 @@ export default function AppPage() {
             localStorage.removeItem("user");
             localStorage.removeItem("token");
             localStorage.removeItem("loginTime");
-            window.location.href = "/login";
+            const currentPath = window.location.pathname + window.location.search;
+            window.location.href = "/login?redirect=" + encodeURIComponent(currentPath);
             return;
           }
         } else {
@@ -1241,7 +1242,8 @@ export default function AppPage() {
           localStorage.removeItem("user");
           localStorage.removeItem("token");
           localStorage.removeItem("loginTime");
-          window.location.href = "/login";
+          const currentPath = window.location.pathname + window.location.search;
+          window.location.href = "/login?redirect=" + encodeURIComponent(currentPath);
           return;
         }
       } catch (error) {
