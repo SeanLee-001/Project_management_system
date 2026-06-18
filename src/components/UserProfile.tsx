@@ -86,6 +86,10 @@ export default function UserProfile() {
   const [filterCreatedStart, setFilterCreatedStart] = useState("");
   const [filterCreatedEnd, setFilterCreatedEnd] = useState("");
 
+  // 查询结果
+  const [queryDelegations, setQueryDelegations] = useState<any[] | null>(null);
+  const [queryLoading, setQueryLoading] = useState(false);
+
   // 用户权限状态
   const [userPermissions, setUserPermissions] = useState<Record<string, string[]>>({});
   const [permissionsLoading, setPermissionsLoading] = useState(false);
@@ -537,6 +541,7 @@ export default function UserProfile() {
         setShowProxyModal(false);
         setSearchResults([]);
         fetchDelegations();
+        setQueryDelegations(null);
       } else {
         const data = await res.json();
         setProxyError(data.error || "操作失败");
@@ -548,7 +553,7 @@ export default function UserProfile() {
     }
   };
 
-  const handleFilterSearch = () => {
+  const handleFilterSearch = async () => {
     const params: Record<string, string> = {};
     if (filterAgentName.trim()) params.agentName = filterAgentName.trim();
     if (filterApprovalType) params.approvalType = filterApprovalType;
@@ -556,7 +561,19 @@ export default function UserProfile() {
     if (filterEndDate) params.endDate = filterEndDate;
     if (filterCreatedStart) params.createdAtStart = filterCreatedStart;
     if (filterCreatedEnd) params.createdAtEnd = filterCreatedEnd;
-    fetchDelegations(params);
+    setQueryLoading(true);
+    try {
+      const qs = Object.keys(params).length ? "?" + new URLSearchParams(params).toString() : "";
+      const res = await fetch("/api/delegations" + qs);
+      if (res.ok) {
+        const data = await res.json();
+        setQueryDelegations(data);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setQueryLoading(false);
+    }
   };
 
   const handleResetFilter = () => {
@@ -566,7 +583,7 @@ export default function UserProfile() {
     setFilterEndDate("");
     setFilterCreatedStart("");
     setFilterCreatedEnd("");
-    fetchDelegations();
+    setQueryDelegations(null);
   };
 
   const handleNewProxy = () => {
@@ -604,6 +621,7 @@ export default function UserProfile() {
       const res = await fetch(`/api/delegations/${id}`, { method: "DELETE" });
       if (res.ok) {
         fetchDelegations();
+        setQueryDelegations(null);
       }
     } catch {
       // ignore
@@ -1245,7 +1263,65 @@ export default function UserProfile() {
                 设置代理人后，代理人可在指定时间范围内代为处理对应类型的审批。
               </p>
 
-              {/* 筛选栏 */}
+              {/* 当前生效中的代理 */}
+              <div className="mb-4 p-4 border-2 border-red-200 dark:border-red-800 rounded-lg bg-red-50/30 dark:bg-red-900/10">
+                <h4 className="text-sm font-medium text-red-700 dark:text-red-400 mb-3">当前生效代理</h4>
+                {delegationsLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-red-500 border-t-transparent"></div>
+                  </div>
+                ) : (() => {
+                  const today = new Date().toISOString().slice(0, 10);
+                  const activeList = delegations.filter((d: any) =>
+                    d.isActive && d.startDate <= today && d.endDate >= today
+                  );
+                  if (activeList.length === 0) {
+                    return <p className="text-sm text-gray-500 dark:text-gray-400 py-2">目前无代理人</p>;
+                  }
+                  return (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-red-200 dark:border-red-800">
+                            <th className="text-left py-1.5 px-3 text-red-600 dark:text-red-400 font-medium text-xs">序号</th>
+                            <th className="text-left py-1.5 px-3 text-red-600 dark:text-red-400 font-medium text-xs">编码</th>
+                            <th className="text-left py-1.5 px-3 text-red-600 dark:text-red-400 font-medium text-xs">代理人</th>
+                            <th className="text-left py-1.5 px-3 text-red-600 dark:text-red-400 font-medium text-xs">代理类型</th>
+                            <th className="text-left py-1.5 px-3 text-red-600 dark:text-red-400 font-medium text-xs w-32">日期范围</th>
+                            <th className="text-left py-1.5 px-3 text-red-600 dark:text-red-400 font-medium text-xs">创建日期</th>
+                            <th className="text-left py-1.5 px-3 text-red-600 dark:text-red-400 font-medium text-xs">操作</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {activeList.map((d: any, idx: number) => (
+                            <tr key={d.id} className="border-b border-red-100 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-900/20">
+                              <td className="py-1.5 px-3 text-gray-700 dark:text-gray-300 text-xs">{idx + 1}</td>
+                              <td className="py-1.5 px-3 text-gray-700 dark:text-gray-300 font-mono text-xs">{d.proxyCode || "-"}</td>
+                              <td className="py-1.5 px-3">
+                                <div className="text-gray-900 dark:text-white font-medium text-xs">{d.proxyName || d.proxyUsername || "-"}</div>
+                                <div className="text-xs text-gray-400">{d.proxyEmail || ""}</div>
+                              </td>
+                              <td className="py-1.5 px-3 text-gray-700 dark:text-gray-300 text-xs">{(d.approvalTypes || []).map((t: string) => APPROVAL_TYPE_LABELS[t] || t).join("、") || "-"}</td>
+                              <td className="py-1.5 px-3 text-gray-700 dark:text-gray-300 text-xs whitespace-nowrap">{d.startDate || "-"} ~ {d.endDate || "-"}</td>
+                              <td className="py-1.5 px-3 text-gray-700 dark:text-gray-300 text-xs">{d.createdAt ? d.createdAt.slice(0, 10) : "-"}</td>
+                              <td className="py-1.5 px-3">
+                                <div className="flex gap-2">
+                                  <button onClick={() => handleEditProxy(d)} className="text-orange-500 hover:text-orange-600 text-xs">编辑</button>
+                                  <button onClick={() => handleDeleteDelegation(d.id)} className="text-red-500 hover:text-red-600 text-xs">删除</button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* 查询区域 */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">查询代理记录</h4>
               <div className="flex flex-wrap items-end gap-2 mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                 <div className="flex flex-col gap-1">
                   <span className="text-xs text-gray-500 dark:text-gray-400">代理人</span>
@@ -1320,81 +1396,74 @@ export default function UserProfile() {
                 </button>
               </div>
 
-              {/* 表格 */}
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">序号</th>
-                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">编码</th>
-                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">代理人</th>
-                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">代理类型</th>
-                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium w-32">日期范围</th>
-                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">创建日期</th>
-                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">状态</th>
-                      <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {delegationsLoading ? (
-                      <tr>
-                        <td colSpan={8} className="py-8 text-center text-gray-400">
-                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-orange-500 border-t-transparent mx-auto"></div>
-                        </td>
+              {/* 查询结果 */}
+              {queryDelegations !== null && (
+                <div className="overflow-x-auto mt-4">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-gray-700">
+                        <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">序号</th>
+                        <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">编码</th>
+                        <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">代理人</th>
+                        <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">代理类型</th>
+                        <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium w-32">日期范围</th>
+                        <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">创建日期</th>
+                        <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">状态</th>
+                        <th className="text-left py-2 px-3 text-gray-500 dark:text-gray-400 font-medium">操作</th>
                       </tr>
-                    ) : delegations.length === 0 ? (
-                      <tr>
-                        <td colSpan={8} className="py-8 text-center text-gray-400">暂无代理设置</td>
-                      </tr>
-                    ) : (
-                      delegations.map((d: any, idx: number) => {
-                        const today = new Date().toISOString().slice(0, 10);
-                        const isInRange = d.isActive && d.startDate <= today && d.endDate >= today;
-                        const isPending = d.isActive && d.startDate > today;
-                        const statusLabel = !d.isActive ? "已失效" : isInRange ? "生效中" : isPending ? "待生效" : "已过期";
-                        const statusColor = isInRange ? "green" : !d.isActive || !isPending ? "red" : "yellow";
-                        return (
-                        <tr key={d.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                          <td className="py-2 px-3 text-gray-700 dark:text-gray-300">{idx + 1}</td>
-                          <td className="py-2 px-3 text-gray-700 dark:text-gray-300 font-mono text-xs">{d.proxyCode || "-"}</td>
-                          <td className="py-2 px-3">
-                            <div className="text-gray-900 dark:text-white font-medium text-sm">{d.proxyName || d.proxyUsername || "-"}</div>
-                            <div className="text-xs text-gray-400">{d.proxyEmail || ""}</div>
-                          </td>
-                          <td className="py-2 px-3 text-gray-700 dark:text-gray-300 text-xs">{(d.approvalTypes || []).map((t: string) => APPROVAL_TYPE_LABELS[t] || t).join("、") || "-"}</td>
-                          <td className="py-2 px-3 text-gray-700 dark:text-gray-300 text-xs whitespace-nowrap">{d.startDate || "-"} ~ {d.endDate || "-"}</td>
-                          <td className="py-2 px-3 text-gray-700 dark:text-gray-300 text-xs">{d.createdAt ? d.createdAt.slice(0, 10) : "-"}</td>
-                          <td className="py-2 px-3">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                              statusColor === "green" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" :
-                              statusColor === "yellow" ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" :
-                              "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-                            }`}>
-                              {statusLabel}
-                            </span>
-                          </td>
-                          <td className="py-2 px-3">
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleEditProxy(d)}
-                                className="text-orange-500 hover:text-orange-600 text-sm"
-                              >
-                                编辑
-                              </button>
-                              <button
-                                onClick={() => handleDeleteDelegation(d.id)}
-                                className="text-red-500 hover:text-red-600 text-sm"
-                              >
-                                删除
-                              </button>
-                            </div>
+                    </thead>
+                    <tbody>
+                      {queryLoading ? (
+                        <tr>
+                          <td colSpan={8} className="py-8 text-center text-gray-400">
+                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-orange-500 border-t-transparent mx-auto"></div>
                           </td>
                         </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+                      ) : queryDelegations.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="py-8 text-center text-gray-400">未找到匹配记录</td>
+                        </tr>
+                      ) : (
+                        queryDelegations.map((d: any, idx: number) => {
+                          const today = new Date().toISOString().slice(0, 10);
+                          const isInRange = d.isActive && d.startDate <= today && d.endDate >= today;
+                          const isPending = d.isActive && d.startDate > today;
+                          const statusLabel = !d.isActive ? "已失效" : isInRange ? "生效中" : isPending ? "待生效" : "已过期";
+                          const statusColor = isInRange ? "green" : !d.isActive || !isPending ? "red" : "yellow";
+                          return (
+                          <tr key={d.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td className="py-2 px-3 text-gray-700 dark:text-gray-300">{idx + 1}</td>
+                            <td className="py-2 px-3 text-gray-700 dark:text-gray-300 font-mono text-xs">{d.proxyCode || "-"}</td>
+                            <td className="py-2 px-3">
+                              <div className="text-gray-900 dark:text-white font-medium text-sm">{d.proxyName || d.proxyUsername || "-"}</div>
+                              <div className="text-xs text-gray-400">{d.proxyEmail || ""}</div>
+                            </td>
+                            <td className="py-2 px-3 text-gray-700 dark:text-gray-300 text-xs">{(d.approvalTypes || []).map((t: string) => APPROVAL_TYPE_LABELS[t] || t).join("、") || "-"}</td>
+                            <td className="py-2 px-3 text-gray-700 dark:text-gray-300 text-xs whitespace-nowrap">{d.startDate || "-"} ~ {d.endDate || "-"}</td>
+                            <td className="py-2 px-3 text-gray-700 dark:text-gray-300 text-xs">{d.createdAt ? d.createdAt.slice(0, 10) : "-"}</td>
+                            <td className="py-2 px-3">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                statusColor === "green" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" :
+                                statusColor === "yellow" ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" :
+                                "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+                              }`}>
+                                {statusLabel}
+                              </span>
+                            </td>
+                            <td className="py-2 px-3">
+                              <div className="flex gap-2">
+                                <button onClick={() => handleEditProxy(d)} className="text-orange-500 hover:text-orange-600 text-sm">编辑</button>
+                                <button onClick={() => handleDeleteDelegation(d.id)} className="text-red-500 hover:text-red-600 text-sm">删除</button>
+                              </div>
+                            </td>
+                          </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
               </div>
             </div>
 
