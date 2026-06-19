@@ -217,7 +217,7 @@ export default function FinancialManagement() {
   const [txnAdvDueDate, setTxnAdvDueDate] = useState('');
   const [editingTxnRow, setEditingTxnRow] = useState<TransactionRow | null>(null);
   const [showTxnEditModal, setShowTxnEditModal] = useState(false);
-  const [txnForm, setTxnForm] = useState({ receivedAmount: '', dueDate: '', receivedDate: '', status1: '', notes: '' });
+  const [txnForm, setTxnForm] = useState({ receivedAmount: '', dueDate: '', receivedDate: '', notes: '' });
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
@@ -427,7 +427,6 @@ export default function FinancialManagement() {
       receivedAmount: row.receivedAmount || '',
       dueDate: row.dueDate || '',
       receivedDate: row.receivedDate || '',
-      status1: row.status1 || '',
       notes: row.notes || '',
     });
     setShowTxnEditModal(true);
@@ -435,36 +434,36 @@ export default function FinancialManagement() {
 
   const handleSaveTxnRow = async () => {
     if (!editingTxnRow) return;
+    const receivedAmount = parseFloat(txnForm.receivedAmount) || 0;
+    const receivableAmount = parseFloat(editingTxnRow.receivableAmount) || 0;
+
+    let status1: string;
+    if (!txnForm.receivedAmount || receivedAmount === 0) {
+      status1 = '';
+    } else if (receivedAmount >= receivableAmount) {
+      status1 = '收款完成';
+    } else {
+      status1 = '部分收款';
+    }
+
+    let status2 = status1 || '待收款';
+    if (receivedAmount > 0 && txnForm.receivedDate) {
+      if (txnForm.receivedDate > txnForm.dueDate) {
+        status2 += ' 延期收款';
+      } else {
+        status2 += ' 按期收款';
+      }
+    }
+
     const updated: TransactionRow = {
       ...editingTxnRow,
       receivedAmount: txnForm.receivedAmount,
       dueDate: txnForm.dueDate,
       receivedDate: txnForm.receivedDate,
-      status1: txnForm.status1,
+      status1,
+      status2,
       notes: txnForm.notes,
     };
-
-    const receivedAmount = parseFloat(txnForm.receivedAmount) || 0;
-    const receivableAmount = parseFloat(updated.receivableAmount) || 0;
-    if (!txnForm.receivedAmount) {
-      updated.status1 = '';
-      updated.status2 = '待收款';
-    } else {
-      if (receivedAmount >= receivableAmount) {
-        updated.status1 = txnForm.status1 || '收款完成';
-        updated.status2 = '收款完成';
-      } else {
-        updated.status1 = txnForm.status1 || '部分收款';
-        updated.status2 = '部分收款';
-      }
-      if (txnForm.receivedDate) {
-        if (txnForm.receivedDate > txnForm.dueDate) {
-          updated.status2 += ' 延期收款';
-        } else {
-          updated.status2 += ' 按期收款';
-        }
-      }
-    }
 
     try {
       await fetch('/api/transactions', {
@@ -1129,8 +1128,7 @@ export default function FinancialManagement() {
                         {col.label}
                         <div
                           {...txnResize.getResizeHandleProps(col.key)}
-                          className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-blue-400/30 transition-colors z-10"
-                          style={{ transform: 'translateX(50%)' }}
+                          className="absolute top-0 -right-1 w-2 h-full cursor-col-resize hover:bg-blue-500/40 transition-colors z-20"
                         />
                       </th>
                     ))}
@@ -1291,7 +1289,7 @@ export default function FinancialManagement() {
               </div>
               <div>
                 <label className="block text-xs text-gray-600 mb-1">实收金额</label>
-                <input type="number" value={txnForm.receivedAmount} onChange={(e) => setTxnForm(prev => ({ ...prev, receivedAmount: e.target.value }))} className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none focus:border-orange-500" />
+                <input type="number" value={txnForm.receivedAmount} onChange={(e) => { const val = e.target.value; const today = new Date().toISOString().split('T')[0]; setTxnForm(prev => ({ ...prev, receivedAmount: val, receivedDate: parseFloat(val || '0') > 0 && !prev.receivedDate ? today : val ? prev.receivedDate : '', })); }} className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none focus:border-orange-500" />
               </div>
               <div>
                 <label className="block text-xs text-gray-600 mb-1">到期日期</label>
@@ -1302,12 +1300,25 @@ export default function FinancialManagement() {
                 <input type="date" value={txnForm.receivedDate} onChange={(e) => setTxnForm(prev => ({ ...prev, receivedDate: e.target.value }))} className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none focus:border-orange-500 [color-scheme:light]" />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 mb-1">状态1</label>
-                <select value={txnForm.status1} onChange={(e) => setTxnForm(prev => ({ ...prev, status1: e.target.value }))} className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none focus:border-orange-500">
-                  <option value="">待收款</option>
-                  <option value="收款完成">收款完成</option>
-                  <option value="部分收款">部分收款</option>
-                </select>
+                <label className="block text-xs text-gray-600 mb-1">状态1（自动判断）</label>
+                {(() => {
+                  const received = parseFloat(txnForm.receivedAmount) || 0;
+                  const receivable = parseFloat(editingTxnRow.receivableAmount) || 0;
+                  let autoStatus = '待收款';
+                  let colorClass = 'text-blue-400';
+                  if (received > 0 && received >= receivable) {
+                    autoStatus = '收款完成';
+                    colorClass = 'text-emerald-400';
+                  } else if (received > 0 && received < receivable) {
+                    autoStatus = '部分收款';
+                    colorClass = 'text-red-400';
+                  }
+                  return (
+                    <div className={`w-full h-9 rounded-lg border border-gray-200 bg-gray-50 px-3 flex items-center text-sm font-medium ${colorClass}`}>
+                      {autoStatus}
+                    </div>
+                  );
+                })()}
               </div>
               <div className="col-span-2">
                 <label className="block text-xs text-gray-600 mb-1">备注</label>

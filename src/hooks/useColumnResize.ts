@@ -12,23 +12,33 @@ export interface ColumnWidthConfig {
 interface UseColumnResizeOptions {
   storageKey: string;
   columns: ColumnWidthConfig[];
-  /** 总容器参考宽度，用于百分比计算，默认 1200 */
-  containerWidth?: number;
 }
 
-export function useColumnResize({ storageKey, columns, containerWidth = 1200 }: UseColumnResizeOptions) {
-  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
-    if (typeof window === "undefined") return {};
+function buildDefaultWidths(columns: ColumnWidthConfig[]): Record<string, number> {
+  const widths: Record<string, number> = {};
+  columns.forEach((c) => {
+    widths[c.key] = c.width;
+  });
+  return widths;
+}
+
+export function useColumnResize({ storageKey, columns }: UseColumnResizeOptions) {
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() =>
+    buildDefaultWidths(columns)
+  );
+
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setColumnWidths((prev) => ({ ...prev, ...parsed }));
+      }
     } catch {}
-    const initial: Record<string, number> = {};
-    columns.forEach((c) => {
-      initial[c.key] = c.width;
-    });
-    return initial;
-  });
+    setHydrated(true);
+  }, [storageKey]);
 
   const resizingRef = useRef<{ key: string; startX: number; startWidth: number } | null>(null);
 
@@ -46,7 +56,8 @@ export function useColumnResize({ storageKey, columns, containerWidth = 1200 }: 
       e.preventDefault();
       e.stopPropagation();
       const startX = e.clientX;
-      const startWidth = columnWidths[key] || columns.find((c) => c.key === key)?.width || 100;
+      const th = (e.target as HTMLElement).closest("th");
+      const startWidth = th ? th.offsetWidth : (columnWidths[key] || columns.find((c) => c.key === key)?.width || 100);
       resizingRef.current = { key, startX, startWidth };
       document.body.style.cursor = "col-resize";
       document.body.style.userSelect = "none";
@@ -90,32 +101,30 @@ export function useColumnResize({ storageKey, columns, containerWidth = 1200 }: 
   }, [columns, persistWidths]);
 
   const getColumnStyle = useCallback(
-    (key: string, fallbackStyle?: React.CSSProperties): React.CSSProperties => {
+    (key: string): React.CSSProperties => {
       const width = columnWidths[key];
-      if (width) return { width, minWidth: width, maxWidth: width };
-      return fallbackStyle || {};
+      if (width) return { width: `${width}px`, minWidth: `${width}px` };
+      const col = columns.find((c) => c.key === key);
+      if (col) return { width: `${col.width}px`, minWidth: `${col.width}px` };
+      return {};
     },
-    [columnWidths]
+    [columnWidths, columns]
   );
 
   const getResizeHandleProps = useCallback(
     (key: string) => ({
       onMouseDown: handleMouseDown(key),
-      className: "resize-handle",
     }),
     [handleMouseDown]
   );
 
   const resetWidths = useCallback(() => {
-    const initial: Record<string, number> = {};
-    columns.forEach((c) => {
-      initial[c.key] = c.width;
-    });
-    setColumnWidths(initial);
+    const defaults = buildDefaultWidths(columns);
+    setColumnWidths(defaults);
     try {
       localStorage.removeItem(storageKey);
     } catch {}
   }, [columns, storageKey]);
 
-  return { columnWidths, getColumnStyle, getResizeHandleProps, resetWidths };
+  return { columnWidths, getColumnStyle, getResizeHandleProps, resetWidths, hydrated };
 }

@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "coze-coding-dev-sdk";
-import { projectApprovalFlows } from "@/storage/database/shared/schema";
+import { projectApprovalFlows, users } from "@/storage/database/shared/schema";
+import { eq } from "drizzle-orm";
 
 /**
  * 数据库迁移：初始化项目审批流程配置
  *
  * 运行此脚本后，将在 project_approval_flows 表中插入项目相关的审批流程
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const db = await getDb();
 
@@ -26,11 +27,24 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 默认审批人配置 - 使用系统管理员
-    const defaultLevel1ApproverId = "1";
+    // 查找系统管理员用户作为默认审批人
+    const adminUsers = await db
+      .select()
+      .from(users)
+      .where(eq(users.role, "system_admin" as any))
+      .limit(1);
+
+    const defaultLevel1ApproverId = adminUsers.length > 0 ? adminUsers[0].id : null;
     const defaultLevel1ApproverRole = "system_admin";
     const defaultLevel2ApproverRole = "project_manager";
     const defaultLevel3ApproverRole = "department_manager";
+
+    if (!defaultLevel1ApproverId) {
+      return NextResponse.json(
+        { success: false, error: "未找到系统管理员用户，请先创建管理员账户" },
+        { status: 400 }
+      );
+    }
 
     // 项目审批流程配置
     const projectFlows = [

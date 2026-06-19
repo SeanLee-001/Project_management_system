@@ -1215,7 +1215,7 @@ export default function AppPage() {
         
         if (res.ok) {
           const json = await res.json();
-          if (json.success && json.data) {
+            if (json.success && json.data) {
             setCurrentUser(json.data);
             // 如果是新的登录，设置登录时间
             if (!loginTime) {
@@ -1227,6 +1227,18 @@ export default function AppPage() {
                 setLoginTime(now);
                 localStorage.setItem("loginTime", now.toISOString());
               }
+            }
+            // 自动检测并初始化系统（角色、部门、审批流程）
+            if (!localStorage.getItem("systemInitDone")) {
+              fetch("/api/init", { method: "POST" })
+                .then((r) => r.json())
+                .then((d) => {
+                  if (d.success && d.details?.length > 0) {
+                    console.log("[系统初始化]", d.message);
+                  }
+                  localStorage.setItem("systemInitDone", "1");
+                })
+                .catch(() => {});
             }
           } else {
             // Token 无效，清除本地存储并跳转到登录页

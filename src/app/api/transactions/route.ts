@@ -24,10 +24,10 @@ interface TransactionRow {
 }
 
 const PAYMENT_CATEGORIES = [
-  { key: 'prepay', label: '预付款', amountField: 'prepayAmount', dateField: 'prepayDate', ratioField: 'prepayRatio' },
-  { key: 'arrival', label: '到货款', amountField: 'arrivalAmount', dateField: 'arrivalDate', ratioField: 'arrivalRatio' },
-  { key: 'acceptance', label: '验收款', amountField: 'acceptanceAmount', dateField: 'acceptanceDate', ratioField: 'acceptanceRatio' },
-  { key: 'warranty', label: '质保款', amountField: 'warrantyAmount', dateField: 'warrantyDate', ratioField: 'warrantyRatio' },
+  { key: 'prepay', label: '预付款', amountField: 'prepayAmount', dateField: 'prepayDate', dueDateField: 'prepayDueDate', ratioField: 'prepayRatio' },
+  { key: 'arrival', label: '到货款', amountField: 'arrivalAmount', dateField: 'arrivalDate', dueDateField: 'arrivalDueDate', ratioField: 'arrivalRatio' },
+  { key: 'acceptance', label: '验收款', amountField: 'acceptanceAmount', dateField: 'acceptanceDate', dueDateField: 'acceptanceDueDate', ratioField: 'acceptanceRatio' },
+  { key: 'warranty', label: '质保款', amountField: 'warrantyAmount', dateField: 'warrantyDate', dueDateField: 'warrantyDueDate', ratioField: 'warrantyRatio' },
 ];
 
 function getOrderField(order: any, field: string): string {
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 
         const id = `txn-${order.id}-${cat.key}`;
         const receivableAmount = getOrderField(order, cat.amountField);
-        const dateRaw = order[cat.dateField];
+        const dateRaw = order[cat.dueDateField];
         const defaultDueDate = dateRaw instanceof Date
           ? dateRaw.toISOString().split('T')[0]
           : (dateRaw || '');
@@ -181,6 +181,7 @@ export async function POST(request: NextRequest) {
     if (categoryKey && orderId) {
       const receivedAmountField = `${categoryKey}ReceivedAmount`;
       const dateField = `${categoryKey}Date`;
+      const dueDateField = `${categoryKey}DueDate`;
       const receivedField = `${categoryKey}Received`;
       const statusField = `${categoryKey}Status`;
       const notesField = `${categoryKey}TransactionNotes`;
@@ -188,7 +189,7 @@ export async function POST(request: NextRequest) {
       const updates: Record<string, any> = {};
       if (receivedAmount !== undefined) updates[receivedAmountField] = receivedAmount;
       if (receivedDate !== undefined) updates[dateField] = receivedDate ? new Date(receivedDate) : null;
-      if (dueDate !== undefined) updates[dateField] = dueDate ? new Date(dueDate) : null;
+      if (dueDate !== undefined) updates[dueDateField] = dueDate ? new Date(dueDate) : null;
       if (status1 !== undefined) {
         updates[receivedField] = status1 !== '';
         updates[statusField] = status1;

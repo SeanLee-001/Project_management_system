@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
     for (const cat of categories) {
       const amountField = `${cat}Amount`;
       const dateField = `${cat}Date`;
+      const dueDateField = `${cat}DueDate`;
       const receivedField = `${cat}Received`;
       const invoiceAmountField = `${cat}InvoiceAmount`;
       const invoiceDateField = `${cat}InvoiceDate`;
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
 
       if (financialData[amountField] !== undefined) updates[amountField] = financialData[amountField];
       if (financialData[dateField] !== undefined) updates[dateField] = financialData[dateField] ? new Date(financialData[dateField]) : null;
+      if (financialData[dueDateField] !== undefined) updates[dueDateField] = financialData[dueDateField] ? new Date(financialData[dueDateField]) : null;
       if (financialData[receivedField] !== undefined) updates[receivedField] = !!financialData[receivedField];
       if (financialData[invoiceAmountField] !== undefined) updates[invoiceAmountField] = financialData[invoiceAmountField];
       if (financialData[invoiceDateField] !== undefined) updates[invoiceDateField] = financialData[invoiceDateField] ? new Date(financialData[invoiceDateField]) : null;

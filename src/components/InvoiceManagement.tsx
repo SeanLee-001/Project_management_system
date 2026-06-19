@@ -319,8 +319,7 @@ export default function InvoiceManagement() {
                     {col.label}
                     <div
                       {...invResize.getResizeHandleProps(col.key)}
-                      className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-blue-400/30 transition-colors z-10"
-                      style={{ transform: 'translateX(50%)' }}
+                      className="absolute top-0 -right-1 w-2 h-full cursor-col-resize hover:bg-blue-500/40 transition-colors z-20"
                     />
                   </th>
                 ))}

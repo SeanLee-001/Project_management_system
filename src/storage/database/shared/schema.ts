@@ -437,6 +437,7 @@ export const orders = pgTable(
     prepayStatus: varchar("prepay_status", { length: 50 }), // 预付收款状态1
     prepayReceivedAmount: varchar("prepay_received_amount", { length: 50 }), // 预付实收金额
     prepayDate: timestamp("prepay_date", { withTimezone: true }), // 预付日期
+    prepayDueDate: timestamp("prepay_due_date", { withTimezone: true }), // 预付到期日期
     prepayInvoiceAmount: varchar("prepay_invoice_amount", { length: 50 }), // 预付开票金额
     prepayInvoiceDate: timestamp("prepay_invoice_date", { withTimezone: true }), // 预付开票日期
     prepayInvoiced: boolean("prepay_invoiced").notNull().default(false), // 预付是否已开票
@@ -448,6 +449,7 @@ export const orders = pgTable(
     arrivalStatus: varchar("arrival_status", { length: 50 }), // 到货收款状态1
     arrivalReceivedAmount: varchar("arrival_received_amount", { length: 50 }), // 到货实收金额
     arrivalDate: timestamp("arrival_date", { withTimezone: true }), // 到货日期
+    arrivalDueDate: timestamp("arrival_due_date", { withTimezone: true }), // 到货到期日期
     arrivalInvoiceAmount: varchar("arrival_invoice_amount", { length: 50 }), // 到货开票金额
     arrivalInvoiceDate: timestamp("arrival_invoice_date", { withTimezone: true }), // 到货开票日期
     arrivalInvoiced: boolean("arrival_invoiced").notNull().default(false), // 到货是否已开票
@@ -461,6 +463,7 @@ export const orders = pgTable(
     acceptanceStatus: varchar("acceptance_status", { length: 50 }), // 验收收款状态1
     acceptanceReceivedAmount: varchar("acceptance_received_amount", { length: 50 }), // 验收实收金额
     acceptanceDate: timestamp("acceptance_date", { withTimezone: true }), // 验收日期
+    acceptanceDueDate: timestamp("acceptance_due_date", { withTimezone: true }), // 验收到期日期
     acceptanceInvoiceAmount: varchar("acceptance_invoice_amount", { length: 50 }), // 验收开票金额
     acceptanceInvoiceDate: timestamp("acceptance_invoice_date", { withTimezone: true }), // 验收开票日期
     acceptanceInvoiced: boolean("acceptance_invoiced").notNull().default(false), // 验收是否已开票
@@ -473,6 +476,7 @@ export const orders = pgTable(
     warrantyStatus: varchar("warranty_status", { length: 50 }), // 质保收款状态1
     warrantyReceivedAmount: varchar("warranty_received_amount", { length: 50 }), // 质保实收金额
     warrantyDate: timestamp("warranty_date", { withTimezone: true }), // 质保金付款日期
+    warrantyDueDate: timestamp("warranty_due_date", { withTimezone: true }), // 质保金到期日期
     warrantyInvoiceAmount: varchar("warranty_invoice_amount", { length: 50 }), // 质保款开票金额
     warrantyInvoiceDate: timestamp("warranty_invoice_date", { withTimezone: true }), // 质保款开票日期
     warrantyInvoiced: boolean("warranty_invoiced").notNull().default(false), // 质保是否已开票

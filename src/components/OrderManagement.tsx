@@ -73,6 +73,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     prepayReceived: false,
     prepayStatus: "",
     prepayDate: "",
+    prepayDueDate: "",
     prepayInvoiceAmount: "",
     prepayInvoiceDate: "",
     prepayInvoiced: false,
@@ -81,6 +82,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     arrivalReceived: false,
     arrivalStatus: "",
     arrivalDate: "",
+    arrivalDueDate: "",
     arrivalInvoiceAmount: "",
     arrivalInvoiceDate: "",
     arrivalInvoiced: false,
@@ -90,6 +92,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     acceptanceReceived: false,
     acceptanceStatus: "",
     acceptanceDate: "",
+    acceptanceDueDate: "",
     acceptanceInvoiceAmount: "",
     acceptanceInvoiceDate: "",
     acceptanceInvoiced: false,
@@ -100,6 +103,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     warrantyReceived: false,
     warrantyStatus: "",
     warrantyDate: "",
+    warrantyDueDate: "",
     warrantyInvoiceAmount: "",
     warrantyInvoiceDate: "",
     warrantyInvoiced: false,
@@ -1021,6 +1025,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       prepayReceived: freshOrder.prepayReceived || false,
       prepayStatus: freshOrder.prepayStatus || "",
       prepayDate: freshOrder.prepayDate ? freshOrder.prepayDate.split('T')[0] : "",
+      prepayDueDate: freshOrder.prepayDueDate ? freshOrder.prepayDueDate.split('T')[0] : "",
       prepayInvoiceAmount: prepayInvoiced ? prepayAmt : "",
       prepayInvoiceDate: freshOrder.prepayInvoiceDate ? freshOrder.prepayInvoiceDate.split('T')[0] : "",
       prepayInvoiced,
@@ -1029,6 +1034,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       arrivalReceived: freshOrder.arrivalReceived || false,
       arrivalStatus: freshOrder.arrivalStatus || "",
       arrivalDate: freshOrder.arrivalDate ? freshOrder.arrivalDate.split('T')[0] : "",
+      arrivalDueDate: freshOrder.arrivalDueDate ? freshOrder.arrivalDueDate.split('T')[0] : "",
       arrivalInvoiceAmount: arrivalInvoiced ? arrivalAmt : "",
       arrivalInvoiceDate: freshOrder.arrivalInvoiceDate ? freshOrder.arrivalInvoiceDate.split('T')[0] : "",
       arrivalInvoiced,
@@ -1038,6 +1044,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       acceptanceReceived: freshOrder.acceptanceReceived || false,
       acceptanceStatus: freshOrder.acceptanceStatus || "",
       acceptanceDate: freshOrder.acceptanceDate ? freshOrder.acceptanceDate.split('T')[0] : "",
+      acceptanceDueDate: freshOrder.acceptanceDueDate ? freshOrder.acceptanceDueDate.split('T')[0] : "",
       acceptanceInvoiceAmount: acceptanceInvoiced ? acceptanceAmt : "",
       acceptanceInvoiceDate: freshOrder.acceptanceInvoiceDate ? freshOrder.acceptanceInvoiceDate.split('T')[0] : "",
       acceptanceInvoiced,
@@ -1048,6 +1055,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       warrantyReceived: freshOrder.warrantyReceived || false,
       warrantyStatus: freshOrder.warrantyStatus || "",
       warrantyDate: freshOrder.warrantyDate ? freshOrder.warrantyDate.split('T')[0] : "",
+      warrantyDueDate: freshOrder.warrantyDueDate ? freshOrder.warrantyDueDate.split('T')[0] : "",
       warrantyInvoiceAmount: warrantyInvoiced ? warrantyAmt : "",
       warrantyInvoiceDate: freshOrder.warrantyInvoiceDate ? freshOrder.warrantyInvoiceDate.split('T')[0] : "",
       warrantyInvoiced,
@@ -1081,6 +1089,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       prepayReceived: false,
       prepayStatus: "",
       prepayDate: "",
+      prepayDueDate: "",
       prepayInvoiceAmount: "",
       prepayInvoiceDate: "",
       prepayInvoiced: false,
@@ -1089,6 +1098,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       arrivalReceived: false,
       arrivalStatus: "",
       arrivalDate: "",
+      arrivalDueDate: "",
       arrivalInvoiceAmount: "",
       arrivalInvoiceDate: "",
       arrivalInvoiced: false,
@@ -1098,6 +1108,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       acceptanceReceived: false,
       acceptanceStatus: "",
       acceptanceDate: "",
+      acceptanceDueDate: "",
       acceptanceInvoiceAmount: "",
       acceptanceInvoiceDate: "",
       acceptanceInvoiced: false,
@@ -1108,6 +1119,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
       warrantyReceived: false,
       warrantyStatus: "",
       warrantyDate: "",
+      warrantyDueDate: "",
       warrantyInvoiceAmount: "",
       warrantyInvoiceDate: "",
       warrantyInvoiced: false,
@@ -2317,6 +2329,7 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                           <tr className="bg-blue-50/50">
                             <th className="px-4 py-2.5 text-left text-xs font-semibold text-gray-600 border-b border-gray-200">付款类别</th>
                             <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 border-b border-gray-200 w-20">比率</th>
+                            <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 border-b border-gray-200 w-32">到期日期</th>
                             <th className="px-4 py-2.5 text-right text-xs font-semibold text-gray-600 border-b border-gray-200">金额（元）</th>
                             <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 border-b border-gray-200 w-24">收款状态</th>
                             <th className="px-4 py-2.5 text-center text-xs font-semibold text-gray-600 border-b border-gray-200 w-32">付款日期</th>
@@ -2340,6 +2353,14 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                                   className="w-full text-center rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
                                 />
                               </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="date"
+                                value={orderForm.prepayDueDate}
+                                onChange={(e) => setOrderForm({ ...orderForm, prepayDueDate: e.target.value })}
+                                className="w-full rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 outline-none focus:border-green-500 [color-scheme:light]"
+                              />
                             </td>
                             <td className="px-4 py-3">
                               <input
@@ -2400,6 +2421,14 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                             </td>
                             <td className="px-4 py-3">
                               <input
+                                type="date"
+                                value={orderForm.arrivalDueDate}
+                                onChange={(e) => setOrderForm({ ...orderForm, arrivalDueDate: e.target.value })}
+                                className="w-full rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 outline-none focus:border-green-500 [color-scheme:light]"
+                              />
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
                                 type="text"
                                 value={orderForm.arrivalAmount}
                                 disabled
@@ -2457,6 +2486,14 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                             </td>
                             <td className="px-4 py-3">
                               <input
+                                type="date"
+                                value={orderForm.acceptanceDueDate}
+                                onChange={(e) => setOrderForm({ ...orderForm, acceptanceDueDate: e.target.value })}
+                                className="w-full rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 outline-none focus:border-green-500 [color-scheme:light]"
+                              />
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
                                 type="text"
                                 value={orderForm.acceptanceAmount}
                                 disabled
@@ -2511,6 +2548,14 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                                   className="w-full text-center rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
                                 />
                               </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="date"
+                                value={orderForm.warrantyDueDate}
+                                onChange={(e) => setOrderForm({ ...orderForm, warrantyDueDate: e.target.value })}
+                                className="w-full rounded border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-900 outline-none focus:border-green-500 [color-scheme:light]"
+                              />
                             </td>
                             <td className="px-4 py-3">
                               <input
