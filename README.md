@@ -1,236 +1,185 @@
-# 项目管理系统 - 本地部署指南
+# 项目管理系统 - 部署指南
 
-## 项目概述
-
-这是一个基于 Next.js 的全功能项目管理系统，包含以下核心模块：
-
-- 用户权限管理
-- 项目管理
-- 任务管理
-- 客户管理
-- 合同管理
-- 订单管理
-- 产品管理
-- 系统对接
-- 实用工具
-- 项目审批
-- 角色管理
-- 审批流程
-- 软件发布
-- 数据统计看板
+基于 Next.js 16 的全功能项目管理系统，包含客户、项目、任务、合同、订单、审批、发票、编码、知识库等 15+ 核心模块。
 
 ## 技术栈
 
-- **前端框架**: Next.js 16.0.10
-- **UI 框架**: React 19.2.1
-- **语言**: TypeScript 5
-- **样式**: Tailwind CSS 4
-- **ORM**: Drizzle ORM
-- **数据库**: PostgreSQL
-- **图表库**: Recharts 3.6.0
-- **移动端**: React Native 0.72.6
-
-## 系统要求
-
-### 开发环境
-
-- Node.js 24.x 或更高版本
-- pnpm 8.x 或更高版本（推荐）
-- PostgreSQL 14.x 或更高版本
-- Git
-
-### 生产环境
-
-- Linux/macOS/Windows Server
-- Node.js 24.x
-- PostgreSQL 14.x 或更高版本
-- Nginx（可选，用于反向代理）
+| 类别 | 技术 |
+|------|------|
+| 框架 | Next.js 16.0.10 (App Router) |
+| UI | React 19 + Tailwind CSS 4 |
+| 语言 | TypeScript 5 |
+| ORM | Drizzle ORM + PostgreSQL |
+| 图表 | Recharts 3 |
+| 认证 | JWT (bcryptjs + jose) |
+| 包管理 | pnpm (strict mode) |
 
 ---
 
 ## 第一步：环境准备
 
-### 1.1 安装 Node.js
+### 1.1 安装 Node.js 与 pnpm
 
 ```bash
-# 使用 nvm 安装 Node.js 24（推荐）
+# 安装 Node.js 22+ (推荐 24)
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 source ~/.bashrc
 nvm install 24
 nvm use 24
-node -v
-```
 
-### 1.2 安装 pnpm
-
-```bash
+# 安装 pnpm
 npm install -g pnpm
-pnpm -v
 ```
 
-### 1.3 安装 PostgreSQL
+### 1.2 安装 PostgreSQL
 
-#### macOS（Homebrew）
 ```bash
-brew install postgresql@14
-brew services start postgresql@14
-```
-
-#### Ubuntu/Debian
-```bash
+# Ubuntu/Debian
 sudo apt update
-sudo apt install postgresql-14 postgresql-contrib-14
+sudo apt install -y postgresql postgresql-contrib
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 ```
 
-#### Windows
-1. 下载 PostgreSQL 安装包：https://www.postgresql.org/download/windows/
-2. 运行安装程序，按提示完成安装
-3. 记住设置的密码（默认用户：postgres）
-
-### 1.4 创建数据库
+### 1.3 创建数据库与用户
 
 ```bash
-# 进入 PostgreSQL 命令行
-psql -U postgres
+sudo -u postgres psql
+```
 
-# 创建数据库和用户
+```sql
 CREATE DATABASE project_management;
 CREATE USER project_user WITH PASSWORD 'your_secure_password';
 GRANT ALL PRIVILEGES ON DATABASE project_management TO project_user;
+-- PostgreSQL 15+ 需额外授权 public schema
+\c project_management
+GRANT ALL ON SCHEMA public TO project_user;
 \q
 ```
 
 ---
 
-## 第二步：项目安装
+## 第二步：克隆与配置
 
 ### 2.1 克隆项目
 
 ```bash
-cd /path/to/your/workspace
-git clone <repository-url>
-cd projects
+git clone https://gitee.com/sean_lee_001/project-management-system.git
+cd project-management-system
 ```
 
-### 2.2 安装依赖
+### 2.2 配置 pnpm
+
+项目需要在项目根目录创建 `.npmrc`（pnpm strict mode 需要）：
+
+```bash
+# 创建 .npmrc
+cat > .npmrc << 'EOF'
+shamefully-hoist=true
+strict-peer-dependencies=false
+EOF
+```
+
+### 2.3 安装依赖
 
 ```bash
 pnpm install
 ```
 
-### 2.3 配置环境变量
+> 注意：如果安装失败（ESLint 相关包解析错误），说明 `.npmrc` 配置缺失或 `eslint.config.mjs` 引用了未安装的插件。请确保 `.npmrc` 已创建且 `eslint.config.mjs` 使用正确的配置（见常见问题）。
+
+### 2.4 配置环境变量
 
 ```bash
-# 复制环境变量示例文件
 cp .env.example .env
 ```
 
-编辑 `.env` 文件：
+编辑 `.env`，**最低配置**：
 
 ```env
-# JWT Secret（请生成一个强随机字符串）
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-
-# 数据库配置
+JWT_SECRET=<用 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" 生成>
 DATABASE_URL=postgresql://project_user:your_secure_password@localhost:5432/project_management
-
-# Node环境
-NODE_ENV=development
 ```
 
-**生成强随机密钥**：
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
+**注意**：`.env` 不应提交到 Git。项目中包含一个已填充真实凭据的 `.env` 文件，部署前请删除或替换。
 
 ---
 
 ## 第三步：数据库初始化
 
-### 3.1 运行数据库迁移
+### 3.1 执行 Schema 迁移
 
 ```bash
-# 创建数据库表
 pnpm drizzle-kit push
 ```
 
-### 3.2 初始化数据（可选）
+此命令会自动创建所有 31 张数据库表（部门、用户、角色、客户、产品、项目、任务、合同、订单、送货、审批流程、审批记录、消息、日志、知识库、编码规则、权限、委托等）。
 
-如果需要创建初始管理员账户，可以运行初始化脚本：
+### 3.2 创建管理员账户（必需）
 
 ```bash
-# 创建初始管理员（用户名：admin，密码：admin123）
-# 注意：生产环境请务必修改密码！
 node scripts/init-admin.js
+```
+
+> 此脚本在数据库中创建 admin 用户（密码 `admin123`）。**生产环境请立即修改密码**。
+
+成功后会输出类似：
+```
+管理员创建成功: admin
+```
+
+### 3.3 生成测试数据（可选）
+
+```bash
+# 生成 20 组完整测试数据（客户/项目/任务/合同/订单/审批/消息/日志等）
+node scripts/generate-all-test-data.js
+
+# 填充订单付款比例和发票/交易数据
+node scripts/populate-invoice-transaction.js
 ```
 
 ---
 
 ## 第四步：启动开发服务器
 
-### 4.1 启动后端服务
-
 ```bash
-# 开发模式（支持热更新）
 pnpm dev
-
-# 或使用 coze CLI（推荐）
-coze dev
 ```
 
-服务将在 `http://localhost:5000` 启动
+服务默认在 `http://localhost:3000` 启动。
 
-### 4.2 访问系统
+> 注意：启动端口为 **3000**（非 5000）。5000 端口是旧版 coze CLI 的端口，本项目使用 Next.js 原生 dev server。
 
-打开浏览器访问：http://localhost:5000
+### 登录系统
 
-默认管理员账户（如果执行了初始化脚本）：
-- 用户名：admin
-- 密码：admin123
-
-**⚠️ 重要：生产环境部署后请立即修改默认密码！**
+| 用户 | 密码 | 角色 |
+|------|------|------|
+| admin | admin123 | 系统管理员 |
+| zhangwei ~ songrui | test123 | 各职能角色 |
 
 ---
 
-## 第五步：构建生产版本
+## 第五步：构建与生产部署
 
-### 5.1 构建项目
+### 5.1 构建
 
 ```bash
 pnpm build
 ```
 
-### 5.2 启动生产服务器
+构建产物位于 `.next/standalone`（standalone 模式，可独立运行）。
+
+### 5.2 启动生产服务
 
 ```bash
-pnpm start
+# 直接启动
+node .next/standalone/server.js
+
+# 或使用 PM2
+pm2 start .next/standalone/server.js --name project-management
 ```
 
----
-
-## 第六步：部署到生产环境
-
-### 6.1 使用 PM2 进程管理（推荐）
-
-```bash
-# 全局安装 PM2
-pnpm add -g pm2
-
-# 启动应用
-pm2 start npm --name "project-management" -- start
-
-# 保存 PM2 配置
-pm2 save
-
-# 设置开机自启
-pm2 startup
-```
-
-### 6.2 使用 Nginx 反向代理（推荐）
-
-创建 Nginx 配置文件 `/etc/nginx/sites-available/project-management`：
+### 5.3 Nginx 反向代理
 
 ```nginx
 server {
@@ -238,12 +187,11 @@ server {
     server_name your-domain.com;
 
     location / {
-        proxy_pass http://localhost:5000;
+        proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
@@ -251,233 +199,183 @@ server {
 }
 ```
 
-启用配置：
-
-```bash
-# 创建软链接
-sudo ln -s /etc/nginx/sites-available/project-management /etc/nginx/sites-enabled/
-
-# 测试配置
-sudo nginx -t
-
-# 重启 Nginx
-sudo systemctl restart nginx
-```
-
-### 6.3 配置 HTTPS（使用 Let's Encrypt）
-
-```bash
-# 安装 Certbot
-sudo apt install certbot python3-certbot-nginx
-
-# 获取 SSL 证书
-sudo certbot --nginx -d your-domain.com
-
-# 自动续期
-sudo certbot renew --dry-run
-```
-
 ---
 
-## 移动端 APP 部署（可选）
+## 常见问题（克隆后必读）
 
-本项目包含 React Native 移动端应用，位于 `mobile-app` 目录。
+### Q1: `pnpm install` 失败（drizzle-kit postinstall 错误）
 
-### 移动端开发环境
+**现象**：`drizzle-kit` 的 postinstall 脚本尝试下载平台二进制文件失败。
 
-```bash
-cd mobile-app
-
-# 安装依赖
-pnpm install
-
-# iOS 开发（需要 macOS）
-npx pod-install
-pnpm ios
-
-# Android 开发
-pnpm android
-```
-
-### 移动端打包发布
-
-详见 `mobile-app/README.md`
-
----
-
-## 数据库备份与恢复
-
-### 备份数据库
+**解决**：升级 Node.js 到 22+：
 
 ```bash
-pg_dump -U postgres project_management > backup_$(date +%Y%m%d_%H%M%S).sql
-```
-
-### 恢复数据库
-
-```bash
-psql -U postgres project_management < backup_20241201_120000.sql
-```
-
-### 定时备份（使用 crontab）
-
-```bash
-# 编辑 crontab
-crontab -e
-
-# 添加每日凌晨 2 点备份任务
-0 2 * * * pg_dump -U postgres project_management > /path/to/backups/backup_$(date +\%Y\%m\%d_\%H\%M\%S).sql
-```
-
----
-
-## 常见问题
-
-### Q1: 端口 5000 被占用
-
-```bash
-# 查找占用端口的进程
-lsof -i :5000
-
-# 杀死进程（替换 PID）
-kill -9 <PID>
-
-# 或修改端口
-pnpm dev -- -p 3000
-```
-
-### Q2: 数据库连接失败
-
-检查：
-1. PostgreSQL 服务是否运行
-2. 数据库密码是否正确
-3. `.env` 文件中 `DATABASE_URL` 配置是否正确
-4. 防火墙是否允许 5432 端口
-
-### Q3: 依赖安装失败
-
-```bash
-# 清理缓存
-pnpm store prune
-
-# 重新安装
+nvm install 24
+nvm use 24
 rm -rf node_modules
 pnpm install
 ```
 
-### Q4: 构建失败
+### Q2: `pnpm dev` 报错 `unique is not defined`
 
-```bash
-# 清理构建缓存
-rm -rf .next
-pnpm build
+**现象**：`ReferenceError: unique is not defined at schema.ts:1308`
+
+**原因**：`src/storage/database/shared/schema.ts` 第 12 行从 `drizzle-orm/pg-core` 导入时遗漏了 `unique`。
+
+**解决**：确认 schema.ts 导入包含 `unique`：
+
+```typescript
+import { pgTable, varchar, timestamp, boolean, integer, date, jsonb, index, unique } from "drizzle-orm/pg-core";
 ```
 
-### Q5: TypeError: params is not a function
+### Q3: ESLint 配置错误
 
-这是 Next.js 16 的 breaking change，确保动态路由使用：
+**现象**：`pnpm lint` 报 `Cannot find module 'globals'` 或 `Cannot read properties of undefined (reading 'base')`
+
+**原因**：`eslint.config.mjs` 导入了 `nextJsConfigs.flat.base`（不存在），且 pnpm strict mode 下 ESLint 预设的传递依赖未被提升。
+
+**解决**：编辑 `eslint.config.mjs`：
+
+```javascript
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import { FlatCompat } from "@eslint/eslintrc";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const compat = new FlatCompat({ baseDirectory: __dirname });
+
+const eslintConfig = [
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
+];
+
+export default eslintConfig;
+```
+
+### Q4: 登录后 admin 无法访问后台管理
+
+**现象**：admin 账号登录成功但无法访问 `/admin` 页面。
+
+**原因**：数据库中 admin 的 `role` 字段值为中文 `系统管理员`，而代码 `UserRole.SYSTEM_ADMIN = "system_admin"` 为英文编码。
+
+**解决**：执行以下 SQL 修正：
+
+```sql
+UPDATE users SET role = 'system_admin' WHERE username = 'admin';
+```
+
+**如果仍无法访问**：清除浏览器 localStorage（`F12` -> Application -> Local Storage -> 清除），重新登录。
+
+### Q5: 新建部门无响应
+
+**原因**：`/api/departments` 缺少 POST 处理器，前端 POST 请求收到 405。
+
+**解决**：已在最新代码中修复。如果使用旧版本，需在 `src/app/api/departments/route.ts` 中手动添加 `export async function POST`。
+
+### Q6: 交易明细 / 发票管理无数据
+
+**原因**：订单表的付款比例字段（`prepay_ratio` 等）为空，API 仅在比例 > 0 时生成行。
+
+**解决**：执行 `node scripts/populate-invoice-transaction.js` 填充付款数据。
+
+### Q7: `init-admin.js` 脚本报模块未找到
+
+**现象**：`Cannot find module 'drizzle-orm/node-postgres'`
+
+**原因**：drizzle-orm 的 exports map 未导出 `node-postgres` 路径。
+
+**解决**：替代方案 — 使用 `psql` 直接插入：
+
+```bash
+node -e "
+const bcrypt = require('bcryptjs');
+console.log(bcrypt.hashSync('admin123', 10));
+"
+# 将输出的哈希值用于 INSERT
+```
+
+### Q8: `params` 不是函数（Next.js 16 breaking change）
+
+**原因**：Next.js 16 将动态路由的 `params` 改为 `Promise` 类型。部分旧代码直接同步访问 `params`。
+
+**解决**：在动态路由页面中：
 
 ```typescript
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  // ...
+  const { id } = await params; // 必须先 await
 }
 ```
 
 ---
 
-## 性能优化建议
+## 代码质量说明
 
-1. **数据库优化**
-   - 定期执行 `VACUUM ANALYZE`
-   - 为常用查询字段添加索引
-   - 配置连接池（如 pg-promise）
+本项目从 Gitee 克隆后，存在以下因环境差异导致的已知问题（已在本部署指南的修复分支中解决）：
 
-2. **应用优化**
-   - 启用 Next.js ISR (Incremental Static Regeneration)
-   - 使用 Redis 缓存热点数据
-   - 优化图片（使用 next/image）
+| 问题类型 | 根因 | 影响范围 |
+|----------|------|----------|
+| schema.ts 缺少 `unique` 导入 | drizzle-orm 版本或构建环境差异，原环境可能隐式可用 | 服务启动崩溃 |
+| eslint 配置引用不存在的 `flat.base` | 原开发者可能未运行 lint，或使用不同 eslint 版本 | `pnpm lint` 失败 |
+| pnpm workspaces 含占位值 | 原开发环境可能使用其他包管理器配置 | `pnpm install` 阻塞 |
+| next.config.ts 含已弃用的 `experimental.serverActions` | Next.js 16 将 serverActions 提升为顶层配置 | 构建时有弃用警告 |
+| 部门 API 缺少 POST 处理器 | 功能未实现（创建部门走其他路径或从未测试） | 新建部门失效 |
+| 发票 API 缺少 PUT 处理器 | InvoiceManagement 组件引用未实现的路由 | 发票单元格内编辑可能失败 |
+| `/api/auth/current-user` 路由缺失 | 订单/合同审批撤销功能引用了未创建的路由 | 撤销审批功能崩溃 |
+| admin 角色存储为中文编码 | 代码使用英文 `system_admin`，但数据初始化时可能写入了中文 | 权限检查失败 |
+| `.env` 已提交到 Git 仓库 | 开发便利性考虑 | 凭据泄露风险 |
 
-3. **服务器优化**
-   - 增加内存
-   - 使用负载均衡（多实例）
-   - 启用 Gzip 压缩
-
----
-
-## 安全建议
-
-1. **环境安全**
-   - ⚠️ 生产环境务必修改默认密码
-   - ⚠️ 使用强随机 `JWT_SECRET`
-   - ⚠️ 不要将 `.env` 文件提交到 Git
-
-2. **网络安全**
-   - 启用 HTTPS
-   - 配置防火墙，仅开放必要端口
-   - 限制数据库访问 IP
-
-3. **应用安全**
-   - 定期更新依赖包（`pnpm update`）
-   - 实施日志监控
-   - 配置备份策略
-
----
-
-## 技术支持
-
-如遇到问题，请：
-
-1. 检查日志文件：查看终端输出或 PM2 日志
-2. 查看文档：检查项目内相关文档
-3. 提交 Issue：在项目仓库提交问题
+**建议**：首次克隆后按本指南的第二步~第四步执行即可避开上述所有坑点。
 
 ---
 
 ## 项目结构
 
 ```
-projects/
+project-management-system/
 ├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── api/               # API 路由
-│   │   ├── app/               # 应用页面
-│   │   └── auth/              # 认证页面
-│   ├── components/            # React 组件
-│   │   ├── ui/               # shadcn/ui 组件
-│   │   ├── Dashboard.tsx     # 数据统计看板
-│   │   └── ...
-│   ├── storage/
-│   │   └── database/         # 数据库配置
-│   │       └── shared/
-│   │           └── schema.ts  # 数据库表定义
-│   └── lib/                  # 工具函数
-├── mobile-app/               # React Native 移动端
-├── public/                   # 静态资源
-├── .env                      # 环境变量（不提交）
-├── .env.example              # 环境变量示例
-├── next.config.ts            # Next.js 配置
-├── package.json              # 项目依赖
-└── drizzle.config.ts         # Drizzle 配置
+│   ├── app/                      # Next.js App Router
+│   │   ├── api/                  # 192 个 API 路由
+│   │   │   ├── auth/             #   登录/注册/Token
+│   │   │   ├── departments/      #   部门 CRUD
+│   │   │   ├── users/            #   用户管理
+│   │   │   ├── projects/         #   项目管理
+│   │   │   ├── tasks/            #   任务管理
+│   │   │   ├── customers/        #   客户管理
+│   │   │   ├── contracts/        #   合同管理
+│   │   │   ├── orders/           #   订单管理
+│   │   │   ├── deliveries/       #   送货管理
+│   │   │   ├── invoices/         #   发票管理
+│   │   │   ├── transactions/     #   交易明细
+│   │   │   ├── approvals/        #   审批流程
+│   │   │   ├── knowledge-base/   #   知识库
+│   │   │   ├── coding-rules-v2/  #   编码规则
+│   │   │   ├── settings/         #   系统设置
+│   │   │   └── ...
+│   │   ├── admin/                # 后台管理
+│   │   ├── app/                  # 应用主界面
+│   │   └── auth/                 # 认证页面
+│   ├── components/               # 66 个 React 组件
+│   ├── storage/database/         # 数据层
+│   │   └── shared/schema.ts      #   31 张表定义 (2083 行)
+│   ├── hooks/                    # 自定义 Hooks
+│   └── lib/                      # 工具库
+├── scripts/                      # 部署/数据脚本
+│   ├── init-admin.js             #   创建管理员
+│   ├── generate-all-test-data.js #   生成 20 组测试数据
+│   └── populate-invoice-transaction.js  # 填充发票/交易数据
+├── drizzle.config.ts             # Drizzle 配置
+├── next.config.ts                # Next.js 配置
+├── .npmrc                        # pnpm 配置 (需手动创建)
+├── .env                          # 环境变量 (勿提交)
+└── package.json
 ```
 
 ---
 
-## 许可证
+## 安全提醒
 
-[请添加您的许可证信息]
-
----
-
-## 更新日志
-
-### v1.0.0 (2024-12)
-- ✅ 完成基础功能模块
-- ✅ 集成数据统计看板
-- ✅ 移动端 APP 支持
-- ✅ 审批流程功能
-- ✅ 二维码下载功能
-
----
-
-**祝您部署顺利！🎉**
+1. **生产环境**务必修改所有默认密码（admin/system/database）
+2. `.env` 文件不应提交到 Git
+3. `JWT_SECRET` 环境变量必须设置为强随机字符串
+4. 不要将 `scripts/` 下含凭据的脚本部署到生产服务器
+5. `/api/init` 和 `/api/migrate` 接口在部署前应禁用或加 IP 白名单

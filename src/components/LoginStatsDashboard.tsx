@@ -603,7 +603,8 @@ export default function LoginStatsDashboard() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700/50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">用户</th>
+                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-12">序号</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">用户</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">工号</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">登录时间</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">登录IP</th>
@@ -614,10 +615,11 @@ export default function LoginStatsDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {logs.map((log) => (
+              {logs.map((log, idx) => (
                 <tr key={log.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
                   log.isSensitiveOperation ? "bg-amber-50 dark:bg-amber-900/10" : ""
                 }`}>
+                  <td className="px-3 py-4 text-center text-xs text-gray-400 dark:text-gray-500">{idx + 1}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">{log.fullName || log.username}</p>
@@ -671,8 +673,8 @@ export default function LoginStatsDashboard() {
               ))}
               {logs.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                    暂无登录日志
+                  <td colSpan={9} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                     暂无登录日志
                   </td>
                 </tr>
               )}

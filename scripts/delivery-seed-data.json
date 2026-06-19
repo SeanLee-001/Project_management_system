@@ -1,0 +1,1183 @@
+{
+  "deliveryNotes": [
+    {
+      "id": "DL39ju0jzymqkvkduw",
+      "noteNumber": "DL20260619-001",
+      "orderId": "ord02",
+      "orderNumber": "ORD-2025-0002",
+      "supplierId": "",
+      "supplierName": "project_management",
+      "companyId": "",
+      "companyName": "北京新能源汽车股份有限公司",
+      "receiver": "系统管理员",
+      "contactPhone": "1380016647",
+      "deliveryAddress": "深圳市南山区科技园路88号A栋",
+      "deliveryDate": "2026-06-22",
+      "items": [
+        {
+          "id": "DLzbveafrvmqkvkduy",
+          "productId": "p01",
+          "materialCode": "MAT-001",
+          "productName": "自动化产线",
+          "specification": "AC220V/1.5KW",
+          "description": "用于自动化装配线驱动",
+          "unit": "台",
+          "quantity": 5
+        },
+        {
+          "id": "DLazup5m29mqkvkduy",
+          "productId": "p02",
+          "materialCode": "MAT-002",
+          "productName": "自动化产线",
+          "specification": "S7-1500系列",
+          "description": "产线核心控制单元",
+          "unit": "台",
+          "quantity": 8
+        }
+      ],
+      "totalQuantity": 13,
+      "status": "pending",
+      "remarks": "第1批送货，请验收",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-14",
+      "shippedByName": "系统管理员"
+    },
+    {
+      "id": "DL3knngjm6mqkvkduy",
+      "noteNumber": "DL20260619-002",
+      "orderId": "ord03",
+      "orderNumber": "ORD-2025-0003",
+      "supplierId": "",
+      "supplierName": "mechanical_engineer",
+      "companyId": "",
+      "companyName": "上海联影医疗科技股份有限公司",
+      "receiver": "project_manager",
+      "contactPhone": "1380027646",
+      "deliveryAddress": "北京市海淀区中关村大街1号",
+      "deliveryDate": "2026-06-23",
+      "items": [
+        {
+          "id": "DL3hq23w6ymqkvkduy",
+          "productId": "p02",
+          "materialCode": "MAT-002",
+          "productName": "自动化产线",
+          "specification": "S7-1500系列",
+          "description": "产线核心控制单元",
+          "unit": "台",
+          "quantity": 5
+        },
+        {
+          "id": "DL8yk3xw84mqkvkduy",
+          "productId": "p03",
+          "materialCode": "MAT-003",
+          "productName": "自动化产线",
+          "specification": "6轴/负载20KG",
+          "description": "搬运与焊接工位",
+          "unit": "台",
+          "quantity": 8
+        },
+        {
+          "id": "DLj3w3u41fmqkvkduy",
+          "productId": "p04",
+          "materialCode": "MAT-004",
+          "productName": "检测设备",
+          "specification": "2000万像素/高速",
+          "description": "产品外观缺陷检测",
+          "unit": "台",
+          "quantity": 11
+        }
+      ],
+      "totalQuantity": 24,
+      "status": "pending",
+      "remarks": "第2批送货，请验收",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-12",
+      "shippedByName": "project_manager"
+    },
+    {
+      "id": "DLewdqohh2mqkvkduy",
+      "noteNumber": "DL20260619-003",
+      "orderId": "ord04",
+      "orderNumber": "ORD-2025-0004",
+      "supplierId": "",
+      "supplierName": "mechanical_engineer",
+      "companyId": "",
+      "companyName": "杭州海康威视数字技术股份有限公司",
+      "receiver": "project_manager",
+      "contactPhone": "1380031162",
+      "deliveryAddress": "上海市浦东新区张江高科技园区",
+      "deliveryDate": "2026-06-24",
+      "items": [
+        {
+          "id": "DLla9xxolmmqkvkduy",
+          "productId": "p03",
+          "materialCode": "MAT-003",
+          "productName": "自动化产线",
+          "specification": "6轴/负载20KG",
+          "description": "搬运与焊接工位",
+          "unit": "台",
+          "quantity": 5
+        },
+        {
+          "id": "DLlpvcd0aemqkvkduy",
+          "productId": "p04",
+          "materialCode": "MAT-004",
+          "productName": "检测设备",
+          "specification": "2000万像素/高速",
+          "description": "产品外观缺陷检测",
+          "unit": "台",
+          "quantity": 8
+        },
+        {
+          "id": "DLoockuopfmqkvkduy",
+          "productId": "p05",
+          "materialCode": "MAT-005",
+          "productName": "物流设备",
+          "specification": "载重500KG",
+          "description": "车间物料自动搬运",
+          "unit": "台",
+          "quantity": 11
+        },
+        {
+          "id": "DLvs30i7tsmqkvkduy",
+          "productId": "p06",
+          "materialCode": "MAT-006",
+          "productName": "加工设备",
+          "specification": "光纤/20W",
+          "description": "产品标识打标",
+          "unit": "台",
+          "quantity": 14
+        }
+      ],
+      "totalQuantity": 38,
+      "status": "pending",
+      "remarks": "第3批送货，请验收",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-10",
+      "shippedByName": "project_manager"
+    },
+    {
+      "id": "DLpj4bymlbmqkvkduy",
+      "noteNumber": "DL20260619-004",
+      "orderId": "ord05",
+      "orderNumber": "ORD-2025-0005",
+      "supplierId": "",
+      "supplierName": "electrical_engineer",
+      "companyId": "",
+      "companyName": "广州汽车集团股份有限公司",
+      "receiver": "project_management",
+      "contactPhone": "1380041853",
+      "deliveryAddress": "广州市天河区珠江新城",
+      "deliveryDate": "2026-06-25",
+      "items": [
+        {
+          "id": "DLr6erg9lgmqkvkduy",
+          "productId": "p04",
+          "materialCode": "MAT-004",
+          "productName": "检测设备",
+          "specification": "2000万像素/高速",
+          "description": "产品外观缺陷检测",
+          "unit": "台",
+          "quantity": 5
+        },
+        {
+          "id": "DL8ncdyh9vmqkvkduy",
+          "productId": "p05",
+          "materialCode": "MAT-005",
+          "productName": "物流设备",
+          "specification": "载重500KG",
+          "description": "车间物料自动搬运",
+          "unit": "台",
+          "quantity": 8
+        }
+      ],
+      "totalQuantity": 13,
+      "status": "in_progress",
+      "remarks": "第4批送货，请验收",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-08",
+      "shippedByName": "project_management"
+    },
+    {
+      "id": "DL4k5xej66mqkvkduy",
+      "noteNumber": "DL20260619-005",
+      "orderId": "ord06",
+      "orderNumber": "ORD-2025-0006",
+      "supplierId": "",
+      "supplierName": "electrical_engineer",
+      "companyId": "",
+      "companyName": "苏州汇川技术有限公司",
+      "receiver": "mechanical_engineer",
+      "contactPhone": "1380050468",
+      "deliveryAddress": "杭州市西湖区文三路",
+      "deliveryDate": "2026-06-26",
+      "items": [
+        {
+          "id": "DLa8jkkem8mqkvkduy",
+          "productId": "p05",
+          "materialCode": "MAT-005",
+          "productName": "物流设备",
+          "specification": "载重500KG",
+          "description": "车间物料自动搬运",
+          "unit": "台",
+          "quantity": 5
+        },
+        {
+          "id": "DLwfbvmp27mqkvkduy",
+          "productId": "p06",
+          "materialCode": "MAT-006",
+          "productName": "加工设备",
+          "specification": "光纤/20W",
+          "description": "产品标识打标",
+          "unit": "台",
+          "quantity": 8
+        },
+        {
+          "id": "DLcqdaehkwmqkvkduy",
+          "productId": "p07",
+          "materialCode": "MAT-007",
+          "productName": "包装设备",
+          "specification": "速度60包/分钟",
+          "description": "成品自动包装线",
+          "unit": "台",
+          "quantity": 11
+        }
+      ],
+      "totalQuantity": 24,
+      "status": "in_progress",
+      "remarks": "第5批送货，请验收",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-06",
+      "shippedByName": "mechanical_engineer"
+    },
+    {
+      "id": "DLihen0a75mqkvkduy",
+      "noteNumber": "DL20260619-006",
+      "orderId": "ord07",
+      "orderNumber": "ORD-2025-0007",
+      "supplierId": "",
+      "supplierName": "visual_engineer",
+      "companyId": "",
+      "companyName": "武汉华星光电技术有限公司",
+      "receiver": "mechanical_engineer",
+      "contactPhone": "1380061601",
+      "deliveryAddress": "武汉市东湖高新区光谷大道",
+      "deliveryDate": "2026-06-27",
+      "items": [
+        {
+          "id": "DL460dla3tmqkvkduy",
+          "productId": "p06",
+          "materialCode": "MAT-006",
+          "productName": "加工设备",
+          "specification": "光纤/20W",
+          "description": "产品标识打标",
+          "unit": "台",
+          "quantity": 5
+        },
+        {
+          "id": "DL5w3vsc82mqkvkduy",
+          "productId": "p07",
+          "materialCode": "MAT-007",
+          "productName": "包装设备",
+          "specification": "速度60包/分钟",
+          "description": "成品自动包装线",
+          "unit": "台",
+          "quantity": 8
+        },
+        {
+          "id": "DLmcecy1ztmqkvkduy",
+          "productId": "p08",
+          "materialCode": "MAT-008",
+          "productName": "零部件",
+          "specification": "6205-2RS",
+          "description": "旋转部件支撑",
+          "unit": "台",
+          "quantity": 11
+        },
+        {
+          "id": "DL2elwxezamqkvkduy",
+          "productId": "p09",
+          "materialCode": "MAT-009",
+          "productName": "电控部件",
+          "specification": "380V/7.5KW",
+          "description": "电机调速控制",
+          "unit": "台",
+          "quantity": 14
+        }
+      ],
+      "totalQuantity": 38,
+      "status": "in_progress",
+      "remarks": "第6批送货，请验收",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-04",
+      "shippedByName": "mechanical_engineer"
+    },
+    {
+      "id": "DLdar3vxi5mqkvkduy",
+      "noteNumber": "DL20260619-007",
+      "orderId": "ord09",
+      "orderNumber": "ORD-2025-0009",
+      "supplierId": "",
+      "supplierName": "software_engineer",
+      "companyId": "",
+      "companyName": "东莞立讯精密工业股份有限公司",
+      "receiver": "electrical_engineer",
+      "contactPhone": "1380076021",
+      "deliveryAddress": "成都市高新区天府软件园",
+      "deliveryDate": "2026-06-28",
+      "items": [
+        {
+          "id": "DL2ssz0zy8mqkvkduy",
+          "productId": "p07",
+          "materialCode": "MAT-007",
+          "productName": "包装设备",
+          "specification": "速度60包/分钟",
+          "description": "成品自动包装线",
+          "unit": "台",
+          "quantity": 5
+        },
+        {
+          "id": "DLdfi6kg0dmqkvkduy",
+          "productId": "p08",
+          "materialCode": "MAT-008",
+          "productName": "零部件",
+          "specification": "6205-2RS",
+          "description": "旋转部件支撑",
+          "unit": "台",
+          "quantity": 8
+        }
+      ],
+      "totalQuantity": 13,
+      "status": "completed",
+      "remarks": "第7批送货，请验收",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-02",
+      "shippedByName": "electrical_engineer"
+    },
+    {
+      "id": "DLbdd4hvlsmqkvkduy",
+      "noteNumber": "DL20260619-008",
+      "orderId": "ord11",
+      "orderNumber": "ORD-2025-0011",
+      "supplierId": "",
+      "supplierName": "系统管理员",
+      "companyId": "",
+      "companyName": "重庆长安汽车股份有限公司",
+      "receiver": "electrical_engineer",
+      "contactPhone": "1380086206",
+      "deliveryAddress": "苏州市工业园区苏虹路",
+      "deliveryDate": "2026-06-29",
+      "items": [
+        {
+          "id": "DL7x232eoamqkvkduy",
+          "productId": "p08",
+          "materialCode": "MAT-008",
+          "productName": "零部件",
+          "specification": "6205-2RS",
+          "description": "旋转部件支撑",
+          "unit": "台",
+          "quantity": 5
+        },
+        {
+          "id": "DLerl98prqmqkvkduy",
+          "productId": "p09",
+          "materialCode": "MAT-009",
+          "productName": "电控部件",
+          "specification": "380V/7.5KW",
+          "description": "电机调速控制",
+          "unit": "台",
+          "quantity": 8
+        },
+        {
+          "id": "DLebs3rt2rmqkvkduy",
+          "productId": "p10",
+          "materialCode": "MAT-010",
+          "productName": "电控部件",
+          "specification": "12寸/工业级",
+          "description": "人机交互界面",
+          "unit": "台",
+          "quantity": 11
+        }
+      ],
+      "totalQuantity": 24,
+      "status": "completed",
+      "remarks": "第8批送货，请验收",
+      "receipt": [
+        {
+          "name": "签收单_8.pdf",
+          "url": "",
+          "type": "application/pdf",
+          "uploadedAt": "2026-06-07"
+        }
+      ],
+      "failureHistory": [],
+      "createTime": "2026-05-31",
+      "shippedByName": "electrical_engineer"
+    },
+    {
+      "id": "DL6y83pw5kmqkvkduy",
+      "noteNumber": "DL20260619-009",
+      "orderId": "ord13",
+      "orderNumber": "ORD-2025-0013",
+      "supplierId": "",
+      "supplierName": "project_manager",
+      "companyId": "",
+      "companyName": "青岛海尔生物医疗股份有限公司",
+      "receiver": "visual_engineer",
+      "contactPhone": "1380092678",
+      "deliveryAddress": "重庆市渝北区金开大道",
+      "deliveryDate": "2026-06-30",
+      "items": [
+        {
+          "id": "DLikooo5k9mqkvkduy",
+          "productId": "p09",
+          "materialCode": "MAT-009",
+          "productName": "电控部件",
+          "specification": "380V/7.5KW",
+          "description": "电机调速控制",
+          "unit": "台",
+          "quantity": 5
+        },
+        {
+          "id": "DLcvi8ph2omqkvkduy",
+          "productId": "p10",
+          "materialCode": "MAT-010",
+          "productName": "电控部件",
+          "specification": "12寸/工业级",
+          "description": "人机交互界面",
+          "unit": "台",
+          "quantity": 8
+        },
+        {
+          "id": "DLtxvgrndumqkvkduy",
+          "productId": "p01",
+          "materialCode": "MAT-001",
+          "productName": "自动化产线",
+          "specification": "AC220V/1.5KW",
+          "description": "用于自动化装配线驱动",
+          "unit": "台",
+          "quantity": 11
+        },
+        {
+          "id": "DL8mqvrl9hmqkvkduy",
+          "productId": "p02",
+          "materialCode": "MAT-002",
+          "productName": "自动化产线",
+          "specification": "S7-1500系列",
+          "description": "产线核心控制单元",
+          "unit": "台",
+          "quantity": 14
+        }
+      ],
+      "totalQuantity": 38,
+      "status": "cancelled",
+      "remarks": "已完成交付",
+      "receipt": [
+        {
+          "name": "签收单_9.pdf",
+          "url": "",
+          "type": "application/pdf",
+          "uploadedAt": "2026-06-06"
+        }
+      ],
+      "failureHistory": [
+        {
+          "time": "2026-06-18",
+          "reason": "客户产能不足，推迟接收",
+          "type": "delay"
+        }
+      ],
+      "createTime": "2026-05-29",
+      "shippedByName": "visual_engineer"
+    },
+    {
+      "id": "DLl99rszzzmqkvkduy",
+      "noteNumber": "DL20260619-010",
+      "orderId": "ord15",
+      "orderNumber": "ORD-2025-0015",
+      "supplierId": "",
+      "supplierName": "project_manager",
+      "companyId": "",
+      "companyName": "合肥美亚光电技术股份有限公司",
+      "receiver": "software_engineer",
+      "contactPhone": "1380100247",
+      "deliveryAddress": "东莞市松山湖高新区",
+      "deliveryDate": "2026-07-01",
+      "items": [
+        {
+          "id": "DL4r5s6gycmqkvkduy",
+          "productId": "p10",
+          "materialCode": "MAT-010",
+          "productName": "电控部件",
+          "specification": "12寸/工业级",
+          "description": "人机交互界面",
+          "unit": "台",
+          "quantity": 5
+        },
+        {
+          "id": "DL2e0q9ndamqkvkduy",
+          "productId": "p01",
+          "materialCode": "MAT-001",
+          "productName": "自动化产线",
+          "specification": "AC220V/1.5KW",
+          "description": "用于自动化装配线驱动",
+          "unit": "台",
+          "quantity": 8
+        }
+      ],
+      "totalQuantity": 13,
+      "status": "pending",
+      "remarks": "客户取消",
+      "receipt": [
+        {
+          "name": "签收单_10.pdf",
+          "url": "",
+          "type": "application/pdf",
+          "uploadedAt": "2026-06-05"
+        }
+      ],
+      "failureHistory": [],
+      "createTime": "2026-05-27",
+      "shippedByName": "software_engineer"
+    }
+  ],
+  "shipmentOrders": [
+    {
+      "id": "DLyowixkw8mqkvkduy",
+      "shipmentNumber": "SH20260619-001",
+      "deliveryNoteId": "DL39ju0jzymqkvkduw",
+      "deliveryNoteNumber": "DL20260619-001",
+      "supplierName": "",
+      "companyName": "北京新能源汽车股份有限公司",
+      "status": "pending_ship",
+      "shipTime": "2026-06-17",
+      "shipOperator": "系统管理员",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-16"
+    },
+    {
+      "id": "DL5dhlsnzpmqkvkduz",
+      "shipmentNumber": "SH20260619-002",
+      "deliveryNoteId": "DL3knngjm6mqkvkduy",
+      "deliveryNoteNumber": "DL20260619-002",
+      "supplierName": "",
+      "companyName": "上海联影医疗科技股份有限公司",
+      "status": "shipped",
+      "shipTime": "2026-06-16",
+      "shipOperator": "project_manager",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-14"
+    },
+    {
+      "id": "DL9bs24sfdmqkvkduz",
+      "shipmentNumber": "SH20260619-003",
+      "deliveryNoteId": "DLewdqohh2mqkvkduy",
+      "deliveryNoteNumber": "DL20260619-003",
+      "supplierName": "",
+      "companyName": "杭州海康威视数字技术股份有限公司",
+      "status": "in_distribution",
+      "shipTime": "2026-06-15",
+      "shipOperator": "project_manager",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-12"
+    },
+    {
+      "id": "DLo50lmmrymqkvkduz",
+      "shipmentNumber": "SH20260619-004",
+      "deliveryNoteId": "DLpj4bymlbmqkvkduy",
+      "deliveryNoteNumber": "DL20260619-004",
+      "supplierName": "",
+      "companyName": "广州汽车集团股份有限公司",
+      "status": "delivered",
+      "shipTime": "2026-06-14",
+      "shipOperator": "project_management",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-10"
+    },
+    {
+      "id": "DLzqisrj00mqkvkduz",
+      "shipmentNumber": "SH20260619-005",
+      "deliveryNoteId": "DL4k5xej66mqkvkduy",
+      "deliveryNoteNumber": "DL20260619-005",
+      "supplierName": "",
+      "companyName": "苏州汇川技术有限公司",
+      "status": "pending_ship",
+      "shipTime": "2026-06-13",
+      "shipOperator": "mechanical_engineer",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-08"
+    },
+    {
+      "id": "DLkecodkhbmqkvkduz",
+      "shipmentNumber": "SH20260619-006",
+      "deliveryNoteId": "DLihen0a75mqkvkduy",
+      "deliveryNoteNumber": "DL20260619-006",
+      "supplierName": "",
+      "companyName": "武汉华星光电技术有限公司",
+      "status": "shipped",
+      "shipTime": "2026-06-12",
+      "shipOperator": "mechanical_engineer",
+      "receipt": [
+        {
+          "name": "发货回执_SH20260619-006.jpg",
+          "url": "",
+          "type": "image/jpeg",
+          "uploadedAt": "2026-06-13"
+        }
+      ],
+      "failureHistory": [],
+      "createTime": "2026-06-06"
+    },
+    {
+      "id": "DLr47xpft1mqkvkduz",
+      "shipmentNumber": "SH20260619-007",
+      "deliveryNoteId": "DLdar3vxi5mqkvkduy",
+      "deliveryNoteNumber": "DL20260619-007",
+      "supplierName": "",
+      "companyName": "东莞立讯精密工业股份有限公司",
+      "status": "in_distribution",
+      "shipTime": "2026-06-11",
+      "shipOperator": "electrical_engineer",
+      "receipt": [
+        {
+          "name": "发货回执_SH20260619-007.jpg",
+          "url": "",
+          "type": "image/jpeg",
+          "uploadedAt": "2026-06-12"
+        }
+      ],
+      "failureHistory": [],
+      "createTime": "2026-06-04"
+    },
+    {
+      "id": "DL9c0rscdkmqkvkduz",
+      "shipmentNumber": "SH20260619-008",
+      "deliveryNoteId": "DLbdd4hvlsmqkvkduy",
+      "deliveryNoteNumber": "DL20260619-008",
+      "supplierName": "",
+      "companyName": "重庆长安汽车股份有限公司",
+      "status": "completed",
+      "shipTime": "2026-06-10",
+      "shipOperator": "electrical_engineer",
+      "receipt": [
+        {
+          "name": "发货回执_SH20260619-008.jpg",
+          "url": "",
+          "type": "image/jpeg",
+          "uploadedAt": "2026-06-11"
+        }
+      ],
+      "failureHistory": [
+        {
+          "time": "2026-06-17",
+          "reason": "车辆调度延误",
+          "type": "logistics"
+        }
+      ],
+      "createTime": "2026-06-02"
+    },
+    {
+      "id": "DLw4x9l6ogmqkvkduz",
+      "shipmentNumber": "SH20260619-009",
+      "deliveryNoteId": "DL6y83pw5kmqkvkduy",
+      "deliveryNoteNumber": "DL20260619-009",
+      "supplierName": "",
+      "companyName": "青岛海尔生物医疗股份有限公司",
+      "status": "completed",
+      "shipOperator": "visual_engineer",
+      "receipt": [
+        {
+          "name": "发货回执_SH20260619-009.jpg",
+          "url": "",
+          "type": "image/jpeg",
+          "uploadedAt": "2026-06-10"
+        }
+      ],
+      "cancelReason": "订单变更取消",
+      "failureHistory": [],
+      "createTime": "2026-05-31"
+    },
+    {
+      "id": "DLd3opo9yumqkvkduz",
+      "shipmentNumber": "SH20260619-010",
+      "deliveryNoteId": "DLl99rszzzmqkvkduy",
+      "deliveryNoteNumber": "DL20260619-010",
+      "supplierName": "",
+      "companyName": "合肥美亚光电技术股份有限公司",
+      "status": "cancelled",
+      "shipOperator": "software_engineer",
+      "receipt": [
+        {
+          "name": "发货回执_SH20260619-010.jpg",
+          "url": "",
+          "type": "image/jpeg",
+          "uploadedAt": "2026-06-09"
+        }
+      ],
+      "cancelReason": "订单变更取消",
+      "failureHistory": [],
+      "createTime": "2026-05-29"
+    }
+  ],
+  "distributionOrders": [
+    {
+      "id": "DL6927w9c0mqkvkduz",
+      "distributionNumber": "DS20260619-001",
+      "shipmentId": "DLyowixkw8mqkvkduy",
+      "shipmentNumber": "SH20260619-001",
+      "deliveryNoteId": "DL39ju0jzymqkvkduw",
+      "supplierName": "",
+      "companyName": "北京新能源汽车股份有限公司",
+      "deliveryAddress": "深圳市南山区科技园路88号A栋",
+      "receiver": "收货人1",
+      "receiverPhone": "13920420661",
+      "distributionType": "logistics",
+      "status": "pending_distribute",
+      "distributeTime": "2026-06-18",
+      "completeTime": "2026-06-19",
+      "distributor": "project_manager",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-17",
+      "logisticsCompany": "顺丰物流",
+      "logisticsNumber": "LGMQKVKDUZ0",
+      "logisticsDriverName": "司机A",
+      "logisticsDriverId": "44031980010001",
+      "logisticsDriverPhone": "13728685025"
+    },
+    {
+      "id": "DLbzjftpy5mqkvkduz",
+      "distributionNumber": "DS20260619-002",
+      "shipmentId": "DL5dhlsnzpmqkvkduz",
+      "shipmentNumber": "SH20260619-002",
+      "deliveryNoteId": "DL3knngjm6mqkvkduy",
+      "supplierName": "",
+      "companyName": "上海联影医疗科技股份有限公司",
+      "deliveryAddress": "北京市海淀区中关村大街1号",
+      "receiver": "收货人2",
+      "receiverPhone": "13925263099",
+      "distributionType": "express",
+      "status": "in_distribution",
+      "distributeTime": "2026-06-17",
+      "completeTime": "2026-06-19",
+      "distributor": "project_management",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-15",
+      "expressCompany": "德邦物流",
+      "expressNumber": "SFMQKVKDUZ1"
+    },
+    {
+      "id": "DLrl7vbfwmmqkvkduz",
+      "distributionNumber": "DS20260619-003",
+      "shipmentId": "DL9bs24sfdmqkvkduz",
+      "shipmentNumber": "SH20260619-003",
+      "deliveryNoteId": "DLewdqohh2mqkvkduy",
+      "supplierName": "",
+      "companyName": "杭州海康威视数字技术股份有限公司",
+      "deliveryAddress": "上海市浦东新区张江高科技园区",
+      "receiver": "收货人3",
+      "receiverPhone": "13928961945",
+      "distributionType": "company",
+      "status": "delivered",
+      "distributeTime": "2026-06-16",
+      "completeTime": "2026-06-18",
+      "distributor": "mechanical_engineer",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-13",
+      "companyDriverName": "司机C",
+      "companyDriverId": "44031982030003",
+      "companyDriverPhone": "13626411590"
+    },
+    {
+      "id": "DLx2xten9ymqkvkduz",
+      "distributionNumber": "DS20260619-004",
+      "shipmentId": "DLo50lmmrymqkvkduz",
+      "shipmentNumber": "SH20260619-004",
+      "deliveryNoteId": "DLpj4bymlbmqkvkduy",
+      "supplierName": "",
+      "companyName": "广州汽车集团股份有限公司",
+      "deliveryAddress": "广州市天河区珠江新城",
+      "receiver": "收货人4",
+      "receiverPhone": "13936836731",
+      "distributionType": "logistics",
+      "status": "pending_distribute",
+      "distributeTime": "2026-06-15",
+      "completeTime": "2026-06-18",
+      "distributor": "mechanical_engineer",
+      "receipt": [],
+      "failureHistory": [],
+      "createTime": "2026-06-11",
+      "logisticsCompany": "中通快递",
+      "logisticsNumber": "LGMQKVKDUZ3",
+      "logisticsDriverName": "司机D",
+      "logisticsDriverId": "44031983040004",
+      "logisticsDriverPhone": "13754120329"
+    },
+    {
+      "id": "DLf9ywum9nmqkvkduz",
+      "distributionNumber": "DS20260619-005",
+      "shipmentId": "DLzqisrj00mqkvkduz",
+      "shipmentNumber": "SH20260619-005",
+      "deliveryNoteId": "DL4k5xej66mqkvkduy",
+      "supplierName": "",
+      "companyName": "苏州汇川技术有限公司",
+      "deliveryAddress": "杭州市西湖区文三路",
+      "receiver": "收货人5",
+      "receiverPhone": "13969037393",
+      "distributionType": "express",
+      "status": "in_distribution",
+      "distributeTime": "2026-06-14",
+      "completeTime": "2026-06-17",
+      "distributor": "electrical_engineer",
+      "receipt": [
+        {
+          "name": "签收_DS20260619-005.pdf",
+          "url": "",
+          "type": "application/pdf",
+          "uploadedAt": "2026-06-15"
+        }
+      ],
+      "failureHistory": [],
+      "createTime": "2026-06-09",
+      "expressCompany": "韵达快递",
+      "expressNumber": "SFMQKVKDUZ4"
+    },
+    {
+      "id": "DLh0yupzkdmqkvkduz",
+      "distributionNumber": "DS20260619-006",
+      "shipmentId": "DLkecodkhbmqkvkduz",
+      "shipmentNumber": "SH20260619-006",
+      "deliveryNoteId": "DLihen0a75mqkvkduy",
+      "supplierName": "",
+      "companyName": "武汉华星光电技术有限公司",
+      "deliveryAddress": "武汉市东湖高新区光谷大道",
+      "receiver": "收货人6",
+      "receiverPhone": "13976385438",
+      "distributionType": "company",
+      "status": "delivered",
+      "distributeTime": "2026-06-13",
+      "completeTime": "2026-06-17",
+      "distributor": "electrical_engineer",
+      "receipt": [
+        {
+          "name": "签收_DS20260619-006.pdf",
+          "url": "",
+          "type": "application/pdf",
+          "uploadedAt": "2026-06-14"
+        }
+      ],
+      "failureHistory": [],
+      "createTime": "2026-06-07",
+      "companyDriverName": "司机F",
+      "companyDriverId": "44031985060006",
+      "companyDriverPhone": "13616107482"
+    },
+    {
+      "id": "DLn78xd7f8mqkvkduz",
+      "distributionNumber": "DS20260619-007",
+      "shipmentId": "DLr47xpft1mqkvkduz",
+      "shipmentNumber": "SH20260619-007",
+      "deliveryNoteId": "DLdar3vxi5mqkvkduy",
+      "supplierName": "",
+      "companyName": "东莞立讯精密工业股份有限公司",
+      "deliveryAddress": "成都市高新区天府软件园",
+      "receiver": "收货人7",
+      "receiverPhone": "13931266532",
+      "distributionType": "logistics",
+      "status": "delivered",
+      "distributeTime": "2026-06-12",
+      "distributor": "visual_engineer",
+      "receipt": [
+        {
+          "name": "签收_DS20260619-007.pdf",
+          "url": "",
+          "type": "application/pdf",
+          "uploadedAt": "2026-06-13"
+        }
+      ],
+      "failureHistory": [],
+      "createTime": "2026-06-05",
+      "logisticsCompany": "EMS",
+      "logisticsNumber": "LGMQKVKDUZ6",
+      "logisticsDriverName": "司机G",
+      "logisticsDriverId": "44031986070007",
+      "logisticsDriverPhone": "13706986688"
+    },
+    {
+      "id": "DLmzjnmhesmqkvkduz",
+      "distributionNumber": "DS20260619-008",
+      "shipmentId": "DL9c0rscdkmqkvkduz",
+      "shipmentNumber": "SH20260619-008",
+      "deliveryNoteId": "DLbdd4hvlsmqkvkduy",
+      "supplierName": "",
+      "companyName": "重庆长安汽车股份有限公司",
+      "deliveryAddress": "苏州市工业园区苏虹路",
+      "receiver": "收货人8",
+      "receiverPhone": "13949781081",
+      "distributionType": "express",
+      "status": "delivered",
+      "distributeTime": "2026-06-11",
+      "distributor": "software_engineer",
+      "receipt": [
+        {
+          "name": "签收_DS20260619-008.pdf",
+          "url": "",
+          "type": "application/pdf",
+          "uploadedAt": "2026-06-12"
+        }
+      ],
+      "failureHistory": [],
+      "createTime": "2026-06-03",
+      "expressCompany": "安能物流",
+      "expressNumber": "SFMQKVKDUZ7"
+    },
+    {
+      "id": "DL0c7fm6snmqkvkduz",
+      "distributionNumber": "DS20260619-009",
+      "shipmentId": "DLw4x9l6ogmqkvkduz",
+      "shipmentNumber": "SH20260619-009",
+      "deliveryNoteId": "DL6y83pw5kmqkvkduy",
+      "supplierName": "",
+      "companyName": "青岛海尔生物医疗股份有限公司",
+      "deliveryAddress": "重庆市渝北区金开大道",
+      "receiver": "收货人9",
+      "receiverPhone": "13984825559",
+      "distributionType": "company",
+      "status": "failed",
+      "distributor": "系统管理员",
+      "failReason": "收货地址不明确，无法送达",
+      "receipt": [
+        {
+          "name": "退件_DS20260619-009.pdf",
+          "url": "",
+          "type": "application/pdf",
+          "uploadedAt": "2026-06-11"
+        }
+      ],
+      "failureHistory": [
+        {
+          "time": "2026-06-16",
+          "reason": "三次派送无人签收",
+          "type": "delivery"
+        }
+      ],
+      "createTime": "2026-06-01",
+      "companyDriverName": "司机I",
+      "companyDriverId": "44031988090009",
+      "companyDriverPhone": "13665687268"
+    },
+    {
+      "id": "DL9cwb3ca7mqkvkduz",
+      "distributionNumber": "DS20260619-010",
+      "shipmentId": "DLd3opo9yumqkvkduz",
+      "shipmentNumber": "SH20260619-010",
+      "deliveryNoteId": "DLl99rszzzmqkvkduy",
+      "supplierName": "",
+      "companyName": "合肥美亚光电技术股份有限公司",
+      "deliveryAddress": "东莞市松山湖高新区",
+      "receiver": "收货人10",
+      "receiverPhone": "13923162994",
+      "distributionType": "logistics",
+      "status": "failed",
+      "distributor": "project_manager",
+      "failReason": "收货地址不明确，无法送达",
+      "receipt": [
+        {
+          "name": "退件_DS20260619-010.pdf",
+          "url": "",
+          "type": "application/pdf",
+          "uploadedAt": "2026-06-10"
+        }
+      ],
+      "failureHistory": [
+        {
+          "time": "2026-06-16",
+          "reason": "三次派送无人签收",
+          "type": "delivery"
+        }
+      ],
+      "createTime": "2026-05-30",
+      "logisticsCompany": "跨越速运",
+      "logisticsNumber": "LGMQKVKDUZ9",
+      "logisticsDriverName": "司机J",
+      "logisticsDriverId": "44031989100010",
+      "logisticsDriverPhone": "13770850071"
+    }
+  ],
+  "materialLabels": [
+    {
+      "id": "DLiwxqjvbxmqkvkduz",
+      "labelCode": "LBL-20260619-0001",
+      "productId": "p01",
+      "productCode": "MAT-001",
+      "productName": "自动化产线",
+      "supplierId": "",
+      "supplierName": "系统管理员",
+      "purchaseOrder": "ORD-2025-0002",
+      "quantity": "10",
+      "unit": "套",
+      "receiveDate": "2026-06-15",
+      "companyName": "北京新能源汽车股份有限公司",
+      "createTime": "2026-06-14",
+      "updateTime": "2026-06-18"
+    },
+    {
+      "id": "DLw51puvqjmqkvkduz",
+      "labelCode": "LBL-20260619-0002",
+      "productId": "p02",
+      "productCode": "MAT-002",
+      "productName": "自动化产线",
+      "supplierId": "",
+      "supplierName": "project_manager",
+      "purchaseOrder": "ORD-2025-0003",
+      "quantity": "15",
+      "unit": "套",
+      "receiveDate": "2026-06-14",
+      "companyName": "上海联影医疗科技股份有限公司",
+      "createTime": "2026-06-13",
+      "updateTime": "2026-06-17"
+    },
+    {
+      "id": "DLtmeyy52kmqkvkduz",
+      "labelCode": "LBL-20260619-0003",
+      "productId": "p03",
+      "productCode": "MAT-003",
+      "productName": "自动化产线",
+      "supplierId": "",
+      "supplierName": "project_manager",
+      "purchaseOrder": "ORD-2025-0004",
+      "quantity": "20",
+      "unit": "套",
+      "receiveDate": "2026-06-13",
+      "companyName": "杭州海康威视数字技术股份有限公司",
+      "createTime": "2026-06-12",
+      "updateTime": "2026-06-16"
+    },
+    {
+      "id": "DLj6ndouzcmqkvkduz",
+      "labelCode": "LBL-20260619-0004",
+      "productId": "p04",
+      "productCode": "MAT-004",
+      "productName": "检测设备",
+      "supplierId": "",
+      "supplierName": "project_management",
+      "purchaseOrder": "ORD-2025-0005",
+      "quantity": "25",
+      "unit": "套",
+      "receiveDate": "2026-06-12",
+      "companyName": "广州汽车集团股份有限公司",
+      "createTime": "2026-06-11",
+      "updateTime": "2026-06-15"
+    },
+    {
+      "id": "DL23r5sqkamqkvkduz",
+      "labelCode": "LBL-20260619-0005",
+      "productId": "p05",
+      "productCode": "MAT-005",
+      "productName": "物流设备",
+      "supplierId": "",
+      "supplierName": "mechanical_engineer",
+      "purchaseOrder": "ORD-2025-0006",
+      "quantity": "30",
+      "unit": "套",
+      "receiveDate": "2026-06-11",
+      "companyName": "苏州汇川技术有限公司",
+      "createTime": "2026-06-10",
+      "updateTime": "2026-06-14"
+    },
+    {
+      "id": "DLv24whckrmqkvkduz",
+      "labelCode": "LBL-20260619-0006",
+      "productId": "p06",
+      "productCode": "MAT-006",
+      "productName": "加工设备",
+      "supplierId": "",
+      "supplierName": "mechanical_engineer",
+      "purchaseOrder": "ORD-2025-0007",
+      "quantity": "35",
+      "unit": "套",
+      "receiveDate": "2026-06-10",
+      "companyName": "武汉华星光电技术有限公司",
+      "createTime": "2026-06-09",
+      "updateTime": "2026-06-13"
+    },
+    {
+      "id": "DLms0c4ddsmqkvkduz",
+      "labelCode": "LBL-20260619-0007",
+      "productId": "p07",
+      "productCode": "MAT-007",
+      "productName": "包装设备",
+      "supplierId": "",
+      "supplierName": "electrical_engineer",
+      "purchaseOrder": "ORD-2025-0009",
+      "quantity": "40",
+      "unit": "套",
+      "receiveDate": "2026-06-09",
+      "companyName": "东莞立讯精密工业股份有限公司",
+      "createTime": "2026-06-08",
+      "updateTime": "2026-06-12"
+    },
+    {
+      "id": "DLjnbmpg2wmqkvkduz",
+      "labelCode": "LBL-20260619-0008",
+      "productId": "p08",
+      "productCode": "MAT-008",
+      "productName": "零部件",
+      "supplierId": "",
+      "supplierName": "electrical_engineer",
+      "purchaseOrder": "ORD-2025-0011",
+      "quantity": "45",
+      "unit": "套",
+      "receiveDate": "2026-06-08",
+      "companyName": "重庆长安汽车股份有限公司",
+      "createTime": "2026-06-07",
+      "updateTime": "2026-06-11"
+    },
+    {
+      "id": "DLxioqlocumqkvkduz",
+      "labelCode": "LBL-20260619-0009",
+      "productId": "p09",
+      "productCode": "MAT-009",
+      "productName": "电控部件",
+      "supplierId": "",
+      "supplierName": "visual_engineer",
+      "purchaseOrder": "ORD-2025-0013",
+      "quantity": "50",
+      "unit": "套",
+      "receiveDate": "2026-06-07",
+      "companyName": "青岛海尔生物医疗股份有限公司",
+      "createTime": "2026-06-06",
+      "updateTime": "2026-06-10"
+    },
+    {
+      "id": "DLdfhhkjeymqkvkduz",
+      "labelCode": "LBL-20260619-0010",
+      "productId": "p10",
+      "productCode": "MAT-010",
+      "productName": "电控部件",
+      "supplierId": "",
+      "supplierName": "software_engineer",
+      "purchaseOrder": "ORD-2025-0015",
+      "quantity": "55",
+      "unit": "套",
+      "receiveDate": "2026-06-06",
+      "companyName": "合肥美亚光电技术股份有限公司",
+      "createTime": "2026-06-05",
+      "updateTime": "2026-06-09"
+    }
+  ]
+}

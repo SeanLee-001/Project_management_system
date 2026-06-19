@@ -9,6 +9,7 @@ import {
   date,
   jsonb,
   index,
+  unique,
 } from "drizzle-orm/pg-core";
 import { createSchemaFactory } from "drizzle-zod";
 import { z } from "zod";

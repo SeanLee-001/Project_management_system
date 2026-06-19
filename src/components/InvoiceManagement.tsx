@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { Search, RefreshCw, Download, Eye, Edit3, X, Check, RotateCcw } from "lucide-react";
+import { Search, RefreshCw, Download, Eye, Edit3, X, Check, RotateCcw, Columns2 } from "lucide-react";
 import { useColumnResize } from "@/hooks/useColumnResize";
 
 const INV_COLUMNS = [
-  { key: 'index', label: '序号', width: 48, minWidth: 36 },
   { key: 'project', label: '项目名称/客户', width: 140, minWidth: 100 },
   { key: 'orderNumber', label: '订单号', width: 100, minWidth: 80 },
   { key: 'contractCode', label: '合同号', width: 100, minWidth: 80 },
@@ -127,9 +126,14 @@ export default function InvoiceManagement() {
 
   const startCellEdit = (row: InvoiceRow, field: EditingCell["field"]) => {
     setEditingCell({ rowId: row.id, field });
-    if (field === "invoiceNumber") setEditValue(row.invoiceNumber);
-    else if (field === "invoiceDate") setEditValue(row.invoiceDate || "");
-    else if (field === "remarks") setEditValue(row.remarks || "");
+    if (field === "invoiceNumber") {
+      setEditValue(row.invoiceNumber);
+    } else if (field === "invoiceDate") {
+      // 发票号已填但开票日期为空，默认填入当天
+      setEditValue(row.invoiceDate || (row.invoiceNumber ? new Date().toISOString().split('T')[0] : ''));
+    } else if (field === "remarks") {
+      setEditValue(row.remarks || '');
+    }
     setTimeout(() => inputRef.current?.focus(), 50);
   };
 
@@ -141,7 +145,16 @@ export default function InvoiceManagement() {
         orderId: row.orderId,
         categoryKey: row.categoryKey,
       };
-      if (editingCell.field === "invoiceNumber") body.invoiceNumber = editValue;
+
+      if (editingCell.field === "invoiceNumber") {
+        const trimmed = editValue.trim();
+        if (!trimmed) {
+          alert("发票号不能为空，请填写发票号后再保存");
+          setSaving(false);
+          return;
+        }
+        body.invoiceNumber = trimmed;
+      }
       if (editingCell.field === "invoiceDate") body.invoiceDate = editValue;
       if (editingCell.field === "remarks") body.remarks = editValue;
 
@@ -157,8 +170,8 @@ export default function InvoiceManagement() {
             if (r.id === row.id) {
               const updated = { ...r };
               if (editingCell.field === "invoiceNumber") {
-                updated.invoiceNumber = editValue;
-                updated.status = editValue ? "完成" : "待开票";
+                updated.invoiceNumber = body.invoiceNumber;
+                updated.status = body.invoiceNumber ? "完成" : "待开票";
               }
               if (editingCell.field === "invoiceDate") updated.invoiceDate = editValue || null;
               if (editingCell.field === "remarks") updated.remarks = editValue;
@@ -236,6 +249,14 @@ export default function InvoiceManagement() {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={invResize.resetWidths}
+            className="h-8 px-3 rounded-lg bg-slate-700/50 text-slate-400 text-xs font-medium flex items-center gap-1.5 hover:bg-slate-700 transition-colors"
+            title="重置列宽"
+          >
+            <Columns2 className="w-3.5 h-3.5" />
+            重置列宽
+          </button>
+          <button
             onClick={fetchInvoices}
             disabled={loading}
             className="h-8 px-3 rounded-lg bg-slate-700/50 text-slate-300 text-xs font-medium flex items-center gap-1.5 hover:bg-slate-700 transition-colors"
@@ -306,20 +327,30 @@ export default function InvoiceManagement() {
 
       {/* Table */}
       <div className="rounded-xl border border-slate-700/50 bg-[#111827] overflow-hidden">
-        <div className="overflow-x-auto">
-              <table style={{ tableLayout: 'fixed' }}>
+        <div className="overflow-x-auto" style={{ position: 'relative' }}>
+          <table style={{ tableLayout: 'fixed', width: `${invResize.totalWidth}px`, minWidth: '100%' }}>
+            <colgroup>
+              {INV_COLUMNS.map((col) => (
+                <col key={col.key} style={invResize.getColumnStyle(col.key)} />
+              ))}
+            </colgroup>
             <thead>
               <tr className="border-b border-slate-700/30 bg-[#0d1220]">
                 {INV_COLUMNS.map((col) => (
                   <th
                     key={col.key}
-                    style={invResize.getColumnStyle(col.key)}
-                    className={`relative text-xs font-semibold text-slate-500 px-3 py-3 ${col.key === 'index' || col.key === 'status' ? 'text-center' : col.key === 'amount' ? 'text-right' : 'text-left'}`}
+                    className={`relative text-xs font-semibold text-slate-500 px-3 py-3 ${
+                      col.key === 'index' || col.key === 'status' ? 'text-center' : col.key === 'amount' ? 'text-right' : 'text-left'
+                    } ${invResize.resizingKey === col.key ? 'bg-blue-500/10' : ''}`}
                   >
                     {col.label}
                     <div
                       {...invResize.getResizeHandleProps(col.key)}
-                      className="absolute top-0 -right-1 w-2 h-full cursor-col-resize hover:bg-blue-500/40 transition-colors z-20"
+                      className={`absolute top-0 -right-1 w-2 h-full cursor-col-resize transition-colors z-20 group ${
+                        invResize.resizingKey === col.key
+                          ? 'bg-blue-500/60'
+                          : 'hover:bg-blue-500/40'
+                      }`}
                     />
                   </th>
                 ))}

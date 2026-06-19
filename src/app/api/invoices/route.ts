@@ -185,3 +185,55 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
+
+// PUT /api/invoices - InvoiceManagement 单元格内编辑保存
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { orderId, categoryKey, invoiceNumber, invoiceDate, remarks } = body;
+
+    logger.info(MODULE, '单元格编辑保存发票', { orderId, categoryKey, invoiceNumber, invoiceDate });
+
+    if (!orderId || !categoryKey) {
+      return NextResponse.json({ success: false, error: '缺少 orderId 或 categoryKey' }, { status: 400 });
+    }
+
+    // 发票号为空则不允许保存
+    if (invoiceNumber !== undefined && !invoiceNumber.trim()) {
+      return NextResponse.json({ success: false, error: '发票号不能为空，请填写发票号后再保存' }, { status: 400 });
+    }
+
+    const updates: Record<string, any> = {};
+    const dateField = `${categoryKey}InvoiceDate`;
+    const invoicedField = `${categoryKey}Invoiced`;
+    const invoiceNumberField = `${categoryKey}InvoiceNumber`;
+    const notesField = `${categoryKey}InvoiceNotes`;
+
+    if (invoiceNumber !== undefined) {
+      updates[invoiceNumberField] = invoiceNumber;
+      updates[invoicedField] = !!invoiceNumber;
+      // 发票号有值时，若未指定开票日期则默认当天
+      if (invoiceNumber && invoiceDate === undefined) {
+        updates[dateField] = new Date();
+      }
+    }
+    if (invoiceDate !== undefined) {
+      updates[dateField] = invoiceDate ? new Date(invoiceDate) : null;
+    }
+    if (remarks !== undefined) updates[notesField] = remarks;
+
+    if (Object.keys(updates).length > 0) {
+      await orderManager.update(orderId, updates);
+      logger.info(MODULE, '发票数据已保存到订单', { orderId, updates });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: { orderId, categoryKey, invoiceNumber, invoiceDate: invoiceDate || (updates[dateField] ? new Date().toISOString().split('T')[0] : undefined), remarks },
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : '更新发票失败';
+    logger.error(MODULE, message);
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  }
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   BarChart3,
   TrendingUp,
@@ -19,7 +19,6 @@ import {
 import { useColumnResize } from '@/hooks/useColumnResize';
 
 const TXN_COLUMNS = [
-  { key: 'index', label: '序号', width: 48, minWidth: 36 },
   { key: 'project', label: '项目名称/客户', width: 160, minWidth: 100 },
   { key: 'orderNumber', label: '订单号', width: 140, minWidth: 100 },
   { key: 'contractCode', label: '合同号', width: 120, minWidth: 80 },
@@ -218,6 +217,8 @@ export default function FinancialManagement() {
   const [editingTxnRow, setEditingTxnRow] = useState<TransactionRow | null>(null);
   const [showTxnEditModal, setShowTxnEditModal] = useState(false);
   const [txnForm, setTxnForm] = useState({ receivedAmount: '', dueDate: '', receivedDate: '', notes: '' });
+  const [transactionPage, setTransactionPage] = useState(1);
+  const transactionPageSize = 15;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
@@ -384,6 +385,7 @@ export default function FinancialManagement() {
       const json = await res.json();
       if (json.success) {
         setTransactionRows(json.data);
+        setTransactionPage(1);
       }
     } catch (err) {
       console.error('加载交易数据失败:', err);
@@ -402,24 +404,43 @@ export default function FinancialManagement() {
   }, [fetchTransactions]);
 
   // 计算交易明细行合并信息：相同 orderId 的行合并"序号、项目名称/客户、订单号、合同号、交付日期"
-  const txnMergeInfo = useMemo(() => {
-    const info: { rowSpan: number; isFirst: boolean; groupIndex: number }[] = [];
+  const txnGroups = useMemo(() => {
+    const groups: { rows: TransactionRow[]; orderId: string }[] = [];
     let i = 0;
-    let groupIdx = 0;
     while (i < transactionRows.length) {
       const orderId = transactionRows[i].orderId;
-      let span = 1;
-      while (i + span < transactionRows.length && transactionRows[i + span].orderId === orderId) {
-        span++;
+      const rows: TransactionRow[] = [];
+      while (i < transactionRows.length && transactionRows[i].orderId === orderId) {
+        rows.push(transactionRows[i]);
+        i++;
       }
+      groups.push({ rows, orderId });
+    }
+    return groups;
+  }, [transactionRows]);
+
+  const totalTxnPages = Math.max(1, Math.ceil(txnGroups.length / transactionPageSize));
+  const paginatedGroups = useMemo(
+    () => txnGroups.slice((transactionPage - 1) * transactionPageSize, transactionPage * transactionPageSize),
+    [txnGroups, transactionPage, transactionPageSize]
+  );
+  const paginatedTransactionRows = useMemo(
+    () => paginatedGroups.flatMap(g => g.rows),
+    [paginatedGroups]
+  );
+
+  // 分页后的行合并信息
+  const txnMergeInfo = useMemo(() => {
+    const info: { rowSpan: number; isFirst: boolean; groupIndex: number }[] = [];
+    for (let g = 0; g < paginatedGroups.length; g++) {
+      const group = paginatedGroups[g];
+      const span = group.rows.length;
       for (let j = 0; j < span; j++) {
-        info.push({ rowSpan: span, isFirst: j === 0, groupIndex: groupIdx });
+        info.push({ rowSpan: span, isFirst: j === 0, groupIndex: g });
       }
-      groupIdx++;
-      i += span;
     }
     return info;
-  }, [transactionRows]);
+  }, [paginatedGroups]);
 
   const handleEditTxnRow = (row: TransactionRow) => {
     setEditingTxnRow(row);
@@ -717,10 +738,72 @@ export default function FinancialManagement() {
                     );
                   });
                 })()}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
+            {/* 分页控件 */}
+            {totalTxnPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50/50">
+                <span className="text-sm text-gray-500">
+                  共 {transactionRows.length} 条，第 {transactionPage} / {totalTxnPages} 页
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setTransactionPage(1)}
+                    disabled={transactionPage === 1}
+                    className="px-2 py-1 text-sm rounded hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    首页
+                  </button>
+                  <button
+                    onClick={() => setTransactionPage(p => Math.max(1, p - 1))}
+                    disabled={transactionPage === 1}
+                    className="px-2 py-1 text-sm rounded hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    上一页
+                  </button>
+                  {Array.from({ length: totalTxnPages }, (_, i) => i + 1)
+                    .filter(p => {
+                      if (totalTxnPages <= 7) return true;
+                      if (p === 1 || p === totalTxnPages) return true;
+                      if (p >= transactionPage - 1 && p <= transactionPage + 1) return true;
+                      return false;
+                    })
+                    .map((pageNum, idx, arr) => (
+                      <React.Fragment key={pageNum}>
+                        {idx > 0 && arr[idx - 1] !== pageNum - 1 && (
+                          <span className="px-1 text-gray-400">...</span>
+                        )}
+                        <button
+                          onClick={() => setTransactionPage(pageNum)}
+                          className={`min-w-[32px] h-8 text-sm rounded ${
+                            transactionPage === pageNum
+                              ? 'bg-blue-500 text-white'
+                              : 'hover:bg-gray-200 text-gray-600'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      </React.Fragment>
+                    ))}
+                  <button
+                    onClick={() => setTransactionPage(p => Math.min(totalTxnPages, p + 1))}
+                    disabled={transactionPage === totalTxnPages}
+                    className="px-2 py-1 text-sm rounded hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    下一页
+                  </button>
+                  <button
+                    onClick={() => setTransactionPage(totalTxnPages)}
+                    disabled={transactionPage === totalTxnPages}
+                    className="px-2 py-1 text-sm rounded hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    末页
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
       )}
 
       {activeTab === 'invoices' && (
@@ -1142,7 +1225,7 @@ export default function FinancialManagement() {
                       </td>
                     </tr>
                   ) : (
-                    transactionRows.map((row, idx) => {
+                    paginatedTransactionRows.map((row, idx) => {
                       const mergeInfo = txnMergeInfo[idx];
                       const renderMergeCell = mergeInfo.isFirst;
                       const groupEven = mergeInfo.groupIndex % 2 === 0;

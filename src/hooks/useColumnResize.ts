@@ -28,6 +28,7 @@ export function useColumnResize({ storageKey, columns }: UseColumnResizeOptions)
   );
 
   const [hydrated, setHydrated] = useState(false);
+  const [resizingKey, setResizingKey] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -59,6 +60,7 @@ export function useColumnResize({ storageKey, columns }: UseColumnResizeOptions)
       const th = (e.target as HTMLElement).closest("th");
       const startWidth = th ? th.offsetWidth : (columnWidths[key] || columns.find((c) => c.key === key)?.width || 100);
       resizingRef.current = { key, startX, startWidth };
+      setResizingKey(key);
       document.body.style.cursor = "col-resize";
       document.body.style.userSelect = "none";
     },
@@ -87,6 +89,7 @@ export function useColumnResize({ storageKey, columns }: UseColumnResizeOptions)
           return prev;
         });
         resizingRef.current = null;
+        setResizingKey(null);
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
       }
@@ -126,5 +129,7 @@ export function useColumnResize({ storageKey, columns }: UseColumnResizeOptions)
     } catch {}
   }, [columns, storageKey]);
 
-  return { columnWidths, getColumnStyle, getResizeHandleProps, resetWidths, hydrated };
+  const totalWidth = Object.values(columnWidths).reduce((a, b) => a + b, 0);
+
+  return { columnWidths, getColumnStyle, getResizeHandleProps, resetWidths, hydrated, resizingKey, totalWidth };
 }

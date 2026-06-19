@@ -312,6 +312,7 @@ export default function IntegrationManagement() {
             <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
+                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-12">序号</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                     集成名称
                   </th>
@@ -336,8 +337,9 @@ export default function IntegrationManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                {integrations.map((integration) => (
+                {integrations.map((integration, idx) => (
                   <tr key={integration.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="px-3 py-4 text-center text-xs text-gray-400 dark:text-gray-500">{idx + 1}</td>
                     <td className="px-6 py-4">
                       <div>
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -431,6 +433,7 @@ export default function IntegrationManagement() {
             <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
+                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-12">序号</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                     密钥名称
                   </th>
@@ -449,8 +452,9 @@ export default function IntegrationManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                {apiKeys.map((apiKey) => (
+                {apiKeys.map((apiKey, idx) => (
                   <tr key={apiKey.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="px-3 py-4 text-center text-xs text-gray-400 dark:text-gray-500">{idx + 1}</td>
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                       {apiKey.name}
                     </td>
@@ -489,6 +493,7 @@ export default function IntegrationManagement() {
             <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
+                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-12">序号</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                     Webhook名称
                   </th>
@@ -507,8 +512,9 @@ export default function IntegrationManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                {webhooks.map((webhook) => (
+                {webhooks.map((webhook, idx) => (
                   <tr key={webhook.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="px-3 py-4 text-center text-xs text-gray-400 dark:text-gray-500">{idx + 1}</td>
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                       {webhook.name}
                     </td>
@@ -560,6 +566,7 @@ export default function IntegrationManagement() {
             <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
+                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-12">序号</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                     时间
                   </th>
@@ -578,8 +585,9 @@ export default function IntegrationManagement() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                {logs.map((log) => (
+                {logs.map((log, idx) => (
                   <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="px-3 py-4 text-center text-xs text-gray-400 dark:text-gray-500">{idx + 1}</td>
                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                       {log.responseTime}
                     </td>

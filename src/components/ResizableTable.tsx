@@ -29,8 +29,9 @@ interface ResizableTableProps<T = any> {
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (size: number) => void;
   showPagination?: boolean;
-  maxFreezeColumns?: number; // 最大冻结列数，默认 6
-  rowClassName?: (row: T, index: number) => string; // 行样式回调
+  maxFreezeColumns?: number;
+  rowClassName?: (row: T, index: number) => string;
+  showRowIndex?: boolean;
 }
 
 // 右键菜单组件
@@ -160,6 +161,7 @@ export function ResizableTable<T = any>({
   showPagination = true,
   maxFreezeColumns = 6,
   rowClassName,
+  showRowIndex = true,
 }: ResizableTableProps<T>) {
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
     // 使用默认宽度
@@ -654,6 +656,11 @@ export function ResizableTable<T = any>({
           >
             <thead className="sticky top-0 z-30 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 shadow-sm">
               <tr>
+                {showRowIndex && (
+                  <th className="px-2 py-4 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 select-none w-[48px] min-w-[48px]">
+                    序号
+                  </th>
+                )}
                 {columns.map((column) => {
                   const isFrozen = frozenColumns.includes(column.key);
                   const columnLeft = getColumnLeft(column.key);
@@ -740,6 +747,11 @@ export function ResizableTable<T = any>({
                   key={(row as any).id || index}
                   className={`hover:bg-blue-50/50 dark:hover:bg-blue-900/30 transition-all duration-200 ${rowClassName ? rowClassName(row, index) : ""}`}
                 >
+                  {showRowIndex && (
+                    <td className="px-2 py-4 text-center text-xs text-gray-500 dark:text-gray-400 w-[48px]">
+                      {((currentPage ?? 1) - 1) * (pageSize ?? 20) + index + 1}
+                    </td>
+                  )}
                   {columns.map((column) => {
                     const isFrozen = frozenColumns.includes(column.key);
                     const columnLeft = getColumnLeft(column.key);

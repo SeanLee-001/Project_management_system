@@ -940,12 +940,34 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
         const c = localStorage.getItem(STORAGE_KEYS.companies);
         const d = localStorage.getItem(STORAGE_KEYS.deliveryNotes);
         const l = localStorage.getItem(STORAGE_KEYS.materialLabels);
+        const sh = localStorage.getItem(STORAGE_KEYS.shipmentOrders);
+        const di = localStorage.getItem(STORAGE_KEYS.distributionOrders);
+
+        // 如果 localStorage 无数据，自动加载种子数据
+        if (!d && !sh && !di && !l) {
+          try {
+            const seedRes = await fetch('/delivery-seed-data.json');
+            if (seedRes.ok) {
+              const seed = await seedRes.json();
+              if (seed.deliveryNotes) localStorage.setItem(STORAGE_KEYS.deliveryNotes, JSON.stringify(seed.deliveryNotes));
+              if (seed.shipmentOrders) localStorage.setItem(STORAGE_KEYS.shipmentOrders, JSON.stringify(seed.shipmentOrders));
+              if (seed.distributionOrders) localStorage.setItem(STORAGE_KEYS.distributionOrders, JSON.stringify(seed.distributionOrders));
+              if (seed.materialLabels) localStorage.setItem(STORAGE_KEYS.materialLabels, JSON.stringify(seed.materialLabels));
+            }
+          } catch (e) {
+            console.error('加载种子数据失败', e);
+          }
+        }
+
+        // 重新读取（可能已由种子数据填充）
+        const dd = localStorage.getItem(STORAGE_KEYS.deliveryNotes);
+        const ll = localStorage.getItem(STORAGE_KEYS.materialLabels);
         
         setSuppliers(s ? JSON.parse(s) : []);
         setCompanies(c ? JSON.parse(c) : []);
-        setDeliveryNotes(d ? JSON.parse(d) : []);
+        setDeliveryNotes(dd ? JSON.parse(dd) : []);
         // 加载物料标签时去重（防止历史重复ID）
-        const loadedLabels: MaterialLabel[] = l ? JSON.parse(l) : [];
+        const loadedLabels: MaterialLabel[] = ll ? JSON.parse(ll) : [];
         const seenIds = new Set<string>();
         const uniqueLabels = loadedLabels.filter((label: MaterialLabel) => {
           if (seenIds.has(label.id)) return false;
@@ -954,10 +976,10 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
         });
         setMaterialLabels(uniqueLabels);
         // 加载发货单和配送单
-        const sh = localStorage.getItem(STORAGE_KEYS.shipmentOrders);
-        const di = localStorage.getItem(STORAGE_KEYS.distributionOrders);
-        setShipmentOrders(sh ? JSON.parse(sh) : []);
-        setDistributionOrders(di ? JSON.parse(di) : []);
+        const ssh = localStorage.getItem(STORAGE_KEYS.shipmentOrders);
+        const ddi = localStorage.getItem(STORAGE_KEYS.distributionOrders);
+        setShipmentOrders(ssh ? JSON.parse(ssh) : []);
+        setDistributionOrders(ddi ? JSON.parse(ddi) : []);
 
         // 从产品管理API获取产品数据
         try {
@@ -2409,6 +2431,7 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
               <table className="w-full border-collapse border border-gray-300">
                 <thead>
                   <tr className="bg-gray-100">
+                    <th className="border border-gray-300 px-3 py-2 text-center w-12">序号</th>
                     <th className="border border-gray-300 px-4 py-2 text-left">送货单号</th>
                     <th className="border border-gray-300 px-4 py-2 text-left">供应商</th>
                     <th className="border border-gray-300 px-4 py-2 text-left">收货公司</th>
@@ -2422,12 +2445,12 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
                 <tbody>
                   {filteredDeliveryNotes.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                      <td colSpan={9} className="border border-gray-300 px-4 py-8 text-center text-gray-500">
                         暂无数据
                       </td>
                     </tr>
                   ) : (
-                    filteredDeliveryNotes.map((note) => {
+                    filteredDeliveryNotes.map((note, idx) => {
                       const supplier = suppliers.find((s) => s.id === note.supplierId);
                       const company = companies.find((c) => c.id === note.companyId);
                       const statusMap: Record<string, { label: string; color: string }> = {
@@ -2440,6 +2463,7 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
                       const status = statusMap[note.status] || statusMap.pending;
                       return (
                         <tr key={note.id} className="hover:bg-gray-50">
+                          <td className="border border-gray-300 px-3 py-2 text-center text-xs text-gray-400">{idx + 1}</td>
                           <td className="border border-gray-300 px-4 py-2 font-mono text-sm">
                             {note.noteNumber}
                           </td>
@@ -2612,6 +2636,7 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b">
+                    <th className="py-3 px-3 text-center font-medium w-12">序号</th>
                     <th className="py-3 px-4 text-left font-medium">发货单号</th>
                     <th className="py-3 px-4 text-left font-medium">送货单号</th>
                     <th className="py-3 px-4 text-left font-medium">供应商</th>
@@ -2640,7 +2665,7 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
                       return match;
                     })
                     .sort((a, b) => (b.createTime || "").localeCompare(a.createTime || ""))
-                    .map(s => {
+                    .map((s, idx) => {
                       const statusMap: Record<string, { label: string; color: string }> = {
                         pending_ship: { label: "待发货", color: "bg-amber-100 text-amber-700" },
                         shipped: { label: "已发货", color: "bg-blue-100 text-blue-700" },
@@ -2654,6 +2679,7 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
                       return (
                         <React.Fragment key={s.id}>
                           <tr className="border-b hover:bg-gray-50 cursor-pointer" onClick={() => setExpandedShipmentId(isExpanded ? null : s.id)}>
+                            <td className="py-3 px-3 text-center text-xs text-gray-400">{idx + 1}</td>
                             <td className="py-3 px-4 font-mono text-xs flex items-center gap-1">
                               <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l8 6-8 6V4z"/></svg>
                               {s.shipmentNumber}
@@ -2839,6 +2865,7 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50 border-b">
+                    <th className="py-3 px-3 text-center font-medium w-12">序号</th>
                     <th className="py-3 px-4 text-left font-medium">配送单号</th>
                     <th className="py-3 px-4 text-left font-medium">发货单号</th>
                     <th className="py-3 px-4 text-left font-medium">供应商</th>
@@ -2870,7 +2897,7 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
                       return match;
                     })
                     .sort((a, b) => (b.createTime || "").localeCompare(a.createTime || ""))
-                    .map(d => {
+                    .map((d, idx) => {
                       const statusMap: Record<string, { label: string; color: string }> = {
                         pending_distribute: { label: "待配送", color: "bg-amber-100 text-amber-700" },
                         in_distribution: { label: "配送中", color: "bg-blue-100 text-blue-700" },
@@ -2891,6 +2918,7 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
                       return (
                         <React.Fragment key={d.id}>
                           <tr className="border-b hover:bg-gray-50 cursor-pointer" onClick={() => setExpandedDistId(isExpanded ? null : d.id)}>
+                            <td className="py-3 px-3 text-center text-xs text-gray-400">{idx + 1}</td>
                             <td className="py-3 px-4 font-mono text-xs flex items-center gap-1">
                               <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l8 6-8 6V4z"/></svg>
                               {d.distributionNumber}
@@ -3238,6 +3266,7 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
               <table className="w-full border-collapse border border-gray-300">
                 <thead>
                   <tr className="bg-gray-100">
+                    <th className="border border-gray-300 px-3 py-2 text-center w-10">序号</th>
                     <th className="border border-gray-300 px-3 py-2 text-center w-10">
                       <input
                         type="checkbox"
@@ -3263,13 +3292,14 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
                 <tbody>
                   {materialLabels.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="border border-gray-300 px-4 py-8 text-center text-gray-500">
+                      <td colSpan={8} className="border border-gray-300 px-4 py-8 text-center text-gray-500">
                         暂无标签，请从送货单生成
                       </td>
                     </tr>
                   ) : (
-                    materialLabels.map((label) => (
+                    materialLabels.map((label, idx) => (
                       <tr key={label.id} className={`hover:bg-gray-50 ${selectedLabels.has(label.id) ? "bg-indigo-50" : ""}`}>
+                        <td className="border border-gray-300 px-3 py-2 text-center text-xs text-gray-400">{idx + 1}</td>
                         <td className="border border-gray-300 px-3 py-2 text-center">
                           <input
                             type="checkbox"
