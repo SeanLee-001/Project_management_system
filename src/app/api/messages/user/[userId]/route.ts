@@ -1,26 +1,30 @@
 import { NextResponse } from "next/server";
 import { messageManager } from "@/storage/database/messageManager";
+import { userManager } from "@/storage/database/userManager";
 
-// GET - 获取指定用户的消息列表（个人消息+系统通告）
+// GET - 获取指定用户的消息列表（系统管理员可查看所有消息，普通用户仅看个人+系统消息）
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     const { userId } = await params;
-    const messagesList = await messageManager.getMessagesByReceiverId(userId);
 
-    // 为每条消息添加发送者信息
-    const messagesWithSender = await Promise.all(
-      messagesList.map(async (message) => {
-        // 这里需要获取发送者信息，但为了简化，暂时返回消息本身
-        return message;
-      })
-    );
+    let isAdmin = false;
+    try {
+      const user = await userManager.getUserById(userId);
+      isAdmin = user?.role === "system_admin";
+    } catch {
+      // role lookup failed, fall back to user-scoped messages
+    }
+
+    const messagesList = isAdmin
+      ? await messageManager.getAllMessages()
+      : await messageManager.getMessagesByReceiverId(userId);
 
     return NextResponse.json({
       success: true,
-      data: messagesWithSender,
+      data: messagesList,
     });
   } catch (error) {
     console.error("获取消息列表失败:", error);

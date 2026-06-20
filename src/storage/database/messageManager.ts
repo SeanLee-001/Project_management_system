@@ -61,6 +61,18 @@ export class MessageManager {
     return result.count;
   }
 
+  async getAllMessages(): Promise<Message[]> {
+    const db = await getDb();
+
+    return db
+      .select()
+      .from(messages)
+      .orderBy(
+        sql`CASE WHEN ${messages.isPinned} = true THEN 0 ELSE 1 END`,
+        desc(messages.createdAt)
+      );
+  }
+
   async markAsRead(id: string): Promise<Message> {
     const db = await getDb();
 

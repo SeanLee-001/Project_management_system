@@ -68,8 +68,7 @@ export default function ApprovalManagement({ targetApprovalId, onApprovalViewed 
     if (userStr) {
       const user = JSON.parse(userStr);
       setCurrentUser(user);
-      // 判断是否为管理员（用户ID为'1'）
-      setIsAdmin(user.id === "1");
+      setIsAdmin(user?.role === "system_admin");
     }
   }, []);
 

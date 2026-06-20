@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { exportContracts } from "@/utils/excelExport";
 import { generateImportTemplate, contractImportColumns } from "@/utils/excelImport";
-import { Pencil, Trash2, Undo2, Unlock } from "lucide-react";
+import { Pencil, Trash2, Undo2, Unlock, BellRing } from "lucide-react";
 import { ResizableTable, Column } from "@/components/ResizableTable";
 import { checkPermission, showNoPermissionAlert } from "@/lib/permissionUtils";
 
@@ -611,6 +611,49 @@ export default function ContractManagement() {
     }
   };
 
+  const handleUrgeApproval = async (contract: any) => {
+    const approvalRequestId = contract.approvalRequestId;
+    if (!approvalRequestId) {
+      alert("该合同没有关联的审批申请");
+      return;
+    }
+
+    try {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) { alert("无法获取用户信息"); return; }
+      const currentUser = JSON.parse(userStr);
+
+      const res = await fetch(`/api/approvals/${approvalRequestId}`);
+      const json = await res.json();
+      if (!json.success || !json.data) {
+        alert("获取审批信息失败");
+        return;
+      }
+
+      const approval = json.data;
+      if (!approval.currentApproverId) {
+        alert("当前无审批人可提醒");
+        return;
+      }
+
+      await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          senderId: currentUser.id,
+          receiverId: approval.currentApproverId,
+          title: `催审批提醒 - ${contract.contractName || "合同"}`,
+          content: `您好，${currentUser.fullName || currentUser.username || "系统管理员"} 提醒您尽快审批以下合同：\n\n合同名称：${contract.contractName || "-"}\n合同编号：${contract.contractCode || "-"}\n审批编号：${approval.requestNumber || approvalRequestId}\n\n请尽快登录系统完成审批。`,
+        }),
+      });
+
+      alert("已发送催审批提醒");
+    } catch (error) {
+      console.error("Error urging approval:", error);
+      alert("发送提醒失败，请稍后重试");
+    }
+  };
+
   const handleForceClearApproval = async (contract: any) => {
     const reason = contract.approvalRequestId
       ? "该合同审批记录存在但无法通过正常流程撤销（可能已有审批人处理），强制清除后合同将恢复可编辑状态。"
@@ -1000,6 +1043,15 @@ export default function ContractManagement() {
                 title="强制清除审批锁定"
               >
                 <Unlock className="w-4 h-4" />
+              </button>
+            )}
+            {isPending && approvalRequestId && (
+              <button
+                onClick={() => handleUrgeApproval(row)}
+                className="p-1.5 rounded-md text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30 transition-colors"
+                title="催审批"
+              >
+                <BellRing className="w-4 h-4" />
               </button>
             )}
           </div>

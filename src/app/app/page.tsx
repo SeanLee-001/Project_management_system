@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from 'next-intl';
 import LanguageSwitcher from "@/components/LanguageSwitcher";
-import { Pencil, Trash2, Undo2, Clock } from "lucide-react";
+import { Pencil, Trash2, Undo2, Clock, BellRing } from "lucide-react";
 import type { Project, Task, User, Contract, CustomMember } from "@/storage/database/shared/schema";
 
 // 动态导入重型组件，按需加载，大幅提升首屏启动速度
@@ -425,6 +425,23 @@ export default function AppPage() {
               <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400" title="审批中">
                 <Clock className="w-4 h-4" />
               </span>
+            )}
+            {isPending && approvalRequestId && (
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('urge-project-approval', {
+                    detail: {
+                      projectId: row.id,
+                      approvalRequestId,
+                      projectName: row.name || ""
+                    }
+                  }));
+                }}
+                className="p-1.5 rounded-md text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30 transition-colors"
+                title="催审批"
+              >
+                <BellRing className="w-4 h-4" />
+              </button>
             )}
           </div>
         );
@@ -1122,16 +1139,60 @@ export default function AppPage() {
       }
     };
 
+    const handleUrgeProjectApproval = async (e: Event) => {
+      const customEvent = e as CustomEvent<{ projectId: string; approvalRequestId: string; projectName: string }>;
+
+      if (!currentUser) {
+        alert("请先登录");
+        return;
+      }
+
+      const { approvalRequestId, projectName } = customEvent.detail;
+
+      try {
+        const res = await fetch(`/api/project-approvals/${approvalRequestId}`);
+        const json = await res.json();
+        if (!json.success || !json.data) {
+          alert("获取审批信息失败");
+          return;
+        }
+
+        const approval = json.data;
+        if (!approval.currentApproverId) {
+          alert("当前无审批人可提醒");
+          return;
+        }
+
+        await fetch("/api/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            senderId: currentUser.id,
+            receiverId: approval.currentApproverId,
+            title: `催审批提醒 - ${projectName || "项目"}`,
+            content: `您好，${currentUser.fullName || currentUser.username || "系统管理员"} 提醒您尽快审批以下项目：\n\n项目名称：${projectName || "-"}\n审批编号：${approvalRequestId}\n\n请尽快登录系统完成审批。`,
+          }),
+        });
+
+        alert("已发送催审批提醒");
+      } catch (error) {
+        console.error("Error urging approval:", error);
+        alert("发送提醒失败，请稍后重试");
+      }
+    };
+
     window.addEventListener('select-project', handleSelectProject);
     window.addEventListener('edit-project', handleEditProject);
     window.addEventListener('delete-project', handleDeleteProjectEvent);
     window.addEventListener('cancel-project-approval', handleCancelProjectApproval);
+    window.addEventListener('urge-project-approval', handleUrgeProjectApproval);
 
     return () => {
       window.removeEventListener('select-project', handleSelectProject);
       window.removeEventListener('edit-project', handleEditProject);
       window.removeEventListener('delete-project', handleDeleteProjectEvent);
       window.removeEventListener('cancel-project-approval', handleCancelProjectApproval);
+      window.removeEventListener('urge-project-approval', handleUrgeProjectApproval);
     };
   }, [currentUser]);
 
@@ -2829,7 +2890,7 @@ export default function AppPage() {
                     : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                 }`}
               >
-                项目审批
+                 审批中心
               </button>
             )}
           </nav>
@@ -5154,10 +5215,39 @@ export default function AppPage() {
 
           {activeTab === "messages" && <MessageCenter userId={currentUser?.id || ""} userRole={currentUser?.role || ""} />}
 
-          {activeTab === "approvals" && targetApprovalType === "general" && (
-            <GeneralApprovalView userId={currentUser?.id} userRole={currentUser?.role} targetApprovalId={targetApprovalId} onApprovalViewed={() => { setTargetApprovalId(null); setTargetApprovalType(null); }} onApprovalCompleted={fetchProjects} />
+          {activeTab === "approvals" && (
+            <div className="space-y-4">
+              <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
+                <button
+                  onClick={() => setTargetApprovalType(targetApprovalType === "general" ? null : null)}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    targetApprovalType !== "general"
+                      ? "bg-white dark:bg-gray-700 text-blue-600 shadow-sm"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
+                  }`}
+                >
+                  <span className="hidden sm:inline">项目审批</span>
+                  <span className="sm:hidden">项目</span>
+                </button>
+                <button
+                  onClick={() => setTargetApprovalType("general")}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    targetApprovalType === "general"
+                      ? "bg-white dark:bg-gray-700 text-blue-600 shadow-sm"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900"
+                  }`}
+                >
+                  <span className="hidden sm:inline">通用审批（订单/合同）</span>
+                  <span className="sm:hidden">通用</span>
+                </button>
+              </div>
+              {targetApprovalType === "general" ? (
+                <GeneralApprovalView userId={currentUser?.id} userRole={currentUser?.role} targetApprovalId={targetApprovalId} onApprovalViewed={() => { setTargetApprovalId(null); setTargetApprovalType(null); }} onApprovalCompleted={fetchProjects} />
+              ) : (
+                <ProjectApproval userId={currentUser?.id} userRole={currentUser?.role} targetApprovalId={targetApprovalId} targetApprovalType={targetApprovalType} onApprovalViewed={() => { setTargetApprovalId(null); setTargetApprovalType(null); }} onApprovalCompleted={fetchProjects} />
+              )}
+            </div>
           )}
-          {activeTab === "approvals" && targetApprovalType !== "general" && <ProjectApproval userId={currentUser?.id} userRole={currentUser?.role} targetApprovalId={targetApprovalId} targetApprovalType={targetApprovalType} onApprovalViewed={() => { setTargetApprovalId(null); setTargetApprovalType(null); }} onApprovalCompleted={fetchProjects} />}
 
         </div>
       </div>

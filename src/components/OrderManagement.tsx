@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { exportOrders } from "@/utils/excelExport";
 import { generateImportTemplate, orderImportColumns } from "@/utils/excelImport";
-import { Pencil, Trash2, Undo2 } from "lucide-react";
+import { Pencil, Trash2, Undo2, BellRing } from "lucide-react";
 import { ResizableTable, Column } from "@/components/ResizableTable";
 import { checkPermission, showNoPermissionAlert } from "@/lib/permissionUtils";
 
@@ -885,6 +885,49 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
     }
   };
 
+  const handleUrgeApproval = async (order: any) => {
+    const approvalRequestId = order.approvalRequestId;
+    if (!approvalRequestId) {
+      alert("该订单没有关联的审批申请");
+      return;
+    }
+
+    try {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) { alert("无法获取用户信息"); return; }
+      const currentUser = JSON.parse(userStr);
+
+      const res = await fetch(`/api/approvals/${approvalRequestId}`);
+      const json = await res.json();
+      if (!json.success || !json.data) {
+        alert("获取审批信息失败");
+        return;
+      }
+
+      const approval = json.data;
+      if (!approval.currentApproverId) {
+        alert("当前无审批人可提醒");
+        return;
+      }
+
+      await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          senderId: currentUser.id,
+          receiverId: approval.currentApproverId,
+          title: `催审批提醒 - ${order.orderNumber || "订单"}`,
+          content: `您好，${currentUser.fullName || currentUser.username || "系统管理员"} 提醒您尽快审批以下订单：\n\n订单号：${order.orderNumber || "-"}\n客户：${order.customerName || "-"}\n审批编号：${approval.requestNumber || approvalRequestId}\n\n请尽快登录系统完成审批。`,
+        }),
+      });
+
+      alert("已发送催审批提醒");
+    } catch (error) {
+      console.error("Error urging approval:", error);
+      alert("发送提醒失败，请稍后重试");
+    }
+  };
+
   const handleCancelOrderApproval = async (order: any) => {
     const approvalRequestId = order.approvalRequestId;
     if (!approvalRequestId) {
@@ -1485,6 +1528,15 @@ export default function OrderManagement({ orders: externalOrders, setOrders: ext
                 title="撤销审批"
               >
                 <Undo2 className="w-4 h-4" />
+              </button>
+            )}
+            {isPending && approvalRequestId && (
+              <button
+                onClick={() => handleUrgeApproval(row)}
+                className="p-1.5 rounded-md text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30 transition-colors"
+                title="催审批"
+              >
+                <BellRing className="w-4 h-4" />
               </button>
             )}
           </div>
