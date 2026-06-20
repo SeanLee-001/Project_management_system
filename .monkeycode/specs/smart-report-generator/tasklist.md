@@ -1,0 +1,90 @@
+# 实施计划 - 智能报告生成模块
+
+- [ ] 1. 数据库 Schema 变更
+  - [ ] 1.1 在 `src/storage/database/shared/schema.ts` 新增 `knowledgeBaseReports` 表定义
+    - 字段: id, title, project_id(FK), content(text), config(jsonb), created_by(FK), created_at, updated_at
+    - 索引: project_id, created_at, created_by
+    - 需求: R4.4
+  - [ ] 1.2 在 `src/storage/database/shared/schema.ts` 新增 `knowledgeBaseReportFiles` 表定义
+    - 字段: id, report_id(FK CASCADE), file_name, file_url, file_size, file_type, uploaded_by, created_at
+    - 需求: R2.5, R6.6
+  - [ ] 1.3 新增 Zod 校验 Schema 和 TypeScript 类型导出
+    - insertReportSchema, insertReportFileSchema
+    - 需求: R1, R2
+
+- [ ] 2. 检查点 - Schema 变更验证
+  - 执行 `pnpm drizzle-kit push` 确保表创建成功
+
+- [ ] 3. 服务层实现
+  - [ ] 3.1 创建 `src/storage/database/reportManager.ts` 数据库管理器
+    - 实现 createReport, getReportById, deleteReport, getReportList (分页+筛选)
+    - 实现 uploadReportFile, getReportFiles, deleteReportFile
+    - 参考 KnowledgeBaseManager 模式
+    - 需求: R4.4, R6
+  - [ ] 3.2 创建 `src/lib/report-aggregator.ts` 数据聚合器
+    - 实现 aggregateProjectData(projectId, dateFrom, dateTo) 并行拉取 9 个数据源
+    - 每个数据源独立 try-catch，失败标注不阻断
+    - 返回 AggregatedData 类型
+    - 需求: R3.1, R3.2, R3.3
+  - [ ] 3.3 创建 `src/lib/report-template-engine.ts` 模板引擎
+    - 实现 generateMarkdownReport(data, config) 生成完整 Markdown 字符串
+    - 10 个固定章节按模板填充
+    - 需求: R4.1, R4.2
+
+- [ ] 4. API 路由实现
+  - [ ] 4.1 创建 `src/app/api/knowledge-base/reports/generate/route.ts` - POST 触发生成
+    - 接收 projectId, dateFrom, dateTo, description, fileIds
+    - 调用 aggregator + template engine
+    - 写入 database，返回 reportId 和 content
+    - 需求: R1, R3, R4
+  - [ ] 4.2 创建 `src/app/api/knowledge-base/reports/route.ts` - GET 报告列表
+    - 支持 projectId, page, pageSize, dateFrom, dateTo 参数
+    - 返回分页列表
+    - 需求: R6.1, R6.4
+  - [ ] 4.3 创建 `src/app/api/knowledge-base/reports/[id]/route.ts` - GET 详情 & DELETE
+    - GET: 返回报告完整内容 + 关联文件列表
+    - DELETE: 删除报告及文件记录
+    - 需求: R5, R6.3
+  - [ ] 4.4 创建 `src/app/api/knowledge-base/reports/[id]/regenerate/route.ts` - POST 重新生成
+    - 读取原报告 config，重新拉数据，生成新报告
+    - 需求: R6.5
+  - [ ] 4.5 创建 `src/app/api/knowledge-base/reports/[id]/files/route.ts` - POST 上传文件
+    - multipart 上传，10MB 限制，10 文件限制
+    - 写入 report_files 表
+    - 需求: R2
+
+- [ ] 5. 检查点 - API 功能验证
+  - 确保 API 编译通过，基本请求返回正确
+
+- [ ] 6. 前端组件实现
+  - [ ] 6.1 创建 `src/components/ReportGenerator.tsx` 主组件
+    - 双 tab: 「生成报告」和「历史报告」
+    - 历史报告 tab 展示列表（分页、日期筛选）
+    - 集成 ReportConfigForm 和报告列表
+    - 需求: R1, R6, R7.2
+  - [ ] 6.2 创建 `src/components/ReportConfigForm.tsx` 配置表单
+    - 项目选择下拉框、日期范围选择器
+    - 描述文本 textarea
+    - 提交「生成报告」按钮 + loading 状态
+    - 需求: R1
+  - [ ] 6.3 创建 `src/components/ReportFileUploader.tsx` 文件上传组件
+    - 拖拽/点击上传区域
+    - 上传进度条显示
+    - 已上传文件列表（预览名称+大小）+ 删除按钮
+    - 文件类型校验、大小校验
+    - 需求: R2
+  - [ ] 6.4 创建 `src/components/ReportPreview.tsx` 报告预览组件
+    - react-markdown 渲染 + remark-gfm 表格支持
+    - 顶部操作栏: 复制 Markdown、下载 .md 文件、重新生成按钮
+    - 需求: R5
+  - [ ] 6.5 在知识库管理页集成「智能报告」tab
+    - 修改 KnowledgeBaseManagement.tsx，添加「智能报告」标签页
+    - 点击切换到 ReportGenerator 组件
+    - 需求: R7.1
+  - [ ] 6.6 在项目详情页添加「生成报告」快捷入口
+    - 修改 ProjectManagement.tsx 或相关项目详情组件
+    - 添加「生成项目报告」按钮，跳转到报告生成页并预选当前项目
+    - 需求: R7.3
+
+- [ ] 7. 构建验证
+  - 执行 `pnpm build` 确认编译通过

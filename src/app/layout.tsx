@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getLocale } from 'next-intl/server';
@@ -16,9 +16,35 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#111827" },
+  ],
+};
+
 export const metadata: Metadata = {
   title: "项目管理系统",
-  description: "基于Next.js的全功能项目管理系统",
+  description: "基于Next.js的全功能项目管理系统 - 支持PC/Mac/移动端多平台",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "项目管理系统",
+    statusBarStyle: "black-translucent",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+    "msapplication-TileColor": "#111827",
+    "msapplication-config": "/browserconfig.xml",
+  },
 };
 
 export default async function RootLayout({
@@ -26,7 +52,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // 获取当前语言和翻译消息
   const locale = await getLocale();
   const messages = await getMessages();
 

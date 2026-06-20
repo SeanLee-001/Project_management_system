@@ -2081,3 +2081,100 @@ export const updateDelegationSchema = createCoercedInsertSchema(delegationSettin
 export type DelegationSetting = typeof delegationSettings.$inferSelect;
 export type InsertDelegationSetting = z.infer<typeof insertDelegationSchema>;
 export type UpdateDelegationSetting = z.infer<typeof updateDelegationSchema>;
+
+// ============================================
+// 行业新闻表
+// ============================================
+
+export const newsArticles = pgTable(
+  "news_articles",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    title: varchar("title", { length: 500 }).notNull(),
+    summary: text("summary"),
+    source: varchar("source", { length: 200 }).notNull(),
+    sourceUrl: text("source_url"),
+    category: varchar("category", { length: 100 }).notNull(), // automation, ai, chip, electronics
+    publishDate: timestamp("publish_date", { withTimezone: true }).notNull(),
+    imageUrl: text("image_url"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    categoryIdx: index("news_category_idx").on(table.category),
+    publishDateIdx: index("news_publish_date_idx").on(table.publishDate),
+    createdAtIdx: index("news_created_at_idx").on(table.createdAt),
+  })
+);
+
+export const insertNewsArticleSchema = createCoercedInsertSchema(newsArticles);
+export const updateNewsArticleSchema = createCoercedInsertSchema(newsArticles).partial();
+
+export type NewsArticle = typeof newsArticles.$inferSelect;
+export type InsertNewsArticle = z.infer<typeof insertNewsArticleSchema>;
+export type UpdateNewsArticle = z.infer<typeof updateNewsArticleSchema>;
+
+// ============================================
+// 智能报告生成模块
+// ============================================
+
+export const knowledgeBaseReports = pgTable(
+  "knowledge_base_reports",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    title: varchar("title", { length: 500 }).notNull(),
+    projectId: varchar("project_id", { length: 36 }).references(() => projects.id, { onDelete: "set null" }),
+    content: text("content").notNull(),
+    config: jsonb("config").notNull().default({}),
+    createdBy: varchar("created_by", { length: 36 }).references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => ({
+    projectIdIdx: index("reports_project_id_idx").on(table.projectId),
+    createdAtIdx: index("reports_created_at_idx").on(table.createdAt),
+    createdByIdx: index("reports_created_by_idx").on(table.createdBy),
+  })
+);
+
+export const knowledgeBaseReportFiles = pgTable(
+  "knowledge_base_report_files",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    reportId: varchar("report_id", { length: 36 })
+      .notNull()
+      .references(() => knowledgeBaseReports.id, { onDelete: "cascade" }),
+    fileName: varchar("file_name", { length: 500 }).notNull(),
+    fileUrl: text("file_url"),
+    fileSize: varchar("file_size", { length: 20 }),
+    fileType: varchar("file_type", { length: 100 }).notNull(),
+    uploadedBy: varchar("uploaded_by", { length: 36 }).references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    reportIdIdx: index("report_files_report_id_idx").on(table.reportId),
+  })
+);
+
+export const insertReportSchema = createCoercedInsertSchema(knowledgeBaseReports);
+export const updateReportSchema = createCoercedInsertSchema(knowledgeBaseReports).partial();
+export const insertReportFileSchema = createCoercedInsertSchema(knowledgeBaseReportFiles);
+export const updateReportFileSchema = createCoercedInsertSchema(knowledgeBaseReportFiles).partial();
+
+export type KnowledgeBaseReport = typeof knowledgeBaseReports.$inferSelect;
+export type InsertKnowledgeBaseReport = z.infer<typeof insertReportSchema>;
+export type UpdateKnowledgeBaseReport = z.infer<typeof updateReportSchema>;
+export type KnowledgeBaseReportFile = typeof knowledgeBaseReportFiles.$inferSelect;
+export type InsertKnowledgeBaseReportFile = z.infer<typeof insertReportFileSchema>;
+export type UpdateKnowledgeBaseReportFile = z.infer<typeof updateReportFileSchema>;

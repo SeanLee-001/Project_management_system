@@ -943,8 +943,19 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
         const sh = localStorage.getItem(STORAGE_KEYS.shipmentOrders);
         const di = localStorage.getItem(STORAGE_KEYS.distributionOrders);
 
-        // 如果 localStorage 无数据，自动加载种子数据
-        if (!d && !sh && !di && !l) {
+        // 如果 4 个表都为空，自动从 seed JSON 加载测试数据
+        let seedNeeded = false;
+        try {
+          const dn = d ? JSON.parse(d) : [];
+          const shp = sh ? JSON.parse(sh) : [];
+          const dist = di ? JSON.parse(di) : [];
+          const lbl = l ? JSON.parse(l) : [];
+          if (dn.length === 0 && shp.length === 0 && dist.length === 0 && lbl.length === 0) {
+            seedNeeded = true;
+          }
+        } catch { seedNeeded = true; }
+
+        if (seedNeeded) {
           try {
             const seedRes = await fetch('/delivery-seed-data.json');
             if (seedRes.ok) {
@@ -953,6 +964,7 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
               if (seed.shipmentOrders) localStorage.setItem(STORAGE_KEYS.shipmentOrders, JSON.stringify(seed.shipmentOrders));
               if (seed.distributionOrders) localStorage.setItem(STORAGE_KEYS.distributionOrders, JSON.stringify(seed.distributionOrders));
               if (seed.materialLabels) localStorage.setItem(STORAGE_KEYS.materialLabels, JSON.stringify(seed.materialLabels));
+              console.log('已自动注入送货管理种子数据');
             }
           } catch (e) {
             console.error('加载种子数据失败', e);
@@ -2270,7 +2282,7 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
       {/* 头部统计 */}
       <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-5 rounded-lg mb-4">
         <div className="flex justify-between items-center flex-wrap gap-4">
-          <h1 className="text-xl font-bold">送货管理系统</h1>
+          <h1 className="text-xl font-bold">送货管理</h1>
           <div className="flex gap-4 flex-wrap">
             <div className="bg-white/20 px-4 py-2 rounded-lg text-center">
               <div className="text-2xl font-bold">{suppliers.length}</div>
@@ -2368,6 +2380,32 @@ export default function DeliveryManagement({ currentUserName = "", currentUserRo
           基础资料
         </button>
       </div>
+
+      {/* 加载测试数据按钮 */}
+      {deliveryNotes.length === 0 && shipmentOrders.length === 0 && distributionOrders.length === 0 && materialLabels.length === 0 && (
+        <div className="flex justify-end mb-2">
+          <button
+            onClick={async () => {
+              try {
+                const res = await fetch('/delivery-seed-data.json');
+                if (res.ok) {
+                  const seed = await res.json();
+                  if (seed.deliveryNotes) localStorage.setItem(STORAGE_KEYS.deliveryNotes, JSON.stringify(seed.deliveryNotes));
+                  if (seed.shipmentOrders) localStorage.setItem(STORAGE_KEYS.shipmentOrders, JSON.stringify(seed.shipmentOrders));
+                  if (seed.distributionOrders) localStorage.setItem(STORAGE_KEYS.distributionOrders, JSON.stringify(seed.distributionOrders));
+                  if (seed.materialLabels) localStorage.setItem(STORAGE_KEYS.materialLabels, JSON.stringify(seed.materialLabels));
+                  window.location.reload();
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+            className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            加载 10 组测试数据（4 表）
+          </button>
+        </div>
+      )}
 
       {/* 内容区域 */}
       <div className="bg-white rounded-lg p-5 shadow-sm">

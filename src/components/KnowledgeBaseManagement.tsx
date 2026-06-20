@@ -239,13 +239,7 @@ export default function KnowledgeBaseManagement() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* 页面标题 */}
-      <div>
-        <h1 className="text-2xl font-bold mb-2">知识库管理</h1>
-        <p className="text-gray-600">根据项目和任务自动生成的知识库，支持附件管理</p>
-      </div>
-
+    <div className="space-y-6">
       <div className="flex gap-6">
         {/* 左侧列表 */}
         <div className="w-2/3">

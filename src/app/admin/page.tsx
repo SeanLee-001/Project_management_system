@@ -62,6 +62,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>("users");
   const [activeMenu, setActiveMenu] = useState<MenuCategory>("basic");
   const [isLoading, setIsLoading] = useState(true);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [systemSettings, setSystemSettings] = useState({
     companyName: "",
@@ -212,19 +213,30 @@ export default function AdminPage() {
     <div className="min-h-screen bg-gray-900">
       {/* Header - 后台管理专用 */}
       <header className="bg-gray-800 border-b border-gray-700">
-        <div className="container mx-auto px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
+        <div className="container mx-auto px-4 md:px-8 py-3 md:py-4">
+          <div className="flex justify-between items-center flex-wrap gap-3">
+            <div className="flex items-center gap-2 md:gap-4">
+              {/* 移动端侧边栏切换按钮 */}
+              <button
+                onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+                className="md:hidden p-2 rounded-lg hover:bg-gray-700 transition-colors touch-target"
+                aria-label="切换菜单"
+              >
+                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+
               <div className="flex items-center gap-2">
                 {systemSettings.companyLogo && (
                   <img
                     src={systemSettings.companyLogo}
                     alt="公司Logo"
-                    className="h-40 w-40 rounded object-contain"
+                    className="h-10 w-10 md:h-40 md:w-40 rounded object-contain"
                   />
                 )}
                 <div>
-                  <h1 className="text-lg font-bold text-white">
+                  <h1 className="text-base md:text-lg font-bold text-white">
                     {systemSettings.companyName}后台管理系统
                   </h1>
                   <div className="text-xs text-gray-400">
@@ -233,10 +245,10 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3 flex-wrap">
               <LanguageSwitcher currentLocale={locale} />
               <MessageNotification userId={currentUser?.id || ""} />
-              <div className="text-right">
+              <div className="hidden sm:block text-right">
                 <div className="text-sm font-medium text-white">
                   {currentUser?.fullName || currentUser?.username}
                 </div>
@@ -246,19 +258,19 @@ export default function AdminPage() {
               </div>
               <button
                 onClick={() => router.push("/app")}
-                className="px-3 py-1.5 text-sm rounded border border-blue-500 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20"
+                className="px-2.5 py-1.5 md:px-3 md:py-1.5 text-xs md:text-sm rounded border border-blue-500 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 touch-target"
               >
                 返回应用端
               </button>
               <button
                 onClick={() => router.push("/user-profile")}
-                className="px-3 py-1.5 text-sm rounded border border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700"
+                className="hidden sm:inline px-3 py-1.5 text-sm rounded border border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700"
               >
                 个人中心
               </button>
               <button
                 onClick={handleLogout}
-                className="px-3 py-1.5 text-sm rounded border border-red-500 bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                className="px-2.5 py-1.5 md:px-3 md:py-1.5 text-xs md:text-sm rounded border border-red-500 bg-red-500/10 text-red-400 hover:bg-red-500/20 touch-target"
               >
                 退出登录
               </button>
@@ -268,9 +280,19 @@ export default function AdminPage() {
       </header>
 
       {/* Main Content */}
-      <div className="flex">
+      <div className="flex relative">
+        {/* 移动端侧边栏遮罩 */}
+        {isMobileSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-30 md:hidden"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar */}
-        <aside className="w-52 min-h-screen bg-gray-900 border-r border-gray-700 flex-shrink-0">
+        <aside className={`w-52 min-h-[calc(100vh-3.5rem)] bg-gray-900 border-r border-gray-700 flex-shrink-0 transition-all duration-300
+          ${isMobileSidebarOpen ? 'fixed left-0 top-[3.5rem] z-40 h-[calc(100vh-3.5rem)] overflow-y-auto shadow-2xl' : 'hidden md:block'}
+        `}>
           <nav className="p-4">
             {/* 一级菜单 - 基础管理 */}
             <div className="mb-2">
@@ -492,8 +514,8 @@ export default function AdminPage() {
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-6">
-          <div className="bg-gray-800 rounded-lg shadow-lg p-6 min-h-[calc(100vh-2rem)]">
+        <main className="flex-1 p-3 md:p-6">
+          <div className="bg-gray-800 rounded-lg shadow-lg p-3 md:p-6 min-h-[calc(100vh-8rem)] md:min-h-[calc(100vh-2rem)]">
             {activeTab === "users" && <UserManagement />}
             {activeTab === "departments" && <DepartmentManagement />}
             {activeTab === "department_permissions" && <DepartmentPermissionManagement />}

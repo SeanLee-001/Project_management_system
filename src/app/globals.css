@@ -3,6 +3,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
 }
 
 @theme inline {
@@ -25,7 +29,72 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* 自定义滚动条样式 - WebKit浏览器 (Chrome, Safari, Edge) */
+/* ============================================
+   响应式 Viewport 适配
+   ============================================ */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+}
+
+/* iOS 安全区域适配 */
+.safe-top {
+  padding-top: var(--safe-area-top);
+}
+
+.safe-bottom {
+  padding-bottom: var(--safe-area-bottom);
+}
+
+.safe-area-bottom {
+  padding-bottom: calc(1rem + var(--safe-area-bottom));
+}
+
+/* ============================================
+   触摸优化
+   ============================================ */
+
+/* 增大移动端触摸目标 */
+@media (max-width: 767px) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  button,
+  a,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"] {
+    /* 确保按钮在移动端有足够触控区域 */
+    touch-action: manipulation;
+  }
+}
+
+/* 阻止 iOS 双击缩放 */
+.touch-no-zoom {
+  touch-action: manipulation;
+}
+
+/* 横向滚动容器优化 - 支持触摸滑动 */
+.touch-scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.touch-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================
+   滚动条样式
+   ============================================ */
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 12px;
   height: 12px;
@@ -47,13 +116,11 @@ body {
   background: #94a3b8;
 }
 
-/* 自定义滚动条样式 - Firefox */
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
 
-/* 深色模式下的滚动条 - 基于 prefers-color-scheme */
 @media (prefers-color-scheme: dark) {
   .custom-scrollbar::-webkit-scrollbar-track {
     background: #1f2937;
@@ -73,7 +140,6 @@ body {
   }
 }
 
-/* 手动切换的深色模式下的滚动条 */
 .dark .custom-scrollbar::-webkit-scrollbar-track {
   background: #1f2937;
 }
@@ -91,7 +157,65 @@ body {
   scrollbar-color: #4b5563 #1f2937;
 }
 
-/* 跑马灯动画 */
+/* ============================================
+   移动端表格卡片视图
+   ============================================ */
+
+@media (max-width: 767px) {
+  .table-card-view {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .table-card-item {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+  }
+
+  .dark .table-card-item {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .table-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.375rem 0;
+    font-size: 0.875rem;
+  }
+
+  .table-card-label {
+    color: #6b7280;
+    font-weight: 500;
+    flex-shrink: 0;
+    max-width: 40%;
+  }
+
+  .table-card-value {
+    text-align: right;
+    color: #111827;
+    word-break: break-word;
+    max-width: 60%;
+  }
+
+  .dark .table-card-label {
+    color: #9ca3af;
+  }
+
+  .dark .table-card-value {
+    color: #f3f4f6;
+  }
+}
+
+/* ============================================
+   跑马灯动画
+   ============================================ */
+
 @keyframes marquee {
   0% {
     transform: translateX(100%);
@@ -103,4 +227,169 @@ body {
 
 .animate-marquee {
   animation: marquee 25s linear infinite;
+}
+
+/* ============================================
+   打印样式
+   ============================================ */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  aside,
+  header,
+  nav,
+  .sidebar,
+  .no-print-container {
+    display: none !important;
+  }
+
+  main,
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  a {
+    text-decoration: underline;
+  }
+}
+
+.print-only {
+  display: none;
+}
+
+/* ============================================
+   移动端底部导航栏
+   ============================================ */
+
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  padding: 0.5rem 0;
+  padding-bottom: calc(0.5rem + var(--safe-area-bottom));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .mobile-bottom-nav {
+  background: rgba(17, 24, 39, 0.95);
+  border-color: #374151;
+}
+
+.mobile-bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.25rem 0.5rem;
+  min-width: 3rem;
+  color: #6b7280;
+  transition: color 0.2s;
+  font-size: 0.625rem;
+  text-decoration: none;
+}
+
+.mobile-bottom-nav-item.active {
+  color: #3b82f6;
+}
+
+.dark .mobile-bottom-nav-item {
+  color: #9ca3af;
+}
+
+.dark .mobile-bottom-nav-item.active {
+  color: #60a5fa;
+}
+
+.mobile-bottom-nav-item svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* ============================================
+   移动端抽屉动画
+   ============================================ */
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideOutLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.mobile-drawer-enter {
+  animation: slideInLeft 0.25s ease-out;
+}
+
+.mobile-drawer-exit {
+  animation: slideOutLeft 0.2s ease-in;
+}
+
+.mobile-overlay-enter {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.mobile-overlay-exit {
+  animation: fadeOut 0.15s ease-in;
+}
+
+/* ============================================
+   跨平台文本优化
+   ============================================ */
+
+/* macOS/iOS 字体渲染优化 */
+@supports (-webkit-font-smoothing: antialiased) {
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Windows 字体渲染优化 */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  body {
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Android Chrome 字体渲染 */
+@media (max-width: 767px) {
+  body {
+    text-rendering: optimizeSpeed;
+  }
 }

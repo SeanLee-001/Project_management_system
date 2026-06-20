@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { useResponsive } from "@/hooks/useResponsive";
 
 export interface Column<T = any> {
   key: string;
@@ -232,7 +233,7 @@ export function ResizableTable<T = any>({
   const [resizingKey, setResizingKey] = useState<string | null>(null);
   const startX = useRef(0);
   const startWidth = useRef(0);
-  const [isMobile, setIsMobile] = useState(false);
+  const { isMobile } = useResponsive();
   const [dragLineX, setDragLineX] = useState<number | null>(null);
 
   // 右键菜单状态
@@ -265,20 +266,6 @@ export function ResizableTable<T = any>({
       );
     }
   }, [internalSortKey, internalSortDirection, storageKey]);
-
-  // 检测屏幕宽度，移动端切换为卡片视图
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-
-    return () => {
-      window.removeEventListener("resize", checkMobile);
-    };
-  }, []);
 
   // 拖拽时禁用文本选择，改变光标
   useEffect(() => {
@@ -498,26 +485,22 @@ export function ResizableTable<T = any>({
   // 移动端卡片视图
   if (isMobile) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 overflow-hidden">
+      <div className="table-card-view">
+        {title && (
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 px-1">{title}</h3>
+        )}
         {paginatedData.map((row, index) => (
           <div
             key={(row as any).id || index}
-            className="p-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+            className="table-card-item"
           >
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {columns.map((column) => {
-                const shouldShow = true;
-
-                if (!shouldShow) return null;
-
+                const priority = column.priority || "medium";
                 return (
-                  <div key={column.key} className="flex flex-col">
-                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                      {column.title}
-                    </div>
-                    <div className="text-sm text-gray-900 dark:text-gray-100">
-                      {renderCellContent(column, row)}
-                    </div>
+                  <div key={column.key} className="table-card-row">
+                    <span className="table-card-label">{column.title}</span>
+                    <span className="table-card-value">{renderCellContent(column, row)}</span>
                   </div>
                 );
               })}
@@ -525,16 +508,21 @@ export function ResizableTable<T = any>({
           </div>
         ))}
         {data.length === 0 && (
-          <div className="p-12 text-center text-gray-500 dark:text-gray-400">暂无数据</div>
+          <div className="p-12 text-center text-gray-500 dark:text-gray-400 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <svg className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            暂无数据
+          </div>
         )}
-        {/* 分页控件 - 始终显示 */}
+        {/* 分页控件 */}
         {showPagination && (
-          <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+          <div className="px-4 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <span>共</span>
                 <span className="font-medium text-gray-900 dark:text-white">{sortedData.length}</span>
-                <span>条记录</span>
+                <span>条</span>
                 <span className="ml-2">每页</span>
                 <select
                   value={pageSize}
@@ -552,31 +540,31 @@ export function ResizableTable<T = any>({
                 <button
                   onClick={() => handlePageChange(1)}
                   disabled={currentPage === 1}
-                  className="px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600"
+                  className="px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600 touch-target"
                 >
                   首页
                 </button>
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600"
+                  className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600 touch-target"
                 >
                   上一页
                 </button>
                 <span className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400">
-                  第 {currentPage} / {totalPages} 页
+                  {currentPage} / {totalPages}
                 </span>
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600"
+                  className="px-3 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600 touch-target"
                 >
                   下一页
                 </button>
                 <button
                   onClick={() => handlePageChange(totalPages)}
                   disabled={currentPage === totalPages}
-                  className="px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600"
+                  className="px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600 touch-target"
                 >
                   末页
                 </button>

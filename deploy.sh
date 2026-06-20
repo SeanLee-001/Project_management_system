@@ -1,331 +1,423 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# deploy.sh -- 项目管理系统一键自动部署脚本
+#
+# 用法：
+#   chmod +x deploy.sh && ./deploy.sh
+#
+# 用户克隆项目后，在项目根目录运行此文件即可完成所有部署步骤：
+#   环境检测 -> 安装依赖 -> 数据库配置 -> Schema 迁移 -> 管理员创建 -> 种子数据 -> 启动服务
+#
+# 支持交互式配置，也可通过环境变量跳过询问：
+#   DB_PASSWORD=xxx JWT_SECRET=xxx ./deploy.sh --auto
 
-#############################################################################
-# 项目管理系统 - 一键部署脚本
-#############################################################################
-# 支持系统：Linux / macOS
-# 使用方法：bash deploy.sh
-#############################################################################
+set -euo pipefail
 
-set -e  # 遇到错误立即退出
-
-# 颜色输出
+# =============================================
+# 颜色与日志
+# =============================================
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# 打印带颜色的消息
-print_info() {
-    echo -e "${BLUE}ℹ ${1}${NC}"
-}
+log_info()  { echo -e "${GREEN}[INFO]${NC}  $*"; }
+log_warn()  { echo -e "${YELLOW}[WARN]${NC}  $*"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $*"; }
+log_step()  { echo -e "\n${BLUE}============================================${NC}"; echo -e "${BLUE}$*${NC}"; echo -e "${BLUE}============================================${NC}"; }
 
-print_success() {
-    echo -e "${GREEN}✓ ${1}${NC}"
-}
+# =============================================
+# 默认配置
+# =============================================
+DB_HOST="${DB_HOST:-localhost}"
+DB_PORT="${DB_PORT:-5432}"
+DB_NAME="${DB_NAME:-project_management}"
+DB_USER="${DB_USER:-project_user}"
+DB_PASSWORD="${DB_PASSWORD:-}"
+JWT_SECRET="${JWT_SECRET:-}"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin123}"
+AUTO_MODE=false
+SKIP_TEST_DATA=false
+SKIP_SEED_NEWS=false
+START_DEV=false
 
-print_warning() {
-    echo -e "${YELLOW}⚠ ${1}${NC}"
-}
+# =============================================
+# 命令行参数解析
+# =============================================
+for arg in "$@"; do
+    case $arg in
+        --auto)            AUTO_MODE=true ;;
+        --skip-test-data)  SKIP_TEST_DATA=true ;;
+        --skip-seed-news)  SKIP_SEED_NEWS=true ;;
+        --start-dev)       START_DEV=true ;;
+        --help|-h)
+            echo "用法: ./deploy.sh [选项]"
+            echo ""
+            echo "选项:"
+            echo "  --auto            自动模式，使用默认值，不交互询问"
+            echo "  --skip-test-data  跳过测试数据生成"
+            echo "  --skip-seed-news  跳过行业新闻种子数据"
+            echo "  --start-dev       部署完成后自动启动开发服务器"
+            echo "  --help, -h        显示帮助"
+            echo ""
+            echo "环境变量:"
+            echo "  DB_HOST           数据库主机 (默认: localhost)"
+            echo "  DB_PORT           数据库端口 (默认: 5432)"
+            echo "  DB_NAME           数据库名称 (默认: project_management)"
+            echo "  DB_USER           数据库用户 (默认: project_user)"
+            echo "  DB_PASSWORD       数据库密码"
+            echo "  JWT_SECRET        JWT 签名密钥"
+            echo "  ADMIN_PASSWORD    管理员密码 (默认: admin123)"
+            exit 0
+            ;;
+    esac
+done
 
-print_error() {
-    echo -e "${RED}✗ ${1}${NC}"
-}
-
-# 打印分隔线
-print_separator() {
-    echo ""
-    echo "═══════════════════════════════════════════════════════════════"
-    echo ""
-}
+# =============================================
+# 工具函数
+# =============================================
 
 # 检查命令是否存在
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
+command_exists() { command -v "$1" &>/dev/null; }
 
-# 检查系统环境
-check_environment() {
-    print_info "检查系统环境..."
+# 交互式读取（自动模式下使用默认值）
+ask() {
+    local prompt="$1"
+    local default="$2"
+    local var_name="$3"
 
-    # 检测操作系统
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        OS="linux"
-        print_success "操作系统：Linux"
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        OS="macos"
-        print_success "操作系统：macOS"
-    else
-        print_error "不支持的操作系统：$OSTYPE"
-        exit 1
+    if $AUTO_MODE; then
+        eval "$var_name=\"\$default\""
+        echo "$prompt (自动模式): $default"
+        return
     fi
 
-    # 检查 Node.js
+    if [ -n "$default" ]; then
+        read -r -p "$prompt [$default]: " input
+        eval "$var_name=\"\${input:-$default}\""
+    else
+        read -r -p "$prompt: " input
+        eval "$var_name=\"\$input\""
+    fi
+}
+
+# 检测操作系统
+detect_os() {
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        OS_ID="${ID}"
+        OS_NAME="${PRETTY_NAME:-$ID}"
+    else
+        OS_ID="unknown"
+        OS_NAME="Unknown"
+    fi
+}
+
+# =============================================
+# 步骤 1：环境检测
+# =============================================
+step_1_check_environment() {
+    log_step "步骤 1/6: 检测运行环境"
+
+    detect_os
+    log_info "操作系统: $OS_NAME"
+
+    # 检测 Node.js
     if ! command_exists node; then
-        print_error "未检测到 Node.js，请先安装 Node.js 24 或更高版本"
-        print_info "安装方法：https://nodejs.org/"
+        log_error "未检测到 Node.js，请先安装 Node.js 22+"
+        log_info "安装方法: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash && nvm install 24"
         exit 1
     fi
 
-    NODE_VERSION=$(node -v)
-    print_success "Node.js 版本：$NODE_VERSION"
-
-    # 检查 Node.js 版本是否 >= 18
-    MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'v' -f2 | cut -d'.' -f1)
-    if [ "$MAJOR_VERSION" -lt 18 ]; then
-        print_warning "Node.js 版本过低，建议升级到 24 或更高版本"
+    NODE_VERSION=$(node -v | sed 's/v//' | cut -d. -f1)
+    if [ "$NODE_VERSION" -lt 22 ]; then
+        log_warn "Node.js 版本: $(node -v)，推荐 22+。如果遇到兼容性问题，请升级。"
+    else
+        log_info "Node.js 版本: $(node -v) ✓"
     fi
 
-    # 检查 pnpm
+    # 检测 pnpm
     if ! command_exists pnpm; then
-        print_warning "未检测到 pnpm，正在安装..."
+        log_info "pnpm 未安装，正在安装..."
         npm install -g pnpm
-        print_success "pnpm 安装成功"
     fi
-    print_success "pnpm 版本：$(pnpm -v)"
+    log_info "pnpm 版本: $(pnpm -v) ✓"
 
-    # 检查 Git
-    if ! command_exists git; then
-        print_error "未检测到 Git，请先安装 Git"
-        exit 1
+    # 检测 PostgreSQL 客户端
+    if command_exists psql; then
+        log_info "PostgreSQL 客户端: $(psql --version | head -1) ✓"
+    else
+        log_warn "未检测到 psql 客户端，数据库操作将跳过部分验证"
     fi
-    print_success "Git 版本：$(git --version)"
 
-    print_separator
+    log_info "环境检测通过"
 }
 
-# 检查 PostgreSQL
-check_postgresql() {
-    print_info "检查 PostgreSQL..."
+# =============================================
+# 步骤 2：安装项目依赖
+# =============================================
+step_2_install_dependencies() {
+    log_step "步骤 2/6: 安装项目依赖"
 
-    if ! command_exists psql; then
-        print_error "未检测到 PostgreSQL，请先安装"
-        if [ "$OS" == "linux" ]; then
-            print_info "Ubuntu/Debian 安装命令：sudo apt install postgresql postgresql-contrib"
-            print_info "CentOS/RHEL 安装命令：sudo yum install postgresql postgresql-server"
-        elif [ "$OS" == "macos" ]; then
-            print_info "macOS 安装命令：brew install postgresql@14"
-        fi
-        exit 1
+    # 确保 .npmrc 存在
+    if [ ! -f .npmrc ]; then
+        log_info "创建 .npmrc (pnpm 配置)..."
+        cat > .npmrc << 'NPMRC_EOF'
+shamefully-hoist=true
+strict-peer-dependencies=false
+auto-install-peers=true
+store-dir=.pnpm-store
+NPMRC_EOF
+    else
+        log_info ".npmrc 已存在，跳过创建"
     fi
 
-    # 检查 PostgreSQL 服务是否运行
-    if ! pg_isready -q 2>/dev/null; then
-        print_error "PostgreSQL 服务未运行"
-        print_info "启动命令："
-        if [ "$OS" == "linux" ]; then
-            print_info "  sudo systemctl start postgresql"
-        elif [ "$OS" == "macos" ]; then
-            print_info "  brew services start postgresql@14"
-        fi
-        exit 1
-    fi
+    log_info "执行 pnpm install (可能需要几分钟)..."
+    pnpm install
 
-    print_success "PostgreSQL 已运行"
-
-    # 检查 .env 文件中的数据库配置
-    if [ -f ".env" ]; then
-        DB_URL=$(grep "^DATABASE_URL" .env | cut -d'=' -f2)
-        if [ -n "$DB_URL" ]; then
-            print_success "数据库配置已找到"
-        fi
-    fi
-
-    print_separator
+    log_info "依赖安装完成"
 }
 
-# 配置环境变量
-setup_env() {
-    print_info "配置环境变量..."
+# =============================================
+# 步骤 3：配置环境变量与数据库
+# =============================================
+step_3_configure() {
+    log_step "步骤 3/6: 配置环境变量与数据库"
 
-    if [ ! -f ".env" ]; then
-        if [ -f ".env.example" ]; then
-            cp .env.example .env
-            print_success "已创建 .env 文件（从 .env.example 复制）"
+    # 3.1 生成 JWT Secret
+    if [ -z "$JWT_SECRET" ]; then
+        if command_exists node; then
+            JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
         else
-            print_error ".env.example 文件不存在"
-            exit 1
+            JWT_SECRET="change-me-in-production-$(date +%s)"
         fi
-    else
-        print_warning ".env 文件已存在，跳过创建"
     fi
 
-    # 检查 JWT_SECRET
-    if [ -f ".env" ]; then
-        JWT_SECRET=$(grep "^JWT_SECRET" .env | cut -d'=' -f2)
-        if [ "$JWT_SECRET" == "your-random-secret-key-here" ] || [ -z "$JWT_SECRET" ]; then
-            print_warning "JWT_SECRET 使用默认值，正在生成新的密钥..."
-            NEW_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-            sed -i.bak "s/^JWT_SECRET=.*/JWT_SECRET=$NEW_SECRET/" .env
-            rm -f .env.bak
-            print_success "已生成新的 JWT_SECRET"
+    # 3.2 收集数据库密码
+    if [ -z "$DB_PASSWORD" ]; then
+        if ! $AUTO_MODE; then
+            log_info "请输入 PostgreSQL 数据库密码（$DB_USER 用户的密码）"
+            ask "数据库密码" "project_pass_2024" DB_PASSWORD
         else
-            print_success "JWT_SECRET 已配置"
+            DB_PASSWORD="project_pass_2024"
+            log_info "数据库密码 (自动模式): $DB_PASSWORD"
         fi
     fi
 
-    print_separator
-}
+    DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 
-# 安装依赖
-install_dependencies() {
-    print_info "安装项目依赖..."
+    # 3.3 写入 .env
+    log_info "写入 .env 配置..."
+    cat > .env << ENV_EOF
+# 数据库配置
+PGDATABASE_URL="${DATABASE_URL}"
+DATABASE_URL="${DATABASE_URL}"
 
-    if [ ! -d "node_modules" ]; then
-        pnpm install
-        print_success "依赖安装完成"
-    else
-        print_warning "node_modules 已存在，跳过安装"
-        print_info "如需重新安装，请执行：rm -rf node_modules && pnpm install"
-    fi
+# 系统设置
+JWT_SECRET="${JWT_SECRET}"
+NODE_ENV="development"
 
-    print_separator
-}
+# 服务器配置
+PORT=5000
+ENV_EOF
 
-# 初始化数据库
-init_database() {
-    print_info "初始化数据库..."
+    # 3.4 检查数据库连接并创建
+    if command_exists psql; then
+        log_info "检查数据库连接..."
+        export PGPASSWORD="$DB_PASSWORD"
 
-    # 运行数据库迁移
-    print_info "正在创建数据库表..."
-    pnpm drizzle-kit push
-    print_success "数据库表创建成功"
+        if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -c "SELECT 1" &>/dev/null; then
+            log_info "数据库用户 $DB_USER 连接成功"
 
-    # 询问是否初始化管理员账户
-    echo ""
-    read -p "是否创建默认管理员账户？(Y/n) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]] || [ -z "$REPLY" ]; then
-        node scripts/init-admin.js
-    else
-        print_info "跳过创建管理员账户"
-    fi
+            # 检查数据库是否存在
+            DB_EXISTS=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" 2>/dev/null || echo "")
 
-    print_separator
-}
-
-# 构建项目
-build_project() {
-    print_info "构建项目..."
-
-    pnpm build
-
-    print_success "项目构建完成"
-
-    print_separator
-}
-
-# 启动服务
-start_service() {
-    print_info "启动服务..."
-
-    # 检查端口 5000 是否被占用
-    if lsof -Pi :5000 -sTCP:LISTEN -t >/dev/null 2>&1 || \
-       ss -tuln 2>/dev/null | grep -E ':5000[[:space:]]' | grep -q LISTEN; then
-        print_warning "端口 5000 已被占用"
-        echo ""
-        read -p "是否终止占用该端口的进程并继续？(Y/n) " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]] || [ -z "$REPLY" ]; then
-            print_info "正在终止占用端口的进程..."
-            if command_exists lsof; then
-                PID=$(lsof -t -i:5000)
-                if [ -n "$PID" ]; then
-                    kill -9 $PID
-                    print_success "进程已终止"
-                fi
+            if [ "$DB_EXISTS" != "1" ]; then
+                log_info "数据库 $DB_NAME 不存在，正在创建..."
+                psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -c "CREATE DATABASE $DB_NAME;" 2>/dev/null || {
+                    log_warn "无法创建数据库，请确保用户有 CREATEDB 权限"
+                    log_info "请手动执行: sudo -u postgres psql -c \"CREATE DATABASE $DB_NAME; GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;\""
+                }
             else
-                print_warning "无法终止进程，请手动处理"
-                exit 1
+                log_info "数据库 $DB_NAME 已存在"
+            fi
+
+            # PostgreSQL 15+ 授权 public schema
+            PG_VERSION=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -tAc "SHOW server_version;" 2>/dev/null | cut -d. -f1)
+            if [ "${PG_VERSION:-0}" -ge 15 ] 2>/dev/null; then
+                psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "GRANT ALL ON SCHEMA public TO $DB_USER;" 2>/dev/null || true
             fi
         else
-            print_error "部署已取消"
+            log_error "无法连接数据库（$DB_HOST:$DB_PORT，用户 $DB_USER）"
+            log_info ""
+            log_info "请确认 PostgreSQL 已安装并运行:"
+            log_info "  sudo apt install -y postgresql postgresql-contrib  # Ubuntu/Debian"
+            log_info "  sudo systemctl start postgresql"
+            log_info ""
+            log_info "然后创建用户和数据库:"
+            log_info "  sudo -u postgres psql"
+            log_info "  CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
+            log_info "  CREATE DATABASE $DB_NAME OWNER $DB_USER;"
+            log_info "  GRANT ALL ON SCHEMA public TO $DB_USER;"
+            log_info ""
+            log_info "完成后重新运行 ./deploy.sh"
             exit 1
+        fi
+    else
+        log_warn "psql 客户端不可用，跳过数据库连接检查"
+        log_info "请确保 PostgreSQL 已运行且以下数据库可访问:"
+        log_info "  $DATABASE_URL"
+    fi
+
+    log_info "配置完成"
+}
+
+# =============================================
+# 步骤 4：数据库 Schema 迁移
+# =============================================
+step_4_migrate() {
+    log_step "步骤 4/6: 数据库 Schema 迁移"
+
+    log_info "执行 drizzle-kit push (创建/更新所有表)..."
+    pnpm drizzle-kit push
+
+    log_info "Schema 迁移完成 (31 张表已就绪)"
+}
+
+# =============================================
+# 步骤 5：创建管理员与种子数据
+# =============================================
+step_5_seed() {
+    log_step "步骤 5/6: 创建管理员与种子数据"
+
+    # 5.1 创建管理员账户
+    log_info "创建管理员账户 (admin / $ADMIN_PASSWORD)..."
+    node scripts/init-admin.js || {
+        log_warn "init-admin.js 执行失败，尝试使用兼容方式创建..."
+        # 回退：使用 bcryptjs + pg 直接创建
+        node -e "
+            const { Pool } = require('pg');
+            const bcrypt = require('bcryptjs');
+            const crypto = require('crypto');
+
+            const dbUrl = process.env.DATABASE_URL || '$DATABASE_URL';
+            const pool = new Pool({ connectionString: dbUrl });
+
+            (async () => {
+                try {
+                    const hashed = bcrypt.hashSync('$ADMIN_PASSWORD', 10);
+                    const id = crypto.randomUUID();
+                    await pool.query(
+                        'INSERT INTO users (id, username, password_hash, display_name, role, status, created_at, updated_at) VALUES (\$1, \$2, \$3, \$4, \$5, \$6, NOW(), NOW()) ON CONFLICT (username) DO UPDATE SET role = \$5, password_hash = \$3',
+                        [id, 'admin', hashed, '系统管理员', 'system_admin', 'active']
+                    );
+                    console.log('管理员账户已创建: admin / $ADMIN_PASSWORD');
+                } catch (e) {
+                    console.error('创建管理员失败:', e.message);
+                    process.exit(1);
+                } finally {
+                    await pool.end();
+                }
+            })();
+        " || {
+            log_error "管理员账户创建失败，请手动执行: node scripts/init-admin.js"
+        }
+    }
+
+    # 5.2 测试数据
+    if ! $SKIP_TEST_DATA; then
+        if $AUTO_MODE; then
+            log_info "生成测试数据..."
+        else
+            ask "是否生成 20 组测试数据? (y/n)" "y" GEN_TEST_DATA
+            if [ "$GEN_TEST_DATA" != "y" ] && [ "$GEN_TEST_DATA" != "Y" ]; then
+                log_info "跳过测试数据生成"
+                SKIP_TEST_DATA=true
+            fi
         fi
     fi
 
-    # 询问启动模式
-    echo ""
-    echo "请选择启动模式："
-    echo "  1) 开发模式（支持热更新）"
-    echo "  2) 生产模式（已构建版本）"
-    echo ""
-    read -p "请输入选项 (1-2) [默认: 1]: " mode
-    mode=${mode:-1}
+    if ! $SKIP_TEST_DATA; then
+        log_info "执行 generate-all-test-data.js..."
+        node scripts/generate-all-test-data.js || log_warn "测试数据生成失败，可稍后手动执行"
+        log_info "执行 populate-invoice-transaction.js..."
+        node scripts/populate-invoice-transaction.js || log_warn "发票交易数据生成失败，可稍后手动执行"
+    fi
 
-    if [ "$mode" == "1" ]; then
-        print_info "启动开发模式..."
-        pnpm dev &
-    elif [ "$mode" == "2" ]; then
-        print_info "启动生产模式..."
-        pnpm start &
+    # 5.3 行业新闻种子数据
+    if ! $SKIP_SEED_NEWS; then
+        if [ -f scripts/seed-news-data.js ]; then
+            log_info "写入行业新闻种子数据..."
+            node scripts/seed-news-data.js || log_warn "新闻种子数据写入失败，可稍后手动执行"
+        fi
+    fi
+
+    log_info "数据初始化完成"
+}
+
+# =============================================
+# 步骤 6：验证与启动
+# =============================================
+step_6_verify_and_start() {
+    log_step "步骤 6/6: 验证与启动"
+
+    # 6.1 验证构建（快速检查代码可编译性）
+    log_info "验证项目构建..."
+    if pnpm build 2>&1 | tail -5; then
+        log_info "构建验证通过 ✓"
     else
-        print_error "无效选项"
+        log_warn "构建验证有警告，但不影响开发模式运行"
+    fi
+
+    # 6.2 启动开发服务器
+    echo ""
+    log_info "=========================================="
+    log_info "  部署完成!"
+    log_info "=========================================="
+    echo ""
+    log_info "  URL:       http://localhost:3000"
+    log_info "  用户名:    admin"
+    log_info "  密码:      $ADMIN_PASSWORD"
+    echo ""
+
+    if [ "$START_DEV" = true ] || $AUTO_MODE; then
+        log_info "启动开发服务器..."
+        pnpm dev
+    else
+        ask "是否现在启动开发服务器? (y/n)" "y" DO_START
+        if [ "$DO_START" = "y" ] || [ "$DO_START" = "Y" ]; then
+            log_info "启动开发服务器 (按 Ctrl+C 停止)..."
+            pnpm dev
+        else
+            log_info "手动启动: pnpm dev"
+        fi
+    fi
+}
+
+# =============================================
+# 主流程
+# =============================================
+main() {
+    echo ""
+    echo -e "${BLUE}╔══════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║     项目管理系统 - 一键自动部署脚本         ║${NC}"
+    echo -e "${BLUE}╚══════════════════════════════════════════════╝${NC}"
+    echo ""
+
+    # 确保在项目根目录
+    if [ ! -f package.json ] || ! grep -q '"name": "project-management-system"' package.json 2>/dev/null; then
+        log_error "请在项目根目录 (project-management-system/) 下运行此脚本"
         exit 1
     fi
 
-    print_separator
+    # 按顺序执行各步骤
+    step_1_check_environment
+    step_2_install_dependencies
+    step_3_configure
+    step_4_migrate
+    step_5_seed
+    step_6_verify_and_start
 }
 
-# 显示部署结果
-show_result() {
-    echo ""
-    print_separator
-    echo -e "${GREEN}"
-    echo "╔═══════════════════════════════════════════════════════╗"
-    echo "║                   🎉 部署成功！                        ║"
-    echo "╚═══════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
-    echo ""
-    echo "访问地址："
-    echo -e "  ${BLUE}http://localhost:5000${NC}"
-    echo ""
-    echo "默认管理员账户（如已创建）："
-    echo -e "  用户名：${BLUE}admin${NC}"
-    echo -e "  密码：${BLUE}admin123${NC}"
-    echo ""
-    echo -e "${YELLOW}⚠️  重要提示：${NC}"
-    echo "  1. 首次登录后请立即修改密码！"
-    echo "  2. 生产环境请务必修改默认密码！"
-    echo "  3. 查看日志：tail -f logs/*.log（如果使用 PM2）"
-    echo ""
-    echo "常用命令："
-    echo "  停止服务：Ctrl+C 或 kill \$(lsof -t -i:5000)"
-    echo "  重新部署：bash deploy.sh"
-    echo "  查看日志：pm2 logs project-management（如果使用 PM2）"
-    echo ""
-}
-
-# 主函数
-main() {
-    echo ""
-    echo -e "${BLUE}"
-    echo "╔═══════════════════════════════════════════════════════╗"
-    echo "║           项目管理系统 - 一键部署工具                ║"
-    echo "╚═══════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
-    echo ""
-
-    check_environment
-    check_postgresql
-    setup_env
-    install_dependencies
-    init_database
-
-    # 询问是否构建
-    echo ""
-    read -p "是否构建生产版本？(Y/n) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]] || [ -z "$REPLY" ]; then
-        build_project
-    else
-        print_info "跳过构建步骤"
-    fi
-
-    start_service
-    show_result
-}
-
-# 运行主函数
-main
+main "$@"

@@ -1,0 +1,44 @@
+{
+  "name": "项目管理系统",
+  "short_name": "项目管理",
+  "description": "基于Next.js的全功能项目管理系统",
+  "start_url": "/app",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "display_override": ["standalone", "minimal-ui"],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "工作台",
+      "short_name": "工作台",
+      "description": "查看工作台概览",
+      "url": "/app"
+    },
+    {
+      "name": "项目管理",
+      "short_name": "项目",
+      "description": "管理项目",
+      "url": "/app?tab=projects"
+    }
+  ]
+}

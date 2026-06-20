@@ -2498,7 +2498,7 @@ export default function AppPage() {
         </div>
 
         {/* 主容器 - 添加顶部padding以避开跑马灯 */}
-        <div className="container mx-auto px-2 sm:px-4 md:px-8 pt-8 sm:pt-10 pb-2">
+        <div className="container mx-auto px-2 sm:px-4 md:px-8 pt-8 sm:pt-10 pb-20 sm:pb-2">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 mb-2">
           <div className="flex items-center gap-2">
