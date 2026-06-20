@@ -2,11 +2,10 @@ import { NextRequest } from "next/server";
 import { userManager } from "@/storage/database";
 import * as crypto from "crypto";
 
-// JWT Secret（生产环境应该从环境变量读取）
-// 注意：如果未设置环境变量，使用固定密钥以确保服务重启后token仍然有效
-// 部署时应设置 JWT_SECRET 环境变量为强随机字符串
-const JWT_SECRET = process.env.JWT_SECRET ||
-  "default-jwt-secret-change-in-production-9d8f7a6e5c4b3d2e1f0";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is required");
+}
 
 // Base64编码辅助函数
 function base64UrlEncode(data: Buffer): string {

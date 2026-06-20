@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "coze-coding-dev-sdk";
 import * as schema from "@/storage/database/shared/schema";
+import { getUserFromToken, isSystemAdmin } from "@/lib/auth";
 
-// GET /api/db/export - 导出数据库数据
 export async function GET(request: NextRequest) {
   try {
+    const user = await getUserFromToken(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: "未授权" }, { status: 401 });
+    }
+    if (!isSystemAdmin(user)) {
+      return NextResponse.json({ success: false, error: "仅限系统管理员" }, { status: 403 });
+    }
     const db = await getDb();
 
     // 获取所有表的数据

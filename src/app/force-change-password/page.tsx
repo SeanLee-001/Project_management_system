@@ -49,11 +49,8 @@ export default function ForceChangePassword() {
       const data = await res.json();
 
       if (data.success) {
-        // 更新localStorage中的用户信息和token
+        // 更新localStorage中的用户信息（token由httpOnly Cookie管理）
         localStorage.setItem("user", JSON.stringify(data.data.user));
-        if (data.data.token) {
-          localStorage.setItem("token", data.data.token);
-        }
 
         alert("密码修改成功！现在可以进入系统了");
         router.push("/app");

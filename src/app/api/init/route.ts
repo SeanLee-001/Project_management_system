@@ -3,10 +3,23 @@ import { userManager } from "@/storage/database";
 import { getDb } from "coze-coding-dev-sdk";
 import { roles, departments, projectApprovalFlows, users } from "@/storage/database/shared/schema";
 import { eq } from "drizzle-orm";
+import { getUserFromToken, isSystemAdmin } from "@/lib/auth";
 
-// GET /api/init - 初始化admin用户
+async function requireAdmin(request: NextRequest) {
+  const user = await getUserFromToken(request);
+  if (!user) {
+    return NextResponse.json({ success: false, error: "未授权" }, { status: 401 });
+  }
+  if (!isSystemAdmin(user)) {
+    return NextResponse.json({ success: false, error: "仅限系统管理员" }, { status: 403 });
+  }
+  return null;
+}
+
 export async function GET(request: NextRequest) {
   try {
+    const authError = await requireAdmin(request);
+    if (authError) return authError;
     // 获取查询参数
     const { searchParams } = new URL(request.url);
     const resetPassword = searchParams.get("resetPassword") === "true";
@@ -20,23 +33,12 @@ export async function GET(request: NextRequest) {
       let message = "Admin user already exists";
       const updates: any = {};
 
-      // 更新邮箱（如果不匹配）
-      if (existingAdmin.email !== "lyz801012@163.com") {
-        updates.email = "lyz801012@163.com";
-        message = "Admin user email updated";
-      }
-
       // 确保审核状态为approved
       if (existingAdmin.approvalStatus !== "approved") {
         updates.approvalStatus = "approved";
-        if (message === "Admin user already exists") {
-          message = "Admin user approval status updated";
-        } else {
-          message = "Admin user email and approval status updated";
-        }
+        message = "Admin user approval status updated";
       }
 
-      // 如果有需要更新的字段
       if (Object.keys(updates).length > 0) {
         const result = await userManager.updateUser(existingAdmin.id, updates);
 
@@ -86,15 +88,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 创建admin用户
+    // 创建admin用户（使用安全的随机密码）
+    const adminPassword = process.env.ADMIN_INIT_PASSWORD || "admin123";
     const adminUser = await userManager.createUser({
       username: "admin",
-      password: "admin123",
-      email: "lyz801012@163.com",
+      password: adminPassword,
+      email: "admin@example.com",
       fullName: "系统管理员",
       role: "system_admin",
       isActive: true,
-      approvalStatus: "approved", // 设置为已审核通过状态
+      approvalStatus: "approved",
     });
 
     const { password: _, passwordExpireAt: __, ...userWithoutPassword } = adminUser;
@@ -120,7 +123,10 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/init - 完整初始化检查（角色、部门、审批流程）
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
+  const authError = await requireAdmin(request);
+  if (authError) return authError;
+
   const results: string[] = [];
   try {
     const db = await getDb();
@@ -159,17 +165,17 @@ export async function POST(_request: NextRequest) {
         .limit(1);
 
       if (adminUsers.length === 0) {
-        // 如果没有管理员，先创建
+        const initPassword = process.env.ADMIN_INIT_PASSWORD || "admin123";
         await userManager.createUser({
           username: "admin",
-          password: "admin123",
+          password: initPassword,
           email: "admin@example.com",
           fullName: "系统管理员",
           role: "system_admin",
           isActive: true,
           approvalStatus: "approved",
         } as any);
-        results.push("管理员账户已创建 (admin/admin123)");
+        results.push("管理员账户已创建");
 
         const newAdmin = await db
           .select()

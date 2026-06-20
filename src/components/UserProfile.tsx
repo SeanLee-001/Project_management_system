@@ -294,10 +294,7 @@ export default function UserProfile() {
       const data = await res.json();
 
       if (data.success) {
-        // 更新本地存储的token（因为API返回了新token）
-        if (data.data.token) {
-          localStorage.setItem("token", data.data.token);
-        }
+        // token 由 httpOnly Cookie 管理，无需写入 localStorage
 
         setSuccess("密码修改成功！");
         setPasswordData({

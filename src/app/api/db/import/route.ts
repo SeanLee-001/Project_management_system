@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "coze-coding-dev-sdk";
 import * as schema from "@/storage/database/shared/schema";
 import * as bcrypt from "bcryptjs";
+import { getUserFromToken, isSystemAdmin } from "@/lib/auth";
 
-// POST /api/db/import - 导入数据库数据
 export async function POST(request: NextRequest) {
   try {
+    const user = await getUserFromToken(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: "未授权" }, { status: 401 });
+    }
+    if (!isSystemAdmin(user)) {
+      return NextResponse.json({ success: false, error: "仅限系统管理员" }, { status: 403 });
+    }
     const body = await request.json();
     let { data, version } = body;
 

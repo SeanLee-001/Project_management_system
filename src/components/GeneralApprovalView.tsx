@@ -201,13 +201,16 @@ export default function GeneralApprovalView({
   const handleApprove = async (approval: GeneralApproval) => {
     setActionLoading(approval.id);
     try {
-      const res = await fetch(`/api/approvals/${approval.id}/approve`, {
+      const endpoint = isAdmin && approval.currentApproverId !== userId
+        ? `/api/approvals/${approval.id}/force-approve`
+        : `/api/approvals/${approval.id}/approve`;
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           approverId: userId,
-          approverName: "管理员",
-          note: "",
+          approverName: userRole === "system_admin" ? "系统管理员" : (approval.applicantName || "管理员"),
+          note: isAdmin && approval.currentApproverId !== userId ? "管理员一键审核通过" : "",
         }),
       });
       const json = await res.json();

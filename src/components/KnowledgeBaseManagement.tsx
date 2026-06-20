@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 interface KnowledgeBase {
   id: string;
@@ -375,7 +376,7 @@ export default function KnowledgeBaseManagement() {
                 </div>
 
                 <div className="prose prose-sm max-w-none mb-4">
-                  <div dangerouslySetInnerHTML={{ __html: selectedKb.content || '暂无内容' }} />
+                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedKb.content || '暂无内容') }} />
                 </div>
 
                 {/* 附件列表 */}

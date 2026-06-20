@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { evaluate } from "mathjs";
 import {
   isHoliday,
   isWorkDay,
@@ -174,7 +175,7 @@ function Calculator() {
       Math.cos = (x) => originalCos(toRadians(x));
       Math.tan = (x) => originalTan(toRadians(x));
 
-      const result = eval(processed);
+      const result = evaluate(processed);
 
       // 恢复原始函数
       Math.sin = originalSin;
@@ -184,7 +185,7 @@ function Calculator() {
       return result;
     }
 
-    return eval(processed);
+    return evaluate(processed);
   };
 
   const handleClick = (value: string) => {

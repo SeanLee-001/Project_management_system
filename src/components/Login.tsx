@@ -62,9 +62,8 @@ export default function Login() {
       const data = await res.json();
 
       if (data.success) {
-        // 登录成功，保存用户信息到localStorage
+        // token 由 httpOnly Cookie 管理，仅保存用户信息
         localStorage.setItem("user", JSON.stringify(data.data.user));
-        localStorage.setItem("token", data.data.token);
         // 重置登录时间
         const now = new Date();
         localStorage.setItem("loginTime", now.toISOString());
@@ -130,9 +129,8 @@ export default function Login() {
       const data = await res.json();
 
       if (data.success) {
-        // 登录成功，保存用户信息到localStorage
+        // 登录成功，保存用户信息（不含token，token由httpOnly Cookie管理）
         localStorage.setItem("user", JSON.stringify(data.data.user));
-        localStorage.setItem("token", data.data.token);
 
         // 保存MAC地址到localStorage
         localStorage.setItem("savedMacAddress", macAddress.trim());

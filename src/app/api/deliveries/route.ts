@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "coze-coding-dev-sdk";
 import { deliveries, orders, users } from "@/storage/database/shared/schema";
 import { eq, like, and, or, desc, sql } from "drizzle-orm";
+import { getUserFromToken } from "@/lib/auth";
 
 // GET - 获取送货列表
 export async function GET(request: NextRequest) {
@@ -102,14 +103,16 @@ export async function POST(request: NextRequest) {
       orderInfo = ordersResult[0];
     }
 
-    // 获取当前用户信息
+    // 获取当前用户信息（通过 token 验证，不信任客户端请求头）
     let userInfo: any = null;
-    const userId = request.headers.get("x-user-id");
-    if (userId) {
+    let verifiedUserId: string | null = null;
+    const currentUser = await getUserFromToken(request);
+    if (currentUser) {
+      verifiedUserId = currentUser.id;
       const usersResult = await db
         .select()
         .from(users)
-        .where(eq(users.id, userId))
+        .where(eq(users.id, currentUser.id))
         .limit(1);
       userInfo = usersResult[0];
     }
@@ -131,10 +134,10 @@ export async function POST(request: NextRequest) {
       items: body.items ? JSON.stringify(body.items) : null,
       totalQuantity: body.totalQuantity || 0,
       remarks: body.remarks || null,
-      shippedBy: userId || null,
+      shippedBy: verifiedUserId || null,
       shippedByName: userInfo?.fullName || userInfo?.username || null,
       receivedBy: body.receivedBy || null,
-      createdBy: userId || null,
+      createdBy: verifiedUserId || null,
     };
 
     const result = await db

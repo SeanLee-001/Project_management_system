@@ -3,15 +3,17 @@ import { getDb } from "coze-coding-dev-sdk";
 import { users, departments, insertUserSchema, updateUserSchema } from "./shared/schema";
 import type { User, InsertUser, UpdateUser } from "./shared/schema";
 import * as bcrypt from "bcryptjs";
+import * as crypto from "crypto";
+
+function generateSecurePassword(): string {
+  return crypto.randomBytes(16).toString("base64url");
+}
 
 export class UserManager {
   async createUser(data: InsertUser, skipApproval: boolean = false): Promise<User> {
     const db = await getDb();
 
-    // 密码处理：
-    // - 如果用户提供了密码（用户注册），则使用用户提供的密码
-    // - 如果没有提供密码（管理员创建用户），则使用默认密码"admin123"
-    const passwordToHash = data.password || "admin123";
+    const passwordToHash = data.password || generateSecurePassword();
     const hashedPassword = await bcrypt.hash(passwordToHash, 10);
 
     // 设置密码过期时间为1个月后
@@ -199,8 +201,8 @@ export class UserManager {
 
   async resetUserPassword(id: string): Promise<User | null> {
     const db = await getDb();
-    const defaultPassword = "admin123";
-    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+    const newPassword = generateSecurePassword();
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // 设置密码过期时间为1个月后
     const passwordExpireAt = new Date();
