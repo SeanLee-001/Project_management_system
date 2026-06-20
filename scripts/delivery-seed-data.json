@@ -1026,14 +1026,15 @@
       "productCode": "MAT-001",
       "productName": "自动化产线",
       "supplierId": "",
-      "supplierName": "系统管理员",
+      "supplierName": "project_management",
       "purchaseOrder": "ORD-2025-0002",
       "quantity": "10",
       "unit": "套",
       "receiveDate": "2026-06-15",
       "companyName": "北京新能源汽车股份有限公司",
       "createTime": "2026-06-14",
-      "updateTime": "2026-06-18"
+      "updateTime": "2026-06-18",
+      "supplier": ""
     },
     {
       "id": "DLw51puvqjmqkvkduz",
@@ -1042,14 +1043,15 @@
       "productCode": "MAT-002",
       "productName": "自动化产线",
       "supplierId": "",
-      "supplierName": "project_manager",
+      "supplierName": "mechanical_engineer",
       "purchaseOrder": "ORD-2025-0003",
       "quantity": "15",
       "unit": "套",
       "receiveDate": "2026-06-14",
       "companyName": "上海联影医疗科技股份有限公司",
       "createTime": "2026-06-13",
-      "updateTime": "2026-06-17"
+      "updateTime": "2026-06-17",
+      "supplier": ""
     },
     {
       "id": "DLtmeyy52kmqkvkduz",
@@ -1058,14 +1060,15 @@
       "productCode": "MAT-003",
       "productName": "自动化产线",
       "supplierId": "",
-      "supplierName": "project_manager",
+      "supplierName": "mechanical_engineer",
       "purchaseOrder": "ORD-2025-0004",
       "quantity": "20",
       "unit": "套",
       "receiveDate": "2026-06-13",
       "companyName": "杭州海康威视数字技术股份有限公司",
       "createTime": "2026-06-12",
-      "updateTime": "2026-06-16"
+      "updateTime": "2026-06-16",
+      "supplier": ""
     },
     {
       "id": "DLj6ndouzcmqkvkduz",
@@ -1074,14 +1077,15 @@
       "productCode": "MAT-004",
       "productName": "检测设备",
       "supplierId": "",
-      "supplierName": "project_management",
+      "supplierName": "electrical_engineer",
       "purchaseOrder": "ORD-2025-0005",
       "quantity": "25",
       "unit": "套",
       "receiveDate": "2026-06-12",
       "companyName": "广州汽车集团股份有限公司",
       "createTime": "2026-06-11",
-      "updateTime": "2026-06-15"
+      "updateTime": "2026-06-15",
+      "supplier": ""
     },
     {
       "id": "DL23r5sqkamqkvkduz",
@@ -1090,14 +1094,15 @@
       "productCode": "MAT-005",
       "productName": "物流设备",
       "supplierId": "",
-      "supplierName": "mechanical_engineer",
+      "supplierName": "electrical_engineer",
       "purchaseOrder": "ORD-2025-0006",
       "quantity": "30",
       "unit": "套",
       "receiveDate": "2026-06-11",
       "companyName": "苏州汇川技术有限公司",
       "createTime": "2026-06-10",
-      "updateTime": "2026-06-14"
+      "updateTime": "2026-06-14",
+      "supplier": ""
     },
     {
       "id": "DLv24whckrmqkvkduz",
@@ -1106,14 +1111,15 @@
       "productCode": "MAT-006",
       "productName": "加工设备",
       "supplierId": "",
-      "supplierName": "mechanical_engineer",
+      "supplierName": "visual_engineer",
       "purchaseOrder": "ORD-2025-0007",
       "quantity": "35",
       "unit": "套",
       "receiveDate": "2026-06-10",
       "companyName": "武汉华星光电技术有限公司",
       "createTime": "2026-06-09",
-      "updateTime": "2026-06-13"
+      "updateTime": "2026-06-13",
+      "supplier": ""
     },
     {
       "id": "DLms0c4ddsmqkvkduz",
@@ -1122,14 +1128,15 @@
       "productCode": "MAT-007",
       "productName": "包装设备",
       "supplierId": "",
-      "supplierName": "electrical_engineer",
+      "supplierName": "software_engineer",
       "purchaseOrder": "ORD-2025-0009",
       "quantity": "40",
       "unit": "套",
       "receiveDate": "2026-06-09",
       "companyName": "东莞立讯精密工业股份有限公司",
       "createTime": "2026-06-08",
-      "updateTime": "2026-06-12"
+      "updateTime": "2026-06-12",
+      "supplier": ""
     },
     {
       "id": "DLjnbmpg2wmqkvkduz",
@@ -1138,14 +1145,15 @@
       "productCode": "MAT-008",
       "productName": "零部件",
       "supplierId": "",
-      "supplierName": "electrical_engineer",
+      "supplierName": "系统管理员",
       "purchaseOrder": "ORD-2025-0011",
       "quantity": "45",
       "unit": "套",
       "receiveDate": "2026-06-08",
       "companyName": "重庆长安汽车股份有限公司",
       "createTime": "2026-06-07",
-      "updateTime": "2026-06-11"
+      "updateTime": "2026-06-11",
+      "supplier": ""
     },
     {
       "id": "DLxioqlocumqkvkduz",
@@ -1154,14 +1162,15 @@
       "productCode": "MAT-009",
       "productName": "电控部件",
       "supplierId": "",
-      "supplierName": "visual_engineer",
+      "supplierName": "project_manager",
       "purchaseOrder": "ORD-2025-0013",
       "quantity": "50",
       "unit": "套",
       "receiveDate": "2026-06-07",
       "companyName": "青岛海尔生物医疗股份有限公司",
       "createTime": "2026-06-06",
-      "updateTime": "2026-06-10"
+      "updateTime": "2026-06-10",
+      "supplier": ""
     },
     {
       "id": "DLdfhhkjeymqkvkduz",
@@ -1170,14 +1179,15 @@
       "productCode": "MAT-010",
       "productName": "电控部件",
       "supplierId": "",
-      "supplierName": "software_engineer",
+      "supplierName": "project_manager",
       "purchaseOrder": "ORD-2025-0015",
       "quantity": "55",
       "unit": "套",
       "receiveDate": "2026-06-06",
       "companyName": "合肥美亚光电技术股份有限公司",
       "createTime": "2026-06-05",
-      "updateTime": "2026-06-09"
+      "updateTime": "2026-06-09",
+      "supplier": ""
     }
   ]
 }
