@@ -360,17 +360,26 @@ export default function GeneralApprovalView({
               <h3 className="text-lg font-semibold text-gray-900">{targetApproval.title}</h3>
               <p className="text-sm text-gray-500 mt-1">{targetApproval.requestNumber}</p>
             </div>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-              targetApproval.status === "pending"
-                ? "bg-orange-100 text-orange-700"
-                : targetApproval.status === "approved"
-                ? "bg-emerald-100 text-emerald-700"
-                : targetApproval.status === "rejected"
-                ? "bg-red-100 text-red-700"
-                : "bg-gray-100 text-gray-700"
-            }`}>
-              {STATUS_LABELS[targetApproval.status] || targetApproval.status}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                targetApproval.status === "pending"
+                  ? "bg-orange-100 text-orange-700"
+                  : targetApproval.status === "approved"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : targetApproval.status === "rejected"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-gray-100 text-gray-700"
+              }`}>
+                {STATUS_LABELS[targetApproval.status] || targetApproval.status}
+              </span>
+              <button
+                onClick={() => { setTargetApprovalId(null); setTargetApprovalType(null); onApprovalViewed?.(); }}
+                className="text-gray-400 hover:text-gray-600"
+                title="关闭"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
@@ -484,7 +493,15 @@ export default function GeneralApprovalView({
                   }`}
                 >
                   <td className="px-4 py-3 text-sm font-mono text-gray-600">{approval.requestNumber}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900 max-w-[200px] truncate">{approval.title}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900 max-w-[200px] truncate">
+                    <button
+                      onClick={() => { setTargetApprovalId(approval.id); setTargetApprovalType("general"); onApprovalViewed?.(); }}
+                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                      title="点击查看详情"
+                    >
+                      {approval.title}
+                    </button>
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {TYPE_LABELS[approval.requestType] || approval.requestType}
                   </td>
