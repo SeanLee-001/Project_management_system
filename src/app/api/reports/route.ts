@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ReportManager } from "@/storage/database/reportManager";
-import { ReportDataAggregator } from "@/lib/report-aggregator";
-import { generateMarkdownReport } from "@/lib/report-template-engine";
-import { randomUUID } from "crypto";
+
+function transformReport(r: any) {
+  const config = (r.config && typeof r.config === "object") ? r.config : {};
+  return {
+    ...r,
+    description: r.description || config.description || "",
+    type: r.type || config.type || "comprehensive",
+    status: r.status || config.status || "published",
+    format: r.format || config.format || "markdown",
+    generatedBy: r.generatedBy || config.generatedBy || r.createdBy || "",
+    generatedAt: r.generatedAt || config.generatedAt || r.createdAt || "",
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,7 +31,12 @@ export async function GET(request: NextRequest) {
       dateTo,
     });
 
-    return NextResponse.json({ success: true, ...result });
+    const transformed = {
+      ...result,
+      data: result.data.map(transformReport),
+    };
+
+    return NextResponse.json({ success: true, ...transformed });
   } catch (error: any) {
     console.error("获取报告列表失败:", error);
     return NextResponse.json(

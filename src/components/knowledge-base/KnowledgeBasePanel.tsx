@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import {
   RefreshCw,
   TrendingUp,
@@ -12,7 +13,10 @@ import {
   Users,
   ShieldAlert,
   TrendingDown,
+  FileText,
 } from 'lucide-react';
+
+const ReportPanel = dynamic(() => import('@/components/ReportPanel'), { ssr: false });
 
 interface NewsItem {
   id: string;
@@ -71,7 +75,7 @@ export default function KnowledgeBasePanel() {
   const [riskAnalysis, setRiskAnalysis] = useState<ProjectRiskAnalysis[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'news' | 'risks'>('news');
+  const [activeTab, setActiveTab] = useState<'news' | 'risks' | 'reports'>('news');
   const [summary, setSummary] = useState<any>(null);
   const [nextScheduleTime, setNextScheduleTime] = useState<string>('');
   const [expandedNews, setExpandedNews] = useState<Set<string>>(new Set());
@@ -122,7 +126,7 @@ export default function KnowledgeBasePanel() {
   useEffect(() => {
     if (activeTab === 'news') {
       fetchNews();
-    } else {
+    } else if (activeTab === 'risks') {
       fetchRiskAnalysis();
     }
   }, [activeTab]);
@@ -212,8 +216,8 @@ export default function KnowledgeBasePanel() {
           <h2 className="text-2xl font-bold">知识库与智能分析</h2>
           <button
             className="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50"
-            onClick={() => activeTab === 'news' ? fetchNews() : fetchRiskAnalysis()}
-            disabled={loading}
+            onClick={() => activeTab === 'news' ? fetchNews() : activeTab === 'risks' ? fetchRiskAnalysis() : undefined}
+            disabled={loading || activeTab === 'reports'}
           >
             <RefreshCw className={`w-4 h-4 mr-2 inline ${loading ? 'animate-spin' : ''}`} />
             刷新
@@ -238,6 +242,15 @@ export default function KnowledgeBasePanel() {
             <AlertTriangle className="w-4 h-4 inline mr-2" />
             项目风险 {summary?.highRisks ? `(${summary.highRisks}个高危)` : ''}
           </button>
+          <button
+            className={`px-4 py-2 rounded text-sm font-medium ${
+              activeTab === 'reports' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'
+            }`}
+            onClick={() => setActiveTab('reports')}
+          >
+            <FileText className="w-4 h-4 inline mr-2" />
+            智能报告
+          </button>
         </div>
         {activeTab === 'risks' && (
           <div className="mt-3 flex items-center justify-between text-sm">
@@ -256,7 +269,12 @@ export default function KnowledgeBasePanel() {
               立即刷新分析
             </button>
               </div>
-             )}
+        )}
+        {activeTab === 'reports' && (
+          <div className="-m-6">
+            <ReportPanel />
+          </div>
+        )}
       </div>
 
       <div className="p-6 overflow-y-auto h-[calc(100vh-280px)]">

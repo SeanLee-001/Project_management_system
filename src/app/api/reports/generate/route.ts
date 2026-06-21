@@ -29,14 +29,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const generatedAt = new Date().toISOString();
+    const generatedAt = new Date();
+    const generatedAtStr = generatedAt.toISOString();
     const reportMarkdown = generateMarkdownReport(aggregatedData, {
       projectName: aggregatedData.project.name,
       dateFrom: dateFrom || aggregatedData.project.startDate || "创建日",
-      dateTo: dateTo || new Date().toISOString().slice(0, 10),
+      dateTo: dateTo || generatedAtStr.slice(0, 10),
       description,
       generatedBy,
-      generatedAt,
+      generatedAt: generatedAtStr,
     });
 
     const reportId = randomUUID();
@@ -45,16 +46,18 @@ export async function GET(request: NextRequest) {
       id: reportId,
       projectId,
       title: `${aggregatedData.project.name} - 综合报告`,
-      description: description || `${aggregatedData.project.name} 项目综合数据分析报告`,
-      type: "comprehensive",
-      status: "published",
-      format: "markdown",
-      data: aggregatedData as any,
       content: reportMarkdown,
-      generatedBy,
-      generatedAt: generatedAt,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      config: {
+        description: description || `${aggregatedData.project.name} 项目综合数据分析报告`,
+        type: "comprehensive",
+        status: "published",
+        format: "markdown",
+        generatedBy,
+        generatedAt: generatedAtStr,
+      } as any,
+      createdBy: generatedBy || "系统自动生成",
+      createdAt: generatedAt,
+      updatedAt: generatedAt,
     });
 
     return NextResponse.json({

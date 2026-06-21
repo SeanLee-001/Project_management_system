@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ReportManager } from "@/storage/database/reportManager";
 import { ReportDataAggregator } from "@/lib/report-aggregator";
 import { generateMarkdownReport } from "@/lib/report-template-engine";
+import { randomUUID } from "crypto";
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,32 +34,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const generatedAt = new Date().toISOString();
+    const generatedAt = new Date();
+    const generatedAtStr = generatedAt.toISOString();
+    const config = (existingReport.config && typeof existingReport.config === "object") ? (existingReport.config as Record<string, unknown>) : {};
+    const desc = ((config.description as string) || "") || "";
+
     const reportMarkdown = generateMarkdownReport(aggregatedData, {
       projectName: aggregatedData.project.name,
       dateFrom: aggregatedData.project.startDate || "创建日",
-      dateTo: new Date().toISOString().slice(0, 10),
-      description: existingReport.description || "",
-      generatedBy: existingReport.generatedBy || "系统自动生成",
-      generatedAt,
+      dateTo: generatedAtStr.slice(0, 10),
+      description: desc,
+      generatedBy: ((config.generatedBy as string) || existingReport.createdBy) || "系统自动生成",
+      generatedAt: generatedAtStr,
     });
 
-    // Re-create as a new report record (snapshot)
-    const { randomUUID } = require("crypto");
     const newReport = await ReportManager.createReport({
       id: randomUUID(),
       projectId,
       title: existingReport.title || `${aggregatedData.project.name} - 综合报告 (重新生成)`,
-      description: existingReport.description || "",
-      type: existingReport.type || "comprehensive",
-      status: "published",
-      format: "markdown",
-      data: aggregatedData as any,
       content: reportMarkdown,
-      generatedBy: existingReport.generatedBy || "系统自动生成",
-      generatedAt,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      config: {
+        description: desc,
+        type: ((config.type as string) || "comprehensive"),
+        status: "published",
+        format: "markdown",
+        generatedBy: ((config.generatedBy as string) || existingReport.createdBy) || "系统自动生成",
+        generatedAt: generatedAtStr,
+      } as any,
+      createdBy: ((config.generatedBy as string) || existingReport.createdBy) || "系统自动生成",
+      createdAt: generatedAt,
+      updatedAt: generatedAt,
     });
 
     return NextResponse.json({
