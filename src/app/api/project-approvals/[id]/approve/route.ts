@@ -8,6 +8,7 @@ import {
   contracts,
 } from "@/storage/database/shared/schema";
 import { eq } from "drizzle-orm";
+import { invalidateCache } from "@/lib/cache";
 import { projectManager } from "@/storage/database";
 import { messageManager } from "@/storage/database/messageManager";
 import { delegationManager } from "@/storage/database/delegationManager";
@@ -434,6 +435,8 @@ export async function POST(
       }
     }
 
+    invalidateCache("project-approvals:");
+    invalidateCache("projects:");
     return NextResponse.json({
       success: true,
       data: updatedApproval[0],

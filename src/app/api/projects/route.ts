@@ -4,10 +4,15 @@ import { verifyToken } from "@/lib/auth";
 import { getDb } from "coze-coding-dev-sdk";
 import { projectApprovals } from "@/storage/database/shared/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET /api/projects - 获取所有项目
 export async function GET(request: NextRequest) {
   try {
+    const cacheKey = `projects:${request.url}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || undefined;
     const keyword = searchParams.get("keyword") || undefined;
@@ -87,7 +92,9 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ success: true, data: projectsWithStatus });
+    const result = { success: true, data: projectsWithStatus };
+    setCache(cacheKey, result, 15000);
+    return NextResponse.json(result);
   } catch (error: any) {
     console.error("Error fetching projects:", error);
     const errorMessage = error?.message || error?.toString() || "获取项目列表失败";
@@ -112,7 +119,7 @@ export async function POST(request: NextRequest) {
     }
 
     const project = await projectManager.createProject(body);
-
+    invalidateCache("projects:");
     return NextResponse.json({ success: true, data: project }, { status: 201 });
   } catch (error: any) {
     console.error("Error creating project:", error);

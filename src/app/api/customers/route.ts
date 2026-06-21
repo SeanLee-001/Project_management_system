@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { customerManager } from "@/storage/database";
 import { insertCustomerSchema } from "@/storage/database/shared/schema";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET /api/customers - 获取所有客户或搜索客户
 export async function GET(request: NextRequest) {
   try {
+    const cacheKey = `customers:${request.url}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get("search");
 
@@ -24,7 +29,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ success: true, data: filteredCustomers });
+    const result = { success: true, data: filteredCustomers };
+    setCache(cacheKey, result, 30000);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching customers:", error);
     return NextResponse.json(
@@ -64,6 +71,7 @@ export async function POST(request: NextRequest) {
     };
 
     const customer = await customerManager.create(dataToSend);
+    invalidateCache("customers:");
     return NextResponse.json({ success: true, data: customer }, { status: 201 });
   } catch (error: any) {
     console.error("Error creating customer:", error);

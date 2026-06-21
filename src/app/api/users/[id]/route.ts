@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { userManager } from "@/storage/database";
 import { UserRole } from "@/storage/database/shared/schema";
 import { verifyToken } from "@/lib/auth";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET /api/users/[id] - 获取单个用户
 export async function GET(
@@ -10,6 +11,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const cacheKey = `user:${id}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const user = await userManager.getUserById(id);
 
     if (!user) {
@@ -20,7 +25,9 @@ export async function GET(
     }
 
     const { password, ...userWithoutPassword } = user;
-    return NextResponse.json({ success: true, data: userWithoutPassword });
+    const result = { success: true, data: userWithoutPassword };
+    setCache(cacheKey, result, 15000);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching user:", error);
     return NextResponse.json(
@@ -81,6 +88,8 @@ export async function PUT(
           { status: 404 }
         );
       }
+      invalidateCache("users:");
+      invalidateCache(`user:${id}`);
       const { password, ...userWithoutPassword } = user;
       return NextResponse.json({ success: true, data: userWithoutPassword });
     }
@@ -96,6 +105,8 @@ export async function PUT(
     }
 
     const { password, ...userWithoutPassword } = user;
+    invalidateCache("users:");
+    invalidateCache(`user:${id}`);
     return NextResponse.json({ success: true, data: userWithoutPassword });
   } catch (error) {
     console.error("Error updating user:", error);
@@ -155,6 +166,8 @@ export async function DELETE(
       );
     }
 
+    invalidateCache("users:");
+    invalidateCache(`user:${id}`);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting user:", error);

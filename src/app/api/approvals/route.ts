@@ -3,10 +3,15 @@ import { approvalManager } from "@/storage/database/approvalManager";
 import { messageManager } from "@/storage/database/messageManager";
 import { userManager } from "@/storage/database/userManager";
 import { delegationManager } from "@/storage/database/delegationManager";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET /api/approvals - 获取审批列表
 export async function GET(request: NextRequest) {
   try {
+    const cacheKey = `approvals:${request.url}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const searchParams = request.nextUrl.searchParams;
     const requestType = searchParams.get("requestType");
     const status = searchParams.get("status");
@@ -49,10 +54,12 @@ export async function GET(request: NextRequest) {
       approvals = await approvalManager.getAll();
     }
 
-    return NextResponse.json({
+    const result = {
       success: true,
       data: approvals,
-    });
+    };
+    setCache(cacheKey, result, 15000);
+    return NextResponse.json(result);
   } catch (error: any) {
     console.error("Error fetching approvals:", error);
     return NextResponse.json(

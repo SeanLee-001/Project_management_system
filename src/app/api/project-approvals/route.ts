@@ -10,6 +10,7 @@ import {
 import { eq, and, desc, or } from "drizzle-orm";
 import { messageManager } from "@/storage/database/messageManager";
 import { verifyToken } from "@/lib/auth";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // 有审批权限的角色
 const APPROVER_ROLES = [
@@ -40,6 +41,10 @@ async function checkUserApprovalPermission(userId: string): Promise<boolean> {
 // GET /api/project-approvals - 获取项目审批列表
 export async function GET(request: NextRequest) {
   try {
+    const cacheKey = `project-approvals:${request.url}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get("projectId");
     const status = searchParams.get("status");
@@ -82,7 +87,9 @@ export async function GET(request: NextRequest) {
 
     const approvals = await query;
 
-    return NextResponse.json({ success: true, data: approvals });
+    const result = { success: true, data: approvals };
+    setCache(cacheKey, result, 15000);
+    return NextResponse.json(result);
   } catch (error: any) {
     console.error("Error fetching project approvals:", error);
     const errorMessage = error?.message || error?.toString() || "获取项目审批列表失败";
@@ -294,6 +301,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    invalidateCache("project-approvals:");
     return NextResponse.json({ success: true, data: newApproval[0] });
   } catch (error: any) {
     console.error("Error creating project approval:", error);

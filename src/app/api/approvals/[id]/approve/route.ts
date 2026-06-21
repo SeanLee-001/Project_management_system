@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { approvalManager } from "@/storage/database/approvalManager";
+import { invalidateCache } from "@/lib/cache";
 
 // POST /api/approvals/[id]/approve - 审批通过
 export async function POST(
@@ -23,6 +24,7 @@ export async function POST(
 
     const approval = await approvalManager.approve(id, approverId, approverName, note);
 
+    invalidateCache("approvals:");
     return NextResponse.json({
       success: true,
       data: approval,

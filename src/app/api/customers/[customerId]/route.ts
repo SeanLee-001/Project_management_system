@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { customerManager } from "@/storage/database";
 import { updateCustomerSchema } from "@/storage/database/shared/schema";
+import { invalidateCache } from "@/lib/cache";
 
 // PUT /api/customers/[customerId] - 更新客户
 export async function PUT(
@@ -20,6 +21,7 @@ export async function PUT(
     };
 
     const customer = await customerManager.update(customerId, dataToSend);
+    invalidateCache("customers:");
     if (!customer) {
       return NextResponse.json(
         { success: false, error: "客户不存在" },
@@ -57,6 +59,7 @@ export async function DELETE(
   try {
     const { customerId } = await params;
     const customer = await customerManager.delete(customerId);
+    invalidateCache("customers:");
     if (!customer) {
       return NextResponse.json(
         { success: false, error: "客户不存在" },

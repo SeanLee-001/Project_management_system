@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { userManager } from "@/storage/database";
 import { UserRole } from "@/storage/database/shared/schema";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET /api/users - 获取所有用户
 export async function GET(request: NextRequest) {
   try {
+    const cacheKey = `users:${request.url}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const { searchParams } = new URL(request.url);
     const role = searchParams.get("role") || undefined;
     const isActive = searchParams.get("isActive") === "true" ? true
@@ -16,7 +21,9 @@ export async function GET(request: NextRequest) {
       filters: role ? { role } : isActive !== undefined ? { isActive } : undefined,
     })).map(({ password, ...user }) => user);
 
-    return NextResponse.json({ success: true, data: users });
+    const result = { success: true, data: users };
+    setCache(cacheKey, result, 30000);
+    return NextResponse.json(result);
   } catch (error: any) {
     console.error("Error fetching users:", error);
     const errorMessage = error?.message || error?.toString() || "获取用户列表失败";
@@ -105,6 +112,7 @@ export async function POST(request: NextRequest) {
 
     // 管理员创建的用户直接审核通过
     const user = await userManager.createUser(body, true);
+    invalidateCache("users:");
     const { password, ...userWithoutPassword } = user;
 
     // 如果用户有部门，自动继承部门的基础权限

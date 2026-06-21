@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { orderManager } from "@/storage/database";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET /api/orders/[orderId] - 获取单个订单
 export async function GET(
@@ -8,6 +9,10 @@ export async function GET(
 ) {
   try {
     const { orderId } = await params;
+    const cacheKey = `order:${orderId}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const order = await orderManager.getById(orderId);
 
     if (!order) {
@@ -17,7 +22,9 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ success: true, data: order });
+    const result = { success: true, data: order };
+    setCache(cacheKey, result, 15000);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching order:", error);
     return NextResponse.json(
@@ -46,6 +53,8 @@ export async function PUT(
     }
 
     const order = await orderManager.update(orderId, body);
+    invalidateCache("orders:");
+    invalidateCache(`order:${orderId}`);
     return NextResponse.json({ success: true, data: order });
   } catch (error: any) {
     console.error("Error updating order:", error);
@@ -75,6 +84,8 @@ export async function DELETE(
     }
 
     const order = await orderManager.delete(orderId);
+    invalidateCache("orders:");
+    invalidateCache(`order:${orderId}`);
     return NextResponse.json({ success: true, data: order });
   } catch (error: any) {
     console.error("Error deleting order:", error);

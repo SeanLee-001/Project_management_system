@@ -2,10 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "coze-coding-dev-sdk";
 import { roles } from "@/storage/database/shared/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET /api/roles - 获取所有角色
 export async function GET(request: NextRequest) {
   try {
+    const cacheKey = `roles:${request.url}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const db = await getDb();
     const { searchParams } = new URL(request.url);
     const onlyActive = searchParams.get("active") === "true";
@@ -25,10 +30,12 @@ export async function GET(request: NextRequest) {
         .orderBy(roles.roleName);
     }
 
-    return NextResponse.json({
+    const result = {
       success: true,
       data: allRoles,
-    });
+    };
+    setCache(cacheKey, result, 300000);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching roles:", error);
     return NextResponse.json(
@@ -88,6 +95,7 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
+    invalidateCache("roles:");
     return NextResponse.json({
       success: true,
       data: newRole[0],

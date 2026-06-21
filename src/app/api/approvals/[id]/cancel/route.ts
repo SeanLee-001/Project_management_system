@@ -3,6 +3,7 @@ import { approvalManager } from "@/storage/database/approvalManager";
 import { getDb } from "coze-coding-dev-sdk";
 import { approvalRequests, approvalHistory, orders, contracts } from "@/storage/database/shared/schema";
 import { eq } from "drizzle-orm";
+import { invalidateCache } from "@/lib/cache";
 
 // POST /api/approvals/[id]/cancel - 撤销审批申请
 export async function POST(
@@ -101,6 +102,9 @@ export async function POST(
       }
     });
 
+    invalidateCache("approvals:");
+    invalidateCache("orders:");
+    invalidateCache("contracts:");
     return NextResponse.json({
       success: true,
       message: "审批已撤销",

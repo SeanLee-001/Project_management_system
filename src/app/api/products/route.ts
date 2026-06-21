@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { productManager } from "@/storage/database";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET /api/products - 获取所有产品
 export async function GET(request: NextRequest) {
   try {
+    const cacheKey = `products:${request.url}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || undefined;
 
@@ -11,7 +16,9 @@ export async function GET(request: NextRequest) {
       filters: status ? { status } : undefined,
     });
 
-    return NextResponse.json({ success: true, data: products });
+    const result = { success: true, data: products };
+    setCache(cacheKey, result, 30000);
+    return NextResponse.json(result);
   } catch (error: any) {
     console.error("Error fetching products:", error);
     const errorMessage = error?.message || error?.toString() || "获取产品列表失败";
@@ -43,6 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     const product = await productManager.createProduct(body);
+    invalidateCache("products:");
 
     return NextResponse.json({ success: true, data: product }, { status: 201 });
   } catch (error: any) {

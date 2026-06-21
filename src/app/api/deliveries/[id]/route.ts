@@ -3,6 +3,7 @@ import { getDb } from "coze-coding-dev-sdk";
 import { deliveries } from "@/storage/database/shared/schema";
 import { eq } from "drizzle-orm";
 import { sql } from "drizzle-orm";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET - 获取单个送货单详情
 export async function GET(
@@ -11,6 +12,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const cacheKey = `delivery:${id}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const db = await getDb();
 
     const result = await db
@@ -36,10 +41,12 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({
+    const resultGet = {
       success: true,
       data: delivery,
-    });
+    };
+    setCache(cacheKey, resultGet, 15000);
+    return NextResponse.json(resultGet);
   } catch (error) {
     console.error("获取送货单详情失败:", error);
     return NextResponse.json(
@@ -102,6 +109,8 @@ export async function PUT(
       .where(eq(deliveries.id, id))
       .returning();
 
+    invalidateCache("deliveries:");
+    invalidateCache(`delivery:${id}`);
     return NextResponse.json({
       success: true,
       data: result[0],
@@ -149,6 +158,8 @@ export async function DELETE(
 
     await db.delete(deliveries).where(eq(deliveries.id, id));
 
+    invalidateCache("deliveries:");
+    invalidateCache(`delivery:${id}`);
     return NextResponse.json({
       success: true,
       message: "送货单删除成功",

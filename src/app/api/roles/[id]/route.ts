@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "coze-coding-dev-sdk";
 import { roles } from "@/storage/database/shared/schema";
 import { eq } from "drizzle-orm";
+import { invalidateCache } from "@/lib/cache";
 
 // PUT /api/roles/[id] - 更新角色
 export async function PUT(
@@ -56,6 +57,7 @@ export async function PUT(
       .where(eq(roles.id, id))
       .returning();
 
+    invalidateCache("roles:");
     return NextResponse.json({
       success: true,
       data: updatedRole[0],
@@ -114,6 +116,7 @@ export async function DELETE(
     // 删除角色
     await db.delete(roles).where(eq(roles.id, id));
 
+    invalidateCache("roles:");
     return NextResponse.json({
       success: true,
       message: "角色删除成功",

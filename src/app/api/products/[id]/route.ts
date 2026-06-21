@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { productManager } from "@/storage/database";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET /api/products/[id] - 获取单个产品
 export async function GET(
@@ -8,6 +9,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const cacheKey = `product:${id}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const product = await productManager.getProductById(id);
 
     if (!product) {
@@ -17,7 +22,9 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ success: true, data: product });
+    const resultGet = { success: true, data: product };
+    setCache(cacheKey, resultGet, 15000);
+    return NextResponse.json(resultGet);
   } catch (error) {
     console.error("Error fetching product:", error);
     return NextResponse.json(
@@ -36,6 +43,8 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const product = await productManager.updateProduct(id, body);
+    invalidateCache("products:");
+    invalidateCache(`product:${id}`);
 
     if (!product) {
       return NextResponse.json(
@@ -62,6 +71,8 @@ export async function DELETE(
   try {
     const { id } = await params;
     const success = await productManager.deleteProduct(id);
+    invalidateCache("products:");
+    invalidateCache(`product:${id}`);
 
     if (!success) {
       return NextResponse.json(

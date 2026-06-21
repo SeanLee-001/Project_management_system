@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { contractManager } from "@/storage/database";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET /api/contracts - 获取所有合同或搜索合同
 export async function GET(request: NextRequest) {
   try {
+    const cacheKey = `contracts:${request.url}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
 
@@ -14,7 +19,9 @@ export async function GET(request: NextRequest) {
       contracts = await contractManager.getAll();
     }
 
-    return NextResponse.json({ success: true, data: contracts });
+    const result = { success: true, data: contracts };
+    setCache(cacheKey, result, 30000);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching contracts:", error);
     return NextResponse.json(
@@ -91,6 +98,7 @@ export async function POST(request: NextRequest) {
     };
 
     const contract = await contractManager.create(dataToSend);
+    invalidateCache("contracts:");
     return NextResponse.json({ success: true, data: contract }, { status: 201 });
   } catch (error: any) {
     console.error("Error creating contract:", error);

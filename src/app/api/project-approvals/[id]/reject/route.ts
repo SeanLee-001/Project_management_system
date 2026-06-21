@@ -7,6 +7,7 @@ import {
 } from "@/storage/database/shared/schema";
 import { eq } from "drizzle-orm";
 import { delegationManager } from "@/storage/database/delegationManager";
+import { invalidateCache } from "@/lib/cache";
 
 // POST /api/project-approvals/[id]/reject - 拒绝审批
 export async function POST(
@@ -123,6 +124,8 @@ export async function POST(
       .where(eq(projectApprovals.id, id))
       .limit(1);
 
+    invalidateCache("project-approvals:");
+    invalidateCache("projects:");
     return NextResponse.json({
       success: true,
       data: updatedApproval[0],

@@ -947,14 +947,7 @@ export default function AppPage() {
 
   useEffect(() => {
     if (currentUser) {
-      fetchProjects(); // 项目管理页面的数据
-      fetchDashboardProjects(); // 项目看板的数据
-      fetchUsers();
-      fetchRoles();
-      fetchCustomers();
-      fetchOrders();
-      fetchSystemSettings();
-      fetchUserPermissions();
+      fetchInitData();
     }
   }, [currentUser]);
 
@@ -1922,6 +1915,46 @@ export default function AppPage() {
       }
     } catch (error) {
       console.error("Error fetching system settings:", error);
+    }
+  };
+
+  const fetchInitData = async () => {
+    try {
+      const res = await fetch("/api/init-data", { credentials: "include" });
+      if (res.ok) {
+        const json = await res.json();
+        const { users, roles: activeRoles, allRoles, customers, projects, orders, permissions, settings } = json.data;
+
+        setUsers(users || []);
+
+        const convertedProjects = (projects || []).map((p: any) => ({
+          ...p,
+          iconUrl: convertToProxyUrl(p.iconUrl),
+        }));
+        setProjects(convertedProjects);
+        setDashboardProjects(convertedProjects);
+
+        setRoles(activeRoles || []);
+        setCustomers(customers || []);
+        setOrders(orders || []);
+        setUserPermissions(permissions);
+
+        if (settings) {
+          const s = { ...settings };
+          if (s.companyLogo) s.companyLogo = convertToProxyUrl(s.companyLogo);
+          setSystemSettings(s);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching init data:", error);
+      // Fallback to individual calls
+      fetchProjects();
+      fetchUsers();
+      fetchRoles();
+      fetchCustomers();
+      fetchOrders();
+      fetchSystemSettings();
+      fetchUserPermissions();
     }
   };
 

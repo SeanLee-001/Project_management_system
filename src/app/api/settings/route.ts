@@ -3,16 +3,21 @@ import { systemManager } from "@/storage/database";
 import { userManager } from "@/storage/database";
 import { UserRole } from "@/storage/database/shared/schema";
 import { verifyToken, getUserFromToken } from "@/lib/auth";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET /api/settings - 获取系统设置
 export async function GET(request: NextRequest) {
   try {
+    const cacheKey = `settings:${request.url}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const companyName = await systemManager.getCompanyName();
     const companyLogo = await systemManager.getCompanyLogo();
     const systemVersion = await systemManager.getSystemVersion();
     const alertStyle = await systemManager.getAlertStyle();
 
-    return NextResponse.json({
+    const result = {
       success: true,
       data: {
         companyName,
@@ -20,7 +25,9 @@ export async function GET(request: NextRequest) {
         systemVersion,
         alertStyle,
       },
-    });
+    };
+    setCache(cacheKey, result, 300000);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching settings:", error);
     return NextResponse.json(
@@ -96,6 +103,8 @@ export async function PUT(request: NextRequest) {
     if (alertStyle !== undefined) {
       await systemManager.setAlertStyle(alertStyle);
     }
+
+    invalidateCache("settings:");
 
     const updatedCompanyName = await systemManager.getCompanyName();
     const updatedCompanyLogo = await systemManager.getCompanyLogo();

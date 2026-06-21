@@ -6,6 +6,7 @@ import {
   projects,
 } from "@/storage/database/shared/schema";
 import { eq, and } from "drizzle-orm";
+import { invalidateCache } from "@/lib/cache";
 
 // POST /api/project-approvals/[id]/cancel - 撤销项目审批
 export async function POST(
@@ -97,6 +98,8 @@ export async function POST(
       }
     });
 
+    invalidateCache("project-approvals:");
+    invalidateCache("projects:");
     return NextResponse.json({
       success: true,
       message: "审批已撤销",

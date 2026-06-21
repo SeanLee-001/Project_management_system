@@ -3,6 +3,7 @@ import { contractManager } from "@/storage/database";
 import { getDb } from "coze-coding-dev-sdk";
 import { contracts } from "@/storage/database/shared/schema";
 import { eq } from "drizzle-orm";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET /api/contracts/[contractId] - 获取单个合同
 export async function GET(
@@ -11,6 +12,10 @@ export async function GET(
 ) {
   try {
     const { contractId } = await params;
+    const cacheKey = `contract:${contractId}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const contract = await contractManager.getById(contractId);
 
     if (!contract) {
@@ -20,7 +25,9 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ success: true, data: contract });
+    const resultGet = { success: true, data: contract };
+    setCache(cacheKey, resultGet, 15000);
+    return NextResponse.json(resultGet);
   } catch (error) {
     console.error("Error fetching contract:", error);
     return NextResponse.json(
@@ -80,6 +87,8 @@ export async function PUT(
     };
 
     const contract = await contractManager.update(contractId, dataToSend);
+    invalidateCache("contracts:");
+    invalidateCache(`contract:${contractId}`);
     return NextResponse.json({ success: true, data: contract });
   } catch (error: any) {
     console.error("Error updating contract:", error);
@@ -109,6 +118,8 @@ export async function DELETE(
     }
 
     const contract = await contractManager.delete(contractId);
+    invalidateCache("contracts:");
+    invalidateCache(`contract:${contractId}`);
     return NextResponse.json({ success: true, data: contract });
   } catch (error: any) {
     console.error("Error deleting contract:", error);

@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { orderManager } from "@/storage/database";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET /api/orders - 获取所有订单或搜索订单
 export async function GET(request: NextRequest) {
   try {
+    const cacheKey = `orders:${request.url}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
     const keyword = searchParams.get("keyword"); // 兼容 keyword 参数
@@ -37,7 +42,9 @@ export async function GET(request: NextRequest) {
       orders = await orderManager.getAll();
     }
 
-    return NextResponse.json({ success: true, data: orders });
+    const result = { success: true, data: orders };
+    setCache(cacheKey, result, 30000);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching orders:", error);
     return NextResponse.json(
@@ -61,6 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     const order = await orderManager.create(body);
+    invalidateCache("orders:");
     return NextResponse.json({ success: true, data: order }, { status: 201 });
   } catch (error: any) {
     console.error("Error creating order:", error);

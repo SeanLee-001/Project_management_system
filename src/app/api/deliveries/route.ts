@@ -3,10 +3,15 @@ import { getDb } from "coze-coding-dev-sdk";
 import { deliveries, orders, users } from "@/storage/database/shared/schema";
 import { eq, like, and, or, desc, sql } from "drizzle-orm";
 import { getUserFromToken } from "@/lib/auth";
+import { getCached, setCache, invalidateCache } from "@/lib/cache";
 
 // GET - 获取送货列表
 export async function GET(request: NextRequest) {
   try {
+    const cacheKey = `deliveries:${request.url}`;
+    const cached = getCached(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const db = await getDb();
     
     const searchParams = request.nextUrl.searchParams;
@@ -53,7 +58,7 @@ export async function GET(request: NextRequest) {
       .limit(pageSize)
       .offset(offset);
 
-    return NextResponse.json({
+    const result = {
       success: true,
       data: {
         list,
@@ -62,7 +67,9 @@ export async function GET(request: NextRequest) {
         pageSize,
         totalPages: Math.ceil(total / pageSize),
       },
-    });
+    };
+    setCache(cacheKey, result, 15000);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("获取送货列表失败:", error);
     return NextResponse.json(
@@ -145,6 +152,7 @@ export async function POST(request: NextRequest) {
       .values(insertData)
       .returning();
 
+    invalidateCache("deliveries:");
     return NextResponse.json({
       success: true,
       data: result[0],
